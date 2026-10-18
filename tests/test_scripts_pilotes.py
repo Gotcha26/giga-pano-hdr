@@ -19,7 +19,8 @@ PILOTES = [
     "mesurer_gain_paires.py", "mesurer_bandes_ciel.py", "localiser_sauts_ciel.py", "comparer_rendus.py",
     "comparer_couleur.py", "rehausser_ciel.py",
 ]
-EXEMPTE = "verifier_renvois.py"   # sans argument, il contrôle : jamais de menu
+EXEMPTES = ["verifier_renvois.py",   # sans argument, il contrôle : jamais de menu de pilotage
+            "panorama.py"]           # le lanceur lui-même
 
 MARQUEUR_MENU = "PILOTAGE"
 
@@ -43,8 +44,9 @@ class TestDeclaration(unittest.TestCase):
 
     def test_tous_les_scripts_python_sont_pilotes_sauf_l_exempte(self):
         presents = sorted(p.name for p in SCRIPTS.glob("*.py"))
-        self.assertEqual(presents, sorted(PILOTES + [EXEMPTE]))
-        self.assertNotIn("piloter(", (SCRIPTS / EXEMPTE).read_text(encoding="utf-8"))
+        self.assertEqual(presents, sorted(PILOTES + EXEMPTES))
+        for nom in EXEMPTES:
+            self.assertNotIn("piloter(", (SCRIPTS / nom).read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ la ligne de commande avait été tapée. Avec des arguments, ou sans terminal, r
 
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Optional
 
 from . import config
@@ -154,8 +155,9 @@ def _afficher(doc, arguments, valeurs, ecrit, constantes, panorama, c, ecrire):
     ecrire(f"  {c.JAUNE}L{c.RESET}. Lancer    {c.JAUNE}0{c.RESET}. {c.DIM}Annuler{c.RESET}")
 
 
-def menu(doc, arguments, ecrit, constantes=None, panorama=None, c=None, lire=input, ecrire=print, effacer=None):
-    """Affiche le menu de pilotage ; retourne la liste d'arguments à ajouter à sys.argv, ou None si annulé."""
+def menu(doc, arguments, ecrit, constantes=None, panorama=None, c=None, lire=input, ecrire=print, effacer=None,
+         construire=construire_argv):
+    """Affiche le menu de pilotage ; retourne la liste d'arguments (construite par `construire`), ou None si annulé."""
     c = c or Couleurs()
     effacer = effacer if effacer is not None else effacer_ecran
     valeurs = _valeurs_initiales(arguments, panorama)
@@ -176,7 +178,7 @@ def menu(doc, arguments, ecrit, constantes=None, panorama=None, c=None, lire=inp
                     if not confirmer("Les constantes du script contredisent le panorama courant. Lancer malgré l'écart ?",
                                      c, defaut_oui=False, lire=lire):
                         continue
-                return construire_argv(arguments, valeurs)
+                return construire(arguments, valeurs)
             if choix.isdigit() and 1 <= int(choix) <= len(arguments):
                 a = arguments[int(choix) - 1]
                 if a.type == "drapeau":
@@ -194,6 +196,26 @@ def menu(doc, arguments, ecrit, constantes=None, panorama=None, c=None, lire=inp
             pause(c, lire)
     except StopIteration:   # fin des saisies injectées (tests)
         return None
+
+
+def lire_declaration(chemin):
+    """(ARGUMENTS, ecrit, docstring) d'un script, lus par analyse syntaxique : le script n'est pas exécuté
+    (un import déclencherait sa lecture de sys.argv)."""
+    import ast
+    arbre = ast.parse(Path(chemin).read_text(encoding="utf-8"))
+    arguments, ecrit = [], None
+    for noeud in arbre.body:
+        if isinstance(noeud, ast.Assign) and any(isinstance(c, ast.Name) and c.id == "ARGUMENTS" for c in noeud.targets):
+            for appel in noeud.value.elts:
+                positionnels = [ast.literal_eval(a) for a in appel.args]
+                nommes = {k.arg: ast.literal_eval(k.value) for k in appel.keywords}
+                arguments.append(Arg(*positionnels, **nommes))
+        elif isinstance(noeud, ast.Expr) and isinstance(noeud.value, ast.Call) \
+                and getattr(noeud.value.func, "id", "") == "piloter":
+            for k in noeud.value.keywords:
+                if k.arg == "ecrit":
+                    ecrit = ast.literal_eval(k.value)
+    return arguments, ecrit, ast.get_docstring(arbre) or ""
 
 
 def piloter(doc, arguments, ecrit=None, globals_=None):
