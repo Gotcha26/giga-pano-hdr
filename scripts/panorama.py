@@ -369,14 +369,16 @@ SOUS_MENUS = {
 
 
 def menu_principal(ctx):
+    def nav(tete, sous_titre, titre, constructeur):
+        return Entree(tete, sous_titre, action=_sous_menu(titre, constructeur), navigation=True)
     return [
-        Entree("Préparer le poste et le panorama", "Phase 0", action=_sous_menu("PHASE 0", menu_phase0)),
-        Entree("Contrôler et renommer l'export", "Phase 2", action=_sous_menu("PHASE 2", menu_phase2)),
-        Entree("Établir la géométrie", "Phase 3", action=_sous_menu("PHASE 3", menu_phase3)),
-        Entree("Rendre : vue centrée, HDR, pleine résolution", "Phases 4 à 6", action=_sous_menu("RENDUS", menu_rendus)),
-        Entree("Mesurer et inspecter", "ciel, raccords, géométrie", action=_sous_menu("MESURES", menu_mesures)),
-        Entree("Tuiler et cadrer", "Phase 7", action=_sous_menu("PHASE 7", menu_phase7)),
-        Entree("Configuration", "chemins des outils, panorama courant", action=_sous_menu("CONFIGURATION", menu_configuration)),
+        nav("Préparer le poste et le panorama", "Phase 0", "PHASE 0", menu_phase0),
+        nav("Contrôler et renommer l'export", "Phase 2", "PHASE 2", menu_phase2),
+        nav("Établir la géométrie", "Phase 3", "PHASE 3", menu_phase3),
+        nav("Rendre : vue centrée, HDR, pleine résolution", "Phases 4 à 6", "RENDUS", menu_rendus),
+        nav("Mesurer et inspecter", "ciel, raccords, géométrie", "MESURES", menu_mesures),
+        nav("Tuiler et cadrer", "Phase 7", "PHASE 7", menu_phase7),
+        nav("Configuration", "chemins des outils, panorama courant", "CONFIGURATION", menu_configuration),
     ]
 
 

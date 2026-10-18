@@ -21,6 +21,7 @@ class Entree:
     raison: Union[str, Callable[[Any], str]] = ""   # texte, ou callable(ctx) -> texte (raison vivante)
     masquer: bool = False
     section: str = ""
+    navigation: bool = False               # ouvre un sous-menu : ni « écrit », ni « lecture seule »
 
     def tete_texte(self, ctx):
         return self.tete(ctx) if callable(self.tete) else self.tete
@@ -42,7 +43,7 @@ def libelles(entrees, ctx):
         texte = e.tete_texte(ctx).ljust(largeurs[e.section])
         if e.sous_titre:
             texte += f" — {e.sous_titre}"
-        if e.action is not None:
+        if e.action is not None and not e.navigation:
             texte += f"  [écrit — {e.effet}]" if e.effet else "  [lecture seule]"
         resultat.append(texte)
     return resultat

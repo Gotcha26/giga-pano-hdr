@@ -6,6 +6,7 @@ lecture de sys.argv. Lancé sans argument dans un terminal, il affiche la liste 
 la ligne de commande avait été tapée. Avec des arguments, ou sans terminal, rien ne change.
 """
 
+import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -22,6 +23,31 @@ CORRESPONDANCE = {"COLS": "colonnes", "ROWS": "lignes", "PAS_H": "pas_h", "PAS_V
                   "FOCALE": "focale", "LARGEUR_MM": "largeur_mm", "EXPOS": "expos"}
 
 A_SAISIR = "à saisir"
+SANS_MENU = "GIGA_PANO_SANS_MENU"   # posée par le lanceur pour ses enfants : jamais de second menu
+
+
+def terminal_interactif(stdin=None, stdout=None):
+    """Vrai seulement si l'entrée ET la sortie standard sont une vraie console.
+
+    Sous Windows, NUL est un périphérique caractère : isatty() y répond vrai pour une entrée redirigée depuis
+    NUL ou subprocess.DEVNULL. GetConsoleMode, lui, n'accepte qu'une console."""
+    stdin = stdin if stdin is not None else sys.stdin
+    stdout = stdout if stdout is not None else sys.stdout
+    try:
+        if not stdout.isatty() or not stdin.isatty():
+            return False
+    except (AttributeError, ValueError):
+        return False
+    if os.name != "nt":
+        return True
+    try:
+        import ctypes
+        import msvcrt
+        handle = msvcrt.get_osfhandle(stdin.fileno())
+        mode = ctypes.c_uint()
+        return bool(ctypes.windll.kernel32.GetConsoleMode(handle, ctypes.byref(mode)))
+    except Exception:
+        return False
 
 
 @dataclass
@@ -67,6 +93,17 @@ def construire_argv(arguments, valeurs):
             argv.append(a.nom)
             argv += str(v).split() if a.nargs > 1 or a.type == "liste" else [str(v)]
     return argv
+
+
+def _positionnels_apres_un_vide(arguments, valeurs):
+    """(vide, renseigné) pour chaque positionnel renseigné qui suit un positionnel vide : la ligne de
+    commande ne saurait pas les distinguer, construire_argv s'arrêterait au vide et perdrait le suivant."""
+    positionnels = [a for a in arguments if not a.option]
+    premier_vide = next((a for a in positionnels if valeurs.get(a.nom) in ("", None)), None)
+    if premier_vide is None:
+        return []
+    apres = positionnels[positionnels.index(premier_vide) + 1:]
+    return [(premier_vide.nom, a.nom) for a in apres if valeurs.get(a.nom) not in ("", None)]
 
 
 def constantes_du_script(globals_):
@@ -174,6 +211,12 @@ def menu(doc, arguments, ecrit, constantes=None, panorama=None, c=None, lire=inp
                     ecrire(c.erreur(f"Argument obligatoire non renseigné : {', '.join(manquants)}"))
                     pause(c, lire)
                     continue
+                orphelins = _positionnels_apres_un_vide(arguments, valeurs)
+                if orphelins:
+                    ecrire(c.erreur("Les arguments sont positionnels : " +
+                                    " ; ".join(f"{apres} exige {vide}" for vide, apres in orphelins)))
+                    pause(c, lire)
+                    continue
                 if constantes and ecarts(constantes, panorama):
                     if not confirmer("Les constantes du script contredisent le panorama courant. Lancer malgré l'écart ?",
                                      c, defaut_oui=False, lire=lire):
@@ -219,8 +262,20 @@ def lire_declaration(chemin):
 
 
 def piloter(doc, arguments, ecrit=None, globals_=None):
-    """À appeler avant la première lecture de sys.argv : sans argument et dans un terminal, ouvre le menu."""
-    if len(sys.argv) != 1 or not getattr(sys.stdin, "isatty", lambda: False)():
+    """À appeler avant la première lecture de sys.argv : sans argument et dans un terminal, ouvre le menu.
+
+    Ne fait rien si : des arguments sont donnés ; le lanceur a posé GIGA_PANO_SANS_MENU ; le script est importé
+    par un autre programme (sys.argv[0] ne le désigne pas) ; l'entrée ou la sortie n'est pas une console."""
+    if len(sys.argv) != 1 or os.environ.get(SANS_MENU):
+        return
+    fichier = (globals_ or {}).get("__file__")
+    if fichier and sys.argv and sys.argv[0]:
+        try:
+            if Path(sys.argv[0]).resolve() != Path(fichier).resolve():
+                return
+        except OSError:
+            return
+    if not terminal_interactif():
         return
     preparer_console()
     panorama = config.panorama_courant(config.charger_poste())

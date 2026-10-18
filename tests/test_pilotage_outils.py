@@ -60,8 +60,8 @@ class TestDivers(unittest.TestCase):
         self.assertEqual(outils.commande_installation(outils.OUTILS[0]),
                          "winget install --id Hugin.Hugin -e --accept-package-agreements --accept-source-agreements")
         self.assertIsNone(outils.commande_installation(next(o for o in outils.OUTILS if o.cle == "multiblend")))
-        self.assertEqual(outils.commande_installation(next(o for o in outils.OUTILS if o.cle == "pillow")),
-                         "pip install pillow")
+        self.assertTrue(outils.commande_installation(next(o for o in outils.OUTILS if o.cle == "pillow"))
+                        .endswith("-m pip install pillow"))
 
     def test_presets(self):
         with tempfile.TemporaryDirectory() as d:

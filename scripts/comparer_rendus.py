@@ -43,7 +43,7 @@ ARGUMENTS = [
     Arg("X1", "Zone de ciel : dernière colonne", type="entier"),
     Arg("Y0", "Zone de ciel : première ligne", type="entier"),
     Arg("Y1", "Zone de ciel : dernière ligne", type="entier"),
-    Arg("PERIODE_PX", "Période en pixels (facultatif)", type="entier"),
+    Arg("PERIODE_PX", "Période en pixels (facultatif)", type="entier", obligatoire=False),
 ]
 piloter(__doc__, ARGUMENTS, ecrit=None, globals_=globals())
 

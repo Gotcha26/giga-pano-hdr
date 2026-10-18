@@ -126,8 +126,8 @@ ARGUMENTS = [
     Arg("projet.pto", "Projet optimisé (positions et champ des images)", type="pto", config="maitre", phase="3_optimisation"),
     Arg("DOSSIER", "Dossier des images L_C_E0", type="dossier", config="export_l"),
     Arg("LIGNE", "Ligne de la grille", type="entier", defaut=0),
-    Arg("COL_DEBUT", "Première paire à comparer (défaut : toute la ligne)", type="entier"),
-    Arg("COL_FIN", "Dernière paire à comparer", type="entier"),
+    Arg("COL_DEBUT", "Première paire à comparer (défaut : toute la ligne)", type="entier", obligatoire=False),
+    Arg("COL_FIN", "Dernière paire à comparer", type="entier", obligatoire=False),
 ]
 piloter(__doc__, ARGUMENTS, ecrit=None, globals_=globals())
 

@@ -44,8 +44,8 @@ ARGUMENTS = [
     Arg("LIGNE_FIN", "Dernière ligne de pixels de ciel", type="entier"),
     Arg("LARGEUR_DEG", "Largeur du panorama en degrés", type="nombre", defaut=185),
     Arg("PAS_DEG", "Pas angulaire entre images, en degrés", type="nombre", config="pas_h", defaut=5),
-    Arg("X_DEBUT", "Première colonne analysée (ciel seul)", type="entier"),
-    Arg("X_FIN", "Dernière colonne analysée", type="entier"),
+    Arg("X_DEBUT", "Première colonne analysée (ciel seul ; défaut : toute la largeur)", type="entier", obligatoire=False),
+    Arg("X_FIN", "Dernière colonne analysée", type="entier", obligatoire=False),
 ]
 piloter(__doc__, ARGUMENTS, ecrit=None, globals_=globals())
 

@@ -29,9 +29,12 @@ class TestSansTerminal(unittest.TestCase):
     def test_sans_argument_et_sans_tty_le_menu_ne_s_affiche_pas(self):
         for nom in PILOTES:
             with self.subTest(nom):
-                r = subprocess.run([sys.executable, "-I", str(SCRIPTS / nom)], stdin=subprocess.DEVNULL,
+                # sans -I : avec lui, scripts/ n'est pas dans sys.path et l'import de pilotage échouerait avant piloter()
+                r = subprocess.run([sys.executable, str(SCRIPTS / nom)], stdin=subprocess.DEVNULL,
                                    capture_output=True, text=True, timeout=60, cwd=SCRIPTS)
                 self.assertNotIn(MARQUEUR_MENU, r.stdout + r.stderr)
+                self.assertNotIn("No module named 'pilotage'", r.stderr)
+                # (cadrage_lightroom.py pose sa propre question quand --catalogue manque : comportement antérieur)
 
 
 class TestDeclaration(unittest.TestCase):

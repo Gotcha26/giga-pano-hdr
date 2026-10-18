@@ -34,8 +34,8 @@ ARGUMENTS = [
     Arg("projet.pto", "Projet Hugin", type="pto", phase="3_optimisation"),
     Arg("PREMIERE", "Première image de la plage", type="entier", defaut=0),
     Arg("DERNIERE", "Dernière image de la plage (bornes comprises)", type="entier"),
-    Arg("PAS_H", "Pas horizontal de la grille, en degrés", type="nombre", config="pas_h"),
-    Arg("PAS_V", "Pas vertical de la grille, en degrés", type="nombre", config="pas_v"),
+    Arg("PAS_H", "Pas horizontal de la grille, en degrés", type="nombre", config="pas_h", defaut=5.0),
+    Arg("PAS_V", "Pas vertical de la grille, en degrés", type="nombre", config="pas_v", defaut=5.8),
 ]
 piloter(__doc__, ARGUMENTS, ecrit=None, globals_=globals())
 

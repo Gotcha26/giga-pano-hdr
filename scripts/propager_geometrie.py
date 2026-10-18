@@ -46,8 +46,8 @@ ARGUMENTS = [
     Arg("optimise_E0.pto", "Projet optimisé de la vue centrée", type="pto", config="maitre", phase="3_optimisation"),
     Arg("sortie.pto", "Projet à écrire (toutes les expositions)", type="pto"),
     Arg("LARGEUR", "Largeur du panorama en pixels", type="entier", config="largeur_hdr", defaut=20000),
-    Arg("LARG_IMAGE", "Largeur des images à assembler, si différente du projet", type="entier"),
-    Arg("HAUT_IMAGE", "Hauteur des images à assembler", type="entier"),
+    Arg("LARG_IMAGE", "Largeur des images à assembler, si différente du projet", type="entier", obligatoire=False),
+    Arg("HAUT_IMAGE", "Hauteur des images à assembler", type="entier", obligatoire=False),
 ]
 piloter(__doc__, ARGUMENTS, ecrit='le projet de sortie', globals_=globals())
 

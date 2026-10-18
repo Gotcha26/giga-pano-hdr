@@ -78,8 +78,10 @@ def _menu(ctx, doc, arguments, ecrit, constantes=None):
 
 
 def _executer(ctx, commande, script=""):
+    env = dict(os.environ)
+    env[args_mod.SANS_MENU] = "1"          # l'enfant hérite de la console : il ne doit pas rouvrir un menu
     try:
-        r = ctx.executer(commande, cwd=str(ctx.scripts))
+        r = ctx.executer(commande, cwd=str(ctx.scripts), env=env)
         return getattr(r, "returncode", 0)
     except KeyboardInterrupt:
         ctx.ecrire("")
@@ -113,7 +115,8 @@ def construire_ps(arguments, valeurs):
             if v is True:
                 resultat.append(a.nom)
         elif v not in (None, "", False):
-            resultat += [a.nom, str(v)]
+            # une liste : un élément argv par valeur (-File lie « -Groupes 1 2 » à un tableau ; « 1,2 » donnerait 12)
+            resultat += [a.nom, *str(v).split()] if a.type == "liste" else [a.nom, str(v)]
     return resultat
 
 

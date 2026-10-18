@@ -28,6 +28,7 @@ class Outil:
     winget: Optional[str]
     url: Optional[str]
     dezipper: Optional[str] = None  # dossier conseillé pour une archive
+    version_requise: bool = False   # présent seulement si la version se lit (Pillow : l'import doit réussir)
 
 
 OUTILS = [
@@ -44,7 +45,8 @@ OUTILS = [
           "https://exiftool.org/"),
     Outil("python", "Python", PYTHON, ["--version"], r"Python ([\d.]+)", [], "Python.Python.3.13",
           "https://www.python.org/downloads/windows/"),
-    Outil("pillow", "Pillow", PYTHON, ["-c", "import PIL; print(PIL.__version__)"], r"^\s*([\d.]+)", [], None, None),
+    Outil("pillow", "Pillow", PYTHON, ["-c", "import PIL; print(PIL.__version__)"], r"^\s*([\d.]+)", [], None, None,
+          version_requise=True),
     Outil("pwsh", "PowerShell 7", "pwsh.exe", ["-NoProfile", "-Command", "$PSVersionTable.PSVersion.ToString()"],
           r"^\s*([\d.]+)", [], "Microsoft.PowerShell", "https://learn.microsoft.com/powershell/"),
 ]
@@ -97,7 +99,10 @@ def detecter(outil, configures, which=shutil.which, lancer=subprocess.run):
     chemin = _chemin(outil, configures or {}, which)
     if chemin is None:
         return Etat(outil, None, None)
-    return Etat(outil, chemin, _version(outil, chemin, lancer))
+    version = _version(outil, chemin, lancer)
+    if outil.version_requise and version is None:
+        return Etat(outil, None, None)
+    return Etat(outil, chemin, version)
 
 
 def detecter_tous(configures):
@@ -115,7 +120,7 @@ def resume(etats, c):
 
 def commande_installation(outil):
     if outil.cle == "pillow":
-        return "pip install pillow"
+        return f'"{sys.executable}" -m pip install pillow'   # le pip de CE Python, pas un autre du PATH
     if outil.winget:
         return f"winget install --id {outil.winget} -e --accept-package-agreements --accept-source-agreements"
     return None
