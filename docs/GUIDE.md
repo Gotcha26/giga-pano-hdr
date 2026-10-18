@@ -132,7 +132,7 @@ Pressé ? La séquence complète des commandes est dans l'[aide-mémoire](#aide-
 | ***PowerShell*** | Les scripts `.ps1`, écrits sans caractères accentués pour tourner **aussi bien sous Windows PowerShell 5.1 que sous PowerShell 7** | Inclus dans Windows ; PowerShell 7 : <https://learn.microsoft.com/powershell/> |
 | ***ImageMagick*** | Facultatif : conversions ponctuelles de petites images | <https://imagemagick.org/> |
 
-Les versions avec lesquelles la méthode a été établie sont dans l'étude de cas ([Configuration de référence](../etudes-de-cas/2026-06-19-wattenberg-200mm/ETUDE-DE-CAS.md#️-configuration-de-référence)).
+Les versions avec lesquelles la méthode a été établie sont dans l'étude de cas ([Configuration de référence](../etudes-de-cas/2026-06-19-wattenberg-200mm/ETUDE-DE-CAS.md#️-configuration-de-référence)). Le lanceur ***panorama.py*** (menu **Préparer**) affiche les versions installées et propose d'installer ce qui manque ([Le lanceur](#le-lanceur-et-les-menus-de-pilotage)).
 
 ### 0B — Vérifier l'installation
 
@@ -1434,7 +1434,23 @@ Les scripts du dossier `scripts\` (`$OUTILS`) sont classés par étape dans [`IN
 
 **Constantes codées en dur** (à adapter si la prise de vue change) : la taille des images est lue dans les fichiers ou dans le projet, mais les scripts de diagnostic et de placement supposent le **nombre de colonnes et de lignes et le champ horizontal** d'une prise de vue donnée. Les modifier en tête de chaque script. Les signes de rotation supposent la colonne 0 à **droite** et la ligne 0 en **haut** ; pour une prise de vue gauche → droite, inverser le signe du lacet dans ***generer_pto.py***.
 
-**Chemins d'installation** (***Hugin***, ***multiblend***, ***libvips***) : en tête des scripts PowerShell concernés, ou en paramètre (`-Vips`, variable `MULTIBLEND_EXE`).
+**Chemins d'installation** (***Hugin***, ***multiblend***, ***libvips***) : paramètres optionnels des scripts PowerShell concernés (`-Hugin`, `-Multiblend`, `-Vips`, avec un chemin par défaut en tête de script), variable `MULTIBLEND_EXE` pour l'adaptateur, ou menu **Configuration** du lanceur, qui les transmet.
+
+### Le lanceur et les menus de pilotage
+
+Toutes les commandes de ce guide restent valables telles quelles. Deux facilités s'y ajoutent, sans rien changer aux scripts appelés avec des arguments :
+
+- **Le lanceur** ***panorama.py*** (`python panorama.py` depuis `$OUTILS`) aiguille vers le bon script **par phase du guide** : chaque sous-menu liste des tâches, nomme le script appelé et déclare ce qu'il écrit et où (`[écrit — cible]` ou `[lecture seule]`). Les gestes qui se font dans ***Hugin*** ou ***Lightroom*** (**3B**, **3E**, **5C**, **6A**, **7B**, **7C**) y apparaissent grisés, avec leur rappel. La Phase 0 y est outillée : versions des outils, installation de ce qui manque (sur confirmation), dossiers des préréglages ***Lightroom***, création de l'arborescence d'un nouveau panorama.
+- **Le menu de pilotage** d'un script Python s'affiche quand on le lance **sans argument, dans un terminal** : la liste numérotée de ses arguments, préremplie, où l'on règle chaque valeur avant de taper `L` pour lancer. Avec des arguments, ou appelé par un autre programme, un script ne pose **jamais** de question. Les scripts PowerShell n'ont pas ce menu : le lanceur le leur fournit.
+
+Le préremplissage vient de deux fichiers JSON, hors dépôt :
+
+| Fichier | Contenu | Qui l'écrit |
+| --- | --- | --- |
+| `%LOCALAPPDATA%\giga-pano-hdr\config.json` | Chemins des outils, panoramas connus, panorama **courant** | Le lanceur (Configuration, Nouveau panorama) |
+| `$T\panorama.json` | `T`, `P`, `H`, grille, expositions, focale, pas, largeurs du HDR et de la pleine résolution, projet maître | Le lanceur (Nouveau panorama) ; à la main ensuite, par exemple pour `maitre` une fois **3G** terminé |
+
+Quand une **constante en dur** d'un script (`COLS`, `PAS_V`…) contredit le panorama courant, le menu de pilotage l'affiche en avertissement et demande confirmation avant de lancer : c'est le rappel d'adapter la constante, pas une interdiction.
 
 ---
 
@@ -1487,5 +1503,5 @@ Méthode établie par Julien Moreau sur un panorama de 222 positions (1554 image
 
 ---
 
-**Version** : 7.0
+**Version** : 7.1
 **Dernière mise à jour** : 2026-10-18

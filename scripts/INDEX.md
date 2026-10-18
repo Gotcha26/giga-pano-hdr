@@ -4,6 +4,17 @@ Les 43 scripts de ce dossier forment la chaîne qui mène des images exportées 
 
 ---
 
+## 🚀 Le lanceur et le pilotage
+
+| Entrée | Rôle |
+| --- | --- |
+| [***panorama.py***](panorama.py) | **Le lanceur** : `python panorama.py`. Menu par phase du guide ; chaque tâche nomme son script et déclare ce qu'elle écrit. Phase 0 : versions des outils, installation, dossiers des préréglages Lightroom, nouveau panorama (arborescence + `panorama.json`), panorama courant. Configuration : chemins des outils |
+| [`pilotage/`](pilotage/) | Le kit partagé : `couleurs.py` (ANSI), `menu.py` (menus déclaratifs), `config.py` (`config.json` du poste et `$T\panorama.json`), `outils.py` (détection, versions, `winget`), `arguments.py` (menu de pilotage des arguments d'un script), `lancer.py` (sous-processus), `declarations_ps.py` (arguments des scripts PowerShell) |
+
+**Menu de pilotage** : chaque script Python de cet index, lancé **sans argument dans un terminal**, affiche la liste de ses arguments, préremplie d'après le panorama courant, et se lance sur `L`. Avec des arguments, il se comporte exactement comme avant. Les scripts PowerShell n'ont pas ce menu : le lanceur le leur fournit. ***verifier_renvois.py*** en est exempté (sans argument, il contrôle).
+
+---
+
 ## 📋 Pour qui ?
 
 Pour qui veut savoir « quel script pour quoi ? » sans ouvrir les 43 fichiers : cet index les classe par phase, dans l'ordre où on s'en sert, avec l'identifiant de l'étape du [guide](../docs/GUIDE.md) qui les emploie (**3F**, **6C**…) et leur **portée**. Le détail des gestes dans *Hugin* et *Lightroom* est dans le guide (voir son aide-mémoire pour la séquence complète).
@@ -186,7 +197,7 @@ flowchart TD
 | ***multiblend*** | <ul><li>***rendre_projet.ps1***</li><li>***fusionner_par_exposition.ps1***</li><li>***enblend_vers_multiblend***</li></ul> |
 | ***libvips*** | <ul><li>***ecart_paires*** (`vips` dans le `PATH`, ou variable d'environnement `VIPS`)</li><li>***tuiler.ps1*** (`-Vips`)</li><li>***rendre_lisible.ps1***</li><li>***profil_jonction.ps1***</li><li>Commandes imprimées par ***cadrage_lightroom***</li></ul> |
 
-Les chemins d'installation (*Hugin*, *multiblend*, *libvips*) sont écrits en tête des scripts PowerShell concernés, ou passés en paramètre : à adapter à votre poste.
+Les chemins d'installation (*Hugin*, *multiblend*, *libvips*) se passent en paramètre aux scripts PowerShell concernés (`-Hugin` dossier bin, `-Multiblend`, `-Vips` ; valeur par défaut en tête de chaque script), ou se règlent une fois dans le menu **Configuration** du lanceur, qui les transmet.
 
 ---
 
@@ -199,7 +210,7 @@ Ouvrir le fichier : la rubrique **ENTRÉES** liste les arguments attendus. Beauc
 Les scripts de diagnostic ne font que lire. Les scripts de projet écrivent un **nouveau** `.pto` (ou le même si on le leur demande explicitement). Ceux qui touchent à des images (***renommer_pano***, ***renommer_par_raw***, ***ranger_intermediaires***) sont en essai à blanc tant qu'on n'ajoute pas `--apply`, et savent défaire (`--undo`) ou ne suppriment rien. Seul ***rendre_projet.ps1*** supprime des fichiers (les intermédiaires), et seulement après une fusion réussie.
 
 **Pourquoi tant de constantes en dur ?**
-Les scripts 🟡 ont été écrits pour une prise de vue précise. Les adapter reste plus simple que de tout paramétrer, et la rubrique **CONTEXTE** de chaque en-tête dit où se trouvent les valeurs. Un lanceur unique, qui aiguillera vers le bon script et portera ces paramètres, est prévu.
+Les scripts 🟡 ont été écrits pour une prise de vue précise. Les adapter reste plus simple que de tout paramétrer, et la rubrique **CONTEXTE** de chaque en-tête dit où se trouvent les valeurs. Le menu de pilotage rappelle ces constantes et avertit quand elles contredisent le panorama courant (`panorama.json`).
 
 **Pourquoi un seul dossier et pas un dossier par portée ?**
 Les scripts s'appellent entre eux (***rendre_projet.ps1*** → ***rendre_lisible.ps1***, ***enblend_vers_multiblend.cmd*** → `.ps1`) et toutes les commandes du guide se lancent depuis `$OUTILS`. Un seul dossier évite de casser ces liens ; la portée est dite ici.
@@ -213,5 +224,5 @@ Les scripts s'appellent entre eux (***rendre_projet.ps1*** → ***rendre_lisible
 
 ---
 
-**Version** : 2.0
+**Version** : 2.1
 **Dernière mise à jour** : 2026-10-18

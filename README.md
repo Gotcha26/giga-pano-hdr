@@ -40,15 +40,17 @@ Le guide donne la **procédure** et ses raisons. L'étude de cas donne les **val
 
 ## 🚀 Démarrage rapide
 
-1. Installer ***Hugin***, ***multiblend***, ***Python*** (+ ***Pillow***), ***ExifTool***, ***libvips*** : [Phase 0 du guide](docs/GUIDE.md#-phase-0--préparer-le-poste-et-lappareil).
-2. Cloner ce dépôt ; les scripts se lancent depuis `scripts\` :
+1. Cloner ce dépôt et ouvrir le **lanceur** depuis `scripts\` :
    ```powershell
-   $OUTILS = 'D:\Depots\giga-pano-hdr\scripts'
-   $T      = 'D:\Panoramas\<date>\<focale>'     # dossier de travail du panorama, hors catalogue Lightroom
-   cd $OUTILS
+   cd D:\Depots\giga-pano-hdr\scripts
+   python panorama.py
+   ```
+   Menu **Préparer** : il affiche les versions de ***Hugin***, ***multiblend***, ***Python*** (+ ***Pillow***), ***ExifTool***, ***libvips***, propose d'installer ce qui manque, et crée l'arborescence d'un **nouveau panorama**. Les autres menus suivent les phases du guide et ouvrent chaque script avec ses arguments préremplis.
+2. Un script se lance aussi seul : **sans argument** dans un terminal, il affiche le menu de ses arguments ; **avec des arguments**, il fait ce que dit le guide :
+   ```powershell
    python verifier_ordre.py "$T\Export-TIFF-L" --grille <lignes> <colonnes>
    ```
-3. Suivre le guide dans l'ordre, ou aller droit à l'[aide-mémoire](docs/GUIDE.md#aide-mémoire--la-séquence-complète) pour la séquence complète des commandes.
+3. Suivre le [guide](docs/GUIDE.md) dans l'ordre, ou aller droit à l'[aide-mémoire](docs/GUIDE.md#aide-mémoire--la-séquence-complète) pour la séquence complète des commandes.
 
 ---
 
@@ -62,6 +64,8 @@ giga-pano-hdr\
 │   ├── GUIDE.md                           ← la méthode générale (phases 0 à 7)
 │   └── NETTOYAGE-ancien-depot.md          ← à faire dans l'ancien dépôt, après la clôture de son issue #46
 ├── scripts\                               ← 43 scripts .py / .ps1 / .cmd, un dossier (ils s'appellent entre eux)
+│   ├── panorama.py                        ← le lanceur : menus par phase, Phase 0 outillée
+│   ├── pilotage\                          ← kit partagé : couleurs, menus, configuration, outils, arguments
 │   └── INDEX.md                           ← quel script pour quoi, portée de chacun
 ├── tests\                                 ← tests unitaires des scripts qui ont des fonctions pures
 └── etudes-de-cas\
@@ -77,7 +81,7 @@ giga-pano-hdr\
 ## 🛠️ Tests et garde-fous
 
 ```powershell
-python -I -m unittest discover -s tests -v     # fonctions pures de controle_reglages_export, ecart_paires, verifier_renvois
+python -I -m unittest discover -s tests -v     # kit de pilotage, lanceur, scripts pilotés, fonctions pures des scripts de contrôle
 python scripts\verifier_renvois.py             # numérotation du guide : identifiants cités, liens internes, restes de l'ancien système (0 écart attendu)
 ```
 
@@ -86,7 +90,7 @@ python scripts\verifier_renvois.py             # numérotation du guide : identi
 ## 📚 Pour aller plus loin
 
 - La visionneuse qui affiche ces panoramas est un autre projet (plugin ***Piwigo*** *GigaPanoramaViewer*) ; ce dépôt n'en dépend pas.
-- Ce que l'on fera ensuite : un **lanceur unique** avec des menus pour aiguiller vers le bon script selon la situation. Les scripts restent tels quels ; le lanceur ne fera qu'orienter.
+- Le lanceur et les menus de pilotage ne font qu'**orienter et préremplir** : les scripts restent pilotables en ligne de commande, et le guide reste la référence ([Configuration : les scripts](docs/GUIDE.md#️-configuration--les-scripts)).
 
 ---
 
@@ -107,5 +111,5 @@ Libre, avec citation de l'auteur et de la source :
 
 ---
 
-**Version** : 1.0
+**Version** : 1.1
 **Dernière mise à jour** : 2026-10-18
