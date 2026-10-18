@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+
+# Fichiers de travail des panoramas : jamais dans le dépôt (plusieurs dizaines de Go)
+*.tif
+*.tiff
+*.dng
+*.pto
+*.dzi
+*_files/
+
+# Espace de travail des agents
+/.superpowers/
+
+# Divers
+Thumbs.db
+desktop.ini
