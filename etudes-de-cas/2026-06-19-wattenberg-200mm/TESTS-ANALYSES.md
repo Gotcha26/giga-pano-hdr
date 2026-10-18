@@ -39,6 +39,7 @@ Le guide donne la **procédure** et ne contient ni statut d'avancement, ni résu
 | [M-14](#m-14--export-h-depuis-222-copies-virtuelles--3-min-54-s) | Export H depuis 222 copies virtuelles<br>3 min 54 s | ✅ |
 | [M-15](#m-15--correction-de-la-brume--des-écarts-de-teinte-entre-images) | Correction de la brume<br>des écarts de teinte entre images | ✅ |
 | [M-16](#m-16--rendu-complet-des-222-images-à-90-112-px-avec-le-développement-validé-brume-et-tonalité-à-0) | Rendu complet à 90 112 px avec le développement validé (brume et tonalité à 0)<br>durées, ciel homogène | ✅ |
+| [M-17](#m-17--nouvel-export-réglages-de-développement-plus-marqués--un-écart-visible-sur-le-panorama-entier-invisible-une-fois-zoomé) | Nouvel export plus marqué : écart visible sur le panorama entier, invisible une fois zoomé ; le seuil se juge dans la visionneuse | ✅ |
 | [T-01](#t-01--enblend-et-les-fichiers-de-plus-de-4-go) | *enblend* et les fichiers de plus de 4 Go (résolu : M-06, réponse négative) | ✅ |
 | [T-02](#t-02--ram-du-fusionneur-à-2-gpx) | RAM du fusionneur (*multiblend*) à 2 Gpx | 🔬 |
 | [T-03](#t-03--durée-du-rendu-complet-à-90-112-px) | Durée du rendu complet à 90 112 px | 🔬 |
@@ -407,6 +408,23 @@ Le guide donne la **procédure** et ne contient ni statut d'avancement, ni résu
 - **Ce que cela apporte** : le développement validé en M-15 donne bien, à pleine résolution, un panorama homogène ; le coût de calcul est inchangé (la différence tient au temps de *nona*, à 3 % près).
 - **Ce que cela ne démontre pas** : les **trous** de prise de vue (135-136, 165-166, 199-200) n'ont **pas été localisés avec certitude** (coordonnées estimées d'après la grille, aucune bande visible dans les extraits) ; les **poussières** et les 8 images en Point Color n'ont pas été jugées une à une ; le rendu n'est pas comparé pixel à pixel à l'ancien ; la RAM libre pendant la fusion n'a pas été relevée en continu.
 - **Statut** : ✅ Mesuré.
+
+### M-17 — Nouvel export (réglages de développement plus marqués) : un écart visible sur le panorama entier, invisible une fois zoomé
+
+- **Question** : avec un nouvel export H (222 images, `Export-TIFF-H2`, développement plus contrasté et plus saturé), les écarts de bande que l'on voit sur la vue d'ensemble comptent-ils encore à pleine résolution, dans la visionneuse ? (issue #46 du dépôt de la visionneuse)
+- **Mesures** (2026-10-18, même machine, même projet que M-16 avec les chemins d'images réécrits vers `Export-TIFF-H2`) :
+  - ***nona*** : **12 805 s (3 h 33)**, pic de RAM **13,5 Go**, 222 intermédiaires, aucune erreur ;
+  - ***multiblend*** `--cache-threshold=4G` : **1 292 s (21 min 32)**, code 0, « pic de RAM » du journal 21,8 Go, RAM libre au lancement 18,5 Go (un peu sous les ≈ 20 Go du guide, sans conséquence) ;
+  - panorama : **88 658 × 20 312 px**, BigTIFF LZW de **13,16 Gio** (12,8 Gio pour M-16) ;
+  - tuilage WebP Q85 : pleine résolution **9 311 tuiles, 407 Mo** (62 s pour `dzsave`) ; cadrée (x = 3 804, y = 786, 84 804 × 19 081 px) **8 471 tuiles, 395 Mo**.
+- **Vue d'ensemble et ciel rehaussé** (gain 20, bande x 700-3 700, y 40-240 à 5 903 px) : aucune couture à l'aperçu ; mais le rendu est **nettement plus saturé et plus contrasté** que celui de M-16 (ciel bleu-violet sombre, verts presque fluo), et le rehaussement fait ressortir des **blocs verticaux** (colonnes d'images) que le rendu de M-16 ne montrait pas.
+- **Jugé dans la visionneuse** (banc d'essai, HDR 20 000 px et pleine résolution, curseur de fondu automatique) : en poussant le zoom jusqu'à l'effacement du HDR, **la transition est bonne et les écarts vus sur le panorama entier ne se voient plus** : à ce niveau, on ne regarde plus qu'une photo agrandie. Valeur limitée : jugement à l'œil d'une personne, une scène, pas de mesure ; les mesures de jonction (`profil_jonction.ps1`, `ecart_paires.py`) n'ont **pas** été faites sur ce rendu.
+- **Ce que cela apporte** :
+  - **Seuil de tolérance à pleine résolution** : le critère qui compte est **le jugement dans la visionneuse à fort zoom**, pas la vue d'ensemble ni le rehaussement du ciel. Les écarts de bande de la vue d'ensemble, voulus nuls en 6C.5, sont **tolérables** quand ils disparaissent à l'échelle où le visiteur regarde la pleine résolution. Le rehaussement reste utile pour **comparer deux rendus**, pas pour condamner un rendu seul.
+  - **Dehaze, tonalité, saturation… agissent à l'échelle de l'image** : un réglage fort et différent d'une image à l'autre devient une **différence de colonne** sur le panorama. Les régler **avec modération et minutie** ; c'est ce qui rend les zones comparables entre elles. Un réglage identique n'est pas une transformation identique (M-15).
+  - **Saturation** : les réglages de cet export sont **trop saturés** (verts presque fluo) ; baisser la saturation ou la vibrance abaisserait aussi le bleu du ciel. Publié tel quel par choix de l'utilisateur ; à corriger dans un export ultérieur.
+- **Ce que cela ne démontre pas** : aucun chiffre d'écart de tonalité entre colonnes (pas de `profil_jonction.ps1` ni de `ecart_paires.py` sur `Export-TIFF-H2`) ; le jugement porte sur la version non cadrée ; la version cadrée n'a été contrôlée qu'à la disponibilité des tuiles en ligne (HTTP 200, dimensions du `.dzi`), pas à l'œil.
+- **Statut** : ✅ Mesuré (durées, tailles) ; ✅ Jugé acceptable à l'œil dans la visionneuse (2026-10-18), non mesuré pour le ciel.
 
 ---
 

@@ -267,11 +267,15 @@ Fichiers successifs dans `3_grille\` et `3_optimisation\` (conservés, légers) 
 
 **Issue #46 du dépôt de la visionneuse** (« Assemblage : colonnes dans le ciel du rendu pleine résolution ») : **ouverte** au 2026-10-18. L'enquête est close (cause : le développement Lightroom, pas la fusion ni la prise de vue), le rendu complet avec le développement validé est fait, tuilé, cadré et en ligne. L'auteur refermera l'issue **après avoir jugé le rendu final dans la visionneuse en ligne**, à fort zoom, où les disparités d'assemblage seront peut-être moins flagrantes qu'à l'échelle globale où elles ont été mesurées.
 
+**Fait depuis** ([M-17](TESTS-ANALYSES.md#m-17--nouvel-export-réglages-de-développement-plus-marqués--un-écart-visible-sur-le-panorama-entier-invisible-une-fois-zoomé), 2026-10-18) :
+- [x] Nouvel export `Export-TIFF-H2` (plus contrasté, plus saturé) et rendu complet : ***nona*** 3 h 33, ***multiblend*** 21 min 32, BigTIFF de 13,16 Gio ; tuilé (9 311 tuiles, 407 Mo ; cadré 8 471 tuiles, 395 Mo) et mis en ligne.
+- [x] Seuil de tolérance : il se **juge dans la visionneuse à fort zoom**. Le rehaussement du ciel montrait des blocs verticaux absents du rendu de M-16, mais ils disparaissent une fois le HDR effacé : à cette échelle on ne regarde qu'une photo agrandie. Le rehaussement sert à comparer deux rendus, pas à condamner un rendu seul (guide, note de **6C.5**).
+- [x] Leçon pour **6A** : brume, tonalité et saturation agissent à l'échelle d'une image ; les régler avec modération. Cet export est jugé **trop saturé** (verts presque fluo), publié tel quel par choix de l'auteur.
+
 **Reste à faire** :
-- [ ] Nouvel export puis rendu (**6A** → **6C**), contrôlé par ***controle_reglages_export.py***, ***ecart_paires.py***, la vue d'ensemble et le ciel rehaussé (leçon de M-15 : valider sur le **rendu**, pas sur les réglages).
-- [ ] Tuilage, contrôle local, mise en ligne (**7A**, **7B**).
-- [ ] Définir un seuil de tolérance des écarts en pleine résolution (fiche M-16).
-- [ ] Validation du rendu final en ligne, puis clôture de l'issue.
+- [ ] Validation du rendu final en ligne par l'auteur, puis clôture de l'issue #46.
+- [ ] Mesures de jonction sur `Export-TIFF-H2` (***profil_jonction.ps1***, ***ecart_paires.py***) : non faites, le jugement de M-17 est à l'œil, sur une scène.
+- [ ] Export ultérieur moins saturé.
 - [ ] Facultatif : bissection des curseurs de tonalité (séparer Contraste, Ombres, Noirs…), essai d'une courbe à points, de Texture et de Clarté.
 
 **Tests à faire et pistes** : voir le [carnet](TESTS-ANALYSES.md#-tests-à-faire) (T-02 à T-15 : RAM à 2 Gpx, superposition HDR / pleine résolution, HDR plus large, crénelage de ***nona***, tuilage à 2 Gpx…) et les [pistes jamais essayées](TESTS-ANALYSES.md#️-pistes-jamais-essayées) (P-01 à P-07 : *lensfun*, *flat-field*, piles automatiques de Lightroom, fusion HDR par position, point nodal…).
@@ -301,5 +305,5 @@ Prise de vue, développement et décisions : Julien Moreau. Scripts, mesures et 
 
 ---
 
-**Version** : 1.1
+**Version** : 1.2
 **Dernière mise à jour** : 2026-10-18

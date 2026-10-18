@@ -1185,9 +1185,11 @@ Une fois la fusion réussie, ***rendre_projet.ps1*** **supprime les intermédiai
 1. **Durées** et **RAM** dans `rendu_log.txt` et dans le relevé de ***surveiller_multiblend.ps1***.
 2. **Ouverture du fichier** : `vipsheader complet_multiblend.tif` donne la taille et 4 bandes `ushort`.
 3. **Aperçu complet** : `vips thumbnail complet_multiblend.tif apercu.jpg 2800 --height 700 --size down`, profil rendu à la réduction (**6C.1**), **comparé à la vue d'ensemble** de 6C.1, qui doit lui ressembler.
-4. **Juger le ciel au rehaussement, pas à l'œil nu.** Réduire le panorama à quelques milliers de pixels (`vips thumbnail … --size force`), puis ***rehausser_ciel.py*** sur la bande de ciel. **Aucune colonne ni image isolée ne doit ressortir.** Les extraits à 100 % seuls ne le montrent pas : une colonne est plus large qu'un extrait. En cas de doute, ***ecart_paires.py*** sur les images sources ([**2E**](#2e--vérifier-lexport)).
+4. **Juger le ciel au rehaussement, pas à l'œil nu.** Réduire le panorama à quelques milliers de pixels (`vips thumbnail … --size force`), puis ***rehausser_ciel.py*** sur la bande de ciel. **Aucune colonne ni image isolée ne doit ressortir** : c'est l'objectif, et le moyen de **comparer deux rendus** ; ce n'est pas un seuil d'acceptation (voir la note ci-dessous). Les extraits à 100 % seuls ne le montrent pas : une colonne est plus large qu'un extrait. En cas de doute, ***ecart_paires.py*** sur les images sources ([**2E**](#2e--vérifier-lexport)).
 5. **Examen à 100 %** de 3 ou 4 zones : une jonction de ciel, une jonction de feuillage, un trou connu, une paire saine comme référence. Pour un extrait fidèle, convertir le profil et sortir en **8 bits** (`vips icc_transform … srgb --input-profile adobergb.icc --depth 8`) : en 16 bits, un `cast` en 8 bits sature l'image en blanc.
 6. **Mesurer une jonction** avec ***profil_jonction.ps1*** : profil par bandes, fichier fusionné contre les deux images qui se recouvrent. Attendu : écart à la source la plus proche de quelques dixièmes de pour cent, sans dépassement (pas de halo).
+
+> **Le seuil de tolérance se juge dans la visionneuse, pas sur la vue d'ensemble.** Des écarts de bande visibles sur le panorama entier ou au rehaussement du ciel peuvent disparaître quand on zoome jusqu'à l'effacement du HDR : à cette échelle, on ne regarde plus qu'une photo agrandie. Ce qui décide est donc **7B** (le fondu HDR → pleine résolution, à tous les zooms), pas 6C.5 seul (mesuré dans l'étude de cas : [M-17](../etudes-de-cas/2026-06-19-wattenberg-200mm/TESTS-ANALYSES.md#m-17--nouvel-export-réglages-de-développement-plus-marqués--un-écart-visible-sur-le-panorama-entier-invisible-une-fois-zoomé)). Corollaire pour **6A** : brume, tonalité et saturation agissent **à l'échelle d'une image** ; les régler avec modération et minutie, parce qu'un réglage fort devient une différence de colonne sur le panorama.
 
 **Ce qui reste visible dans le fichier** : le bord supérieur en escalier, les trous de prise de vue, les poussières non retouchées. Ce sont des finitions, à faire hors ***Lightroom*** (ou en amont, **6A.1**).
 
@@ -1503,5 +1505,5 @@ Méthode établie par Julien Moreau sur un panorama de 222 positions (1554 image
 
 ---
 
-**Version** : 7.1
+**Version** : 7.2
 **Dernière mise à jour** : 2026-10-18
