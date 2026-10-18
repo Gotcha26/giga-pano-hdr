@@ -14,7 +14,12 @@ PILOTES = [
     "diagnostic_pas_v.py", "corriger_pas_v.py", "filtrer_cp.py", "preparer_optimisation.py", "detecter_trous.py",
     "placer_isoles.py", "affiner_images_faibles.py", "propager_geometrie.py", "extraire_sous_projet.py",
     "redimensionner_projet.py", "deplacer_projet.py", "ranger_intermediaires.py", "cadrage_lightroom.py",
+    # Tâche 6 : mesures et inspection
+    "voir_positions.py", "lister_pires_cp.py", "detecter_aberrantes.py", "compter_cp_paire.py", "mesurer_ciel.py",
+    "mesurer_gain_paires.py", "mesurer_bandes_ciel.py", "localiser_sauts_ciel.py", "comparer_rendus.py",
+    "comparer_couleur.py", "rehausser_ciel.py",
 ]
+EXEMPTE = "verifier_renvois.py"   # sans argument, il contrôle : jamais de menu
 
 MARQUEUR_MENU = "PILOTAGE"
 
@@ -35,6 +40,11 @@ class TestDeclaration(unittest.TestCase):
                 texte = (SCRIPTS / nom).read_text(encoding="utf-8")
                 self.assertIn("ARGUMENTS = [", texte)
                 self.assertIn("piloter(__doc__, ARGUMENTS", texte)
+
+    def test_tous_les_scripts_python_sont_pilotes_sauf_l_exempte(self):
+        presents = sorted(p.name for p in SCRIPTS.glob("*.py"))
+        self.assertEqual(presents, sorted(PILOTES + [EXEMPTE]))
+        self.assertNotIn("piloter(", (SCRIPTS / EXEMPTE).read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

@@ -27,6 +27,18 @@ import re
 import sys
 
 COLS, ROWS = 37, 6
+
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("projet.pto", "Projet Hugin", type="pto", phase="3_optimisation"),
+    Arg("PREMIERE", "Première image de la plage", type="entier", defaut=0),
+    Arg("DERNIERE", "Dernière image de la plage (bornes comprises)", type="entier"),
+    Arg("PAS_H", "Pas horizontal de la grille, en degrés", type="nombre", config="pas_h"),
+    Arg("PAS_V", "Pas vertical de la grille, en degrés", type="nombre", config="pas_v"),
+]
+piloter(__doc__, ARGUMENTS, ecrit=None, globals_=globals())
+
 f, a, b = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
 pas_h = float(sys.argv[4]) if len(sys.argv) > 4 else 5.0
 pas_v = float(sys.argv[5]) if len(sys.argv) > 5 else 5.8

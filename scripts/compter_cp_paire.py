@@ -24,6 +24,14 @@ import re
 import sys
 from collections import Counter
 
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("projet.pto", "Projet avec points de contrôle", type="pto", config="maitre", phase="3_optimisation"),
+    Arg("PAIRES", "Paires d'images, séparées par des espaces, ex. 135-136 165-166", type="liste"),
+]
+piloter(__doc__, ARGUMENTS, ecrit=None, globals_=globals())
+
 paires = [tuple(sorted(map(int, a.split("-")))) for a in sys.argv[2:]]
 nb = Counter()
 for l in open(sys.argv[1], encoding="utf-8"):

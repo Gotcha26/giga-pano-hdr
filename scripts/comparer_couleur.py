@@ -32,6 +32,18 @@ import sys
 from PIL import Image
 
 Image.MAX_IMAGE_PIXELS = None
+
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("X0", "Zone de ciel : première colonne", type="entier"),
+    Arg("X1", "Zone de ciel : dernière colonne", type="entier"),
+    Arg("Y0", "Zone de ciel : première ligne", type="entier"),
+    Arg("Y1", "Zone de ciel : dernière ligne", type="entier"),
+    Arg("RENDUS", "Un ou plusieurs rendus à comparer, séparés par des espaces", type="liste"),
+]
+piloter(__doc__, ARGUMENTS, ecrit=None, globals_=globals())
+
 x0, x1, y0, y1 = (int(v) for v in sys.argv[1:5])
 
 

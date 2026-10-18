@@ -33,6 +33,20 @@ import sys
 from PIL import Image
 
 Image.MAX_IMAGE_PIXELS = None
+
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("avant.tif", "Premier rendu", type="chemin"),
+    Arg("apres.tif", "Second rendu, de même taille", type="chemin"),
+    Arg("X0", "Zone de ciel : première colonne", type="entier"),
+    Arg("X1", "Zone de ciel : dernière colonne", type="entier"),
+    Arg("Y0", "Zone de ciel : première ligne", type="entier"),
+    Arg("Y1", "Zone de ciel : dernière ligne", type="entier"),
+    Arg("PERIODE_PX", "Période en pixels (facultatif)", type="entier"),
+]
+piloter(__doc__, ARGUMENTS, ecrit=None, globals_=globals())
+
 a, b = sys.argv[1], sys.argv[2]
 x0, x1, y0, y1 = (int(v) for v in sys.argv[3:7])
 periode = float(sys.argv[7]) if len(sys.argv) > 7 else None

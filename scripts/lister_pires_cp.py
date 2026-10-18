@@ -27,12 +27,22 @@ Usage : python lister_pires_cp.py projet.pto [N=15] [--par-image]
 import math
 import re
 import sys
+
+COLS = 37
 from collections import defaultdict
+
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("projet.pto", "Projet avec points de contrôle (optimisé de préférence)", type="pto", phase="3_optimisation"),
+    Arg("N", "Nombre de points à lister", type="entier", defaut=15),
+    Arg("--par-image", "Ajoute le résumé par image", type="drapeau"),
+]
+piloter(__doc__, ARGUMENTS, ecrit=None, globals_=globals())
 
 fichier = sys.argv[1]
 n_pires = int(sys.argv[2]) if len(sys.argv) > 2 and sys.argv[2].isdigit() else 15
 par_image = "--par-image" in sys.argv
-COLS = 37
 
 images, cps = [], []
 for l in open(fichier, encoding="utf-8"):

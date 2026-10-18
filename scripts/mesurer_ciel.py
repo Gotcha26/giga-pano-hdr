@@ -26,14 +26,24 @@ Dépendance : Pillow.
 Usage : python mesurer_ciel.py DOSSIER [LIGNE]
 """
 import sys
+
+COLS = 37
 from pathlib import Path
 
 from PIL import Image
 
 Image.MAX_IMAGE_PIXELS = None
+
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("DOSSIER", "Dossier des images L_C_E0", type="dossier", config="export_l"),
+    Arg("LIGNE", "Ligne de la grille à mesurer (0 = haut)", type="entier", defaut=0),
+]
+piloter(__doc__, ARGUMENTS, ecrit=None, globals_=globals())
+
 dossier = Path(sys.argv[1])
 ligne = int(sys.argv[2]) if len(sys.argv) > 2 else 0
-COLS = 37
 BANDE = (0, 300)       # lignes de pixels analysées (haut de l'image)
 LARGEUR = 300          # largeur de chaque zone
 
