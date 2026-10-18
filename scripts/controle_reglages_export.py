@@ -136,6 +136,14 @@ def couverture(lignes, table):
     presents = {l.get("RawFileName", "") for l in lignes}
     return sorted(e0 - presents), sorted(presents - e0)
 
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("DOSSIER", "Dossier des TIFF exportés", type="dossier", config="export_h"),
+    Arg("--table", "Table raw,lce (table_raw_LCE.csv)", type="chemin", config="table"),
+    Arg("--ignorer", "Préfixe de champ à ne pas comparer (ex. PointColors)"),
+]
+piloter(__doc__, ARGUMENTS, ecrit=None, globals_=globals())
 
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])

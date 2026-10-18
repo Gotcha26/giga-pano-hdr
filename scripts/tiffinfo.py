@@ -23,6 +23,13 @@ Usage : python tiffinfo.py image.tif
 import struct
 import sys
 
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("image.tif", "Fichier TIFF à interroger", type="chemin"),
+]
+piloter(__doc__, ARGUMENTS, ecrit=None, globals_=globals())
+
 with open(sys.argv[1], "rb") as f:
     bo = "<" if f.read(2) == b"II" else ">"
     f.read(2)

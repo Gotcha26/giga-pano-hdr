@@ -74,6 +74,13 @@ def taille_tiff(chemin):
             tags[tag] = struct.unpack(bo + ("H" if typ == 3 else "I"), brut[: 2 if typ == 3 else 4])[0]
     return tags[256], tags[257]
 
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("DOSSIER", "Dossier des images L_C_E (toutes les expositions)", type="dossier", config="export_l"),
+    Arg("sortie.pto", "Projet à écrire (défaut : DOSSIER/pano_HDR_grille.pto)", type="pto", obligatoire=False),
+]
+piloter(__doc__, ARGUMENTS, ecrit='le projet de sortie', globals_=globals())
 
 def main():
     global LENS_W, LENS_H

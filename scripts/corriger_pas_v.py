@@ -28,6 +28,16 @@ import re
 import sys
 
 COLS, ROWS = 37, 6
+
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("entree.pto", "Projet de grille", type="pto", phase="3_optimisation"),
+    Arg("sortie.pto", "Projet à écrire", type="pto"),
+    Arg("PAS_V", "Nouveau pas vertical, en degrés", type="nombre", config="pas_v"),
+]
+piloter(__doc__, ARGUMENTS, ecrit='le projet de sortie', globals_=globals())
+
 entree, sortie, pas_v = sys.argv[1], sys.argv[2], float(sys.argv[3])
 
 lignes, idx = [], 0

@@ -43,6 +43,12 @@ def _taille_projet(f):
             return (int(re.search(r" w(\d+)", ligne).group(1)), int(re.search(r" h(\d+)", ligne).group(1)),
                     float(re.search(r" v([\d.]+)", ligne).group(1)))
 
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("projet.pto", "Projet avec points de contrôle, images à leur position de grille", type="pto", phase="3_optimisation"),
+]
+piloter(__doc__, ARGUMENTS, ecrit=None, globals_=globals())
 
 W, H, _FOV = _taille_projet(sys.argv[1])
 F = (W / 2) / math.tan(math.radians(_FOV) / 2)

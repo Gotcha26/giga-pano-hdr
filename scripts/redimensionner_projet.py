@@ -29,6 +29,16 @@ import argparse
 import re
 from pathlib import Path
 
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("entree.pto", "Projet source", type="pto", phase="3_optimisation"),
+    Arg("sortie.pto", "Projet à écrire (peut être le même fichier)", type="pto"),
+    Arg("--images", "LARG HAUT : nouvelle taille des images, en pixels", nargs=2),
+    Arg("--pano", "Nouvelle largeur du panorama, en pixels", type="entier"),
+]
+piloter(__doc__, ARGUMENTS, ecrit='le projet de sortie', globals_=globals())
+
 ap = argparse.ArgumentParser()
 ap.add_argument("entree")
 ap.add_argument("sortie")
