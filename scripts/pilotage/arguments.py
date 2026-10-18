@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from . import config
-from .couleurs import Couleurs, effacer_ecran
+from .couleurs import Couleurs, effacer_ecran, preparer_console
 from .menu import confirmer, demander, pause
 
 TYPES = ("texte", "chemin", "dossier", "pto", "nombre", "entier", "drapeau", "plage", "liste")
@@ -222,6 +222,7 @@ def piloter(doc, arguments, ecrit=None, globals_=None):
     """À appeler avant la première lecture de sys.argv : sans argument et dans un terminal, ouvre le menu."""
     if len(sys.argv) != 1 or not getattr(sys.stdin, "isatty", lambda: False)():
         return
+    preparer_console()
     panorama = config.panorama_courant(config.charger_poste())
     resultat = menu(doc, arguments, ecrit, constantes=constantes_du_script(globals_ or {}), panorama=panorama)
     if resultat is None:

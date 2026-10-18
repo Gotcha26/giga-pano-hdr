@@ -92,6 +92,18 @@ class TestExecution(unittest.TestCase):
         self.assertEqual(vu["cmd"][-2:], ["-Vips", r"D:\O\vips.exe"])
 
 
+class TestConsole(unittest.TestCase):
+    def test_console_cp1252_sans_plantage(self):
+        import os
+        import subprocess
+        env = dict(os.environ, PYTHONIOENCODING="cp1252", NO_COLOR="1")
+        r = subprocess.run([sys.executable, "-I", str(SCRIPTS / "panorama.py")], stdin=subprocess.DEVNULL,
+                           capture_output=True, text=True, timeout=60, env=env, cwd=SCRIPTS)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertNotIn("Traceback", r.stderr)
+        self.assertIn("LANCEUR", r.stdout)
+
+
 class TestLanceur(unittest.TestCase):
     def test_menu_principal_et_quitter(self):
         import panorama

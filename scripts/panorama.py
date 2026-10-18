@@ -31,7 +31,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from pilotage import config, lancer, menu, outils  # noqa: E402
-from pilotage.couleurs import Couleurs, effacer_ecran  # noqa: E402
+from pilotage.couleurs import Couleurs, effacer_ecran, preparer_console  # noqa: E402
 from pilotage.menu import Entree, confirmer, demander  # noqa: E402
 
 A_VENIR = "sous-menu construit à la tâche suivante"
@@ -246,6 +246,7 @@ def boucle_principale(ctx, effacer=effacer_ecran):
 
 
 def main(argv=None):
+    preparer_console()
     poste = config.charger_poste()
     ctx = lancer.Contexte(poste=poste, panorama=config.panorama_courant(poste),
                           etats=outils.detecter_tous(poste.outils), c=Couleurs())

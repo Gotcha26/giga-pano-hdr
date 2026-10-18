@@ -78,6 +78,17 @@ class Couleurs:
         return f"  {self.CLE}{cle.ljust(largeur_cle)}{self.RESET} : {self.VALEUR}{valeur}{self.RESET}"
 
 
+def preparer_console():
+    """Sortie en UTF-8 avec remplacement : les menus portent des accents et des flèches, et une console
+    Windows en cp1252 planterait sur le premier caractère hors table."""
+    for flux in (sys.stdout, sys.stderr):
+        if hasattr(flux, "reconfigure"):
+            try:
+                flux.reconfigure(encoding="utf-8", errors="replace")
+            except (ValueError, OSError):
+                pass
+
+
 def effacer_ecran():
     """Efface le terminal ; ne fait rien si stdout n'est pas un terminal (tests, redirection)."""
     if getattr(sys.stdout, "isatty", lambda: False)():
