@@ -97,7 +97,7 @@ def _valeurs_initiales(arguments, panorama):
     valeurs = {}
     for a in arguments:
         if a.type == "drapeau":
-            valeurs[a.nom] = False
+            valeurs[a.nom] = bool(a.defaut)
             continue
         v = config.valeur(panorama, a.config) if a.config else None
         if v is None and a.defaut is not None:

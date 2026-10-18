@@ -147,5 +147,65 @@ class TestLanceur(unittest.TestCase):
         self.assertIn("winget install --id OliverBetz.ExifTool", "\n".join(lignes))
 
 
+VERBES_ECRITURE = ("Renommer", "Rendre", "Tuiler", "Fusionner", "Reprojeter", "Générer", "Écrire", "Appliquer",
+                   "Filtrer", "Replacer", "Affiner", "Reporter", "Extraire", "Rattacher", "Ranger", "Préparer",
+                   "Remettre", "Redimensionner", "Nettoyer", "Cadrer", "Recadrer", "Rehausser", "Copier")
+
+
+class TestSousMenus(unittest.TestCase):
+    def test_tous_les_sous_menus_se_rendent_sans_panorama_ni_outil(self):
+        import panorama
+        from pilotage import menu
+        ctx = contexte([])
+        self.assertEqual(set(panorama.SOUS_MENUS), {"phase0", "phase2", "phase3", "rendus", "mesures", "phase7", "configuration"})
+        for nom, constructeur in panorama.SOUS_MENUS.items():
+            with self.subTest(nom):
+                lignes = []
+                table = menu.rendre(constructeur(ctx), ctx, C, ecrire=lignes.append)
+                self.assertTrue(table, "au moins une entrée sélectionnable")
+
+    def test_entrees_powershell_et_outils_grisees_sans_outil(self):
+        import panorama
+        ctx = contexte([])
+        e = next(x for x in panorama.menu_rendus(ctx) if "rendre_projet.ps1" in x.sous_titre)
+        self.assertFalse(e.disponible(ctx))
+        self.assertIn("absent", e.raison(ctx) if callable(e.raison) else e.raison)
+        hugin = next(o for o in outils.OUTILS if o.cle == "hugin")
+        ctx2 = contexte([], etats=[outils.Etat(hugin, r"C:\H\nona.exe", "2025")])
+        e2 = next(x for x in panorama.menu_phase3(ctx2) if "cpclean" in x.sous_titre)
+        self.assertTrue(e2.disponible(ctx2))
+
+    def test_garde_la_promesse_lecture_seule(self):
+        """Une entrée sans effet déclaré ne porte pas un verbe d'écriture. Cette garde lit les libellés, pas le
+        code des handlers : une action qui écrirait sans le déclarer y passerait."""
+        import panorama
+        ctx = contexte([])
+        for nom, constructeur in panorama.SOUS_MENUS.items():
+            for e in constructeur(ctx):
+                if e.action is not None and e.effet is None:
+                    self.assertFalse(e.tete_texte(ctx).startswith(VERBES_ECRITURE), f"{nom} : {e.tete_texte(ctx)}")
+        # contre-témoin : la convention est en usage
+        self.assertTrue(any(e.effet for e in panorama.menu_phase3(ctx)))
+
+    def test_gestes_hugin_et_lightroom_informatifs(self):
+        import panorama
+        ctx = contexte([])
+        informatives = [e for e in panorama.menu_phase3(ctx) if e.action is None]
+        self.assertTrue(any("3B" in e.tete_texte(ctx) for e in informatives))
+
+
+class TestDeclarationsPs(unittest.TestCase):
+    def test_un_script_powershell_sur_deux_declare(self):
+        from pilotage import declarations_ps
+        ps1 = {p.name for p in SCRIPTS.glob("*.ps1")} - {"enblend_vers_multiblend.ps1"}
+        self.assertEqual(set(declarations_ps.PS), ps1)
+        for nom, (args, ecrit) in declarations_ps.PS.items():
+            with self.subTest(nom):
+                self.assertTrue(args)
+                for a in args:
+                    self.assertTrue(a.nom.startswith("-"), a.nom)
+                self.assertTrue(ecrit is None or isinstance(ecrit, str))
+
+
 if __name__ == "__main__":
     unittest.main()

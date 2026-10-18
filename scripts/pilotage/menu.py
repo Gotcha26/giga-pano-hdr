@@ -18,7 +18,7 @@ class Entree:
     effet: Optional[str] = None            # None = lecture seule ; sinon la cible écrite
     action: Optional[Callable[[Any], Any]] = None   # None = entrée informative (grisée, jamais numérotée)
     disponible: Callable[[Any], bool] = field(default=lambda ctx: True)
-    raison: str = ""
+    raison: Union[str, Callable[[Any], str]] = ""   # texte, ou callable(ctx) -> texte (raison vivante)
     masquer: bool = False
     section: str = ""
 
@@ -79,7 +79,8 @@ def rendre(entrees, ctx, c, ecrire=print):
             ecrire(f"  {c.JAUNE}{str(n).rjust(largeur)}{c.RESET}. {texte}")
             table[str(n)] = e
         else:
-            raison = f"  [{e.raison}]" if e.raison else ""
+            texte_raison = e.raison(ctx) if callable(e.raison) else e.raison
+            raison = f"  [{texte_raison}]" if texte_raison else ""
             ecrire(f"  {c.DIM}{'–'.rjust(largeur)}. {texte}{raison}{c.RESET}")
     ecrire("")
     ecrire(f"  {c.JAUNE}{'0'.rjust(largeur)}{c.RESET}. {c.DIM}Retour{c.RESET}")

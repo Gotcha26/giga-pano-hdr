@@ -7,6 +7,7 @@ l'enfant et revient au lanceur.
 
 import os
 import re
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass, field, replace
@@ -58,7 +59,13 @@ def _prerempli_outils(ctx, arguments):
     resultat = []
     for a in arguments:
         if a.config and a.config.startswith("outil:"):
-            chemin = ctx.poste.outils.get(a.config.split(":", 1)[1])
+            cle = a.config.split(":", 1)[1]
+            chemin = ctx.poste.outils.get(cle)
+            if not chemin:
+                e = etat(ctx, cle)
+                chemin = e.chemin if e and e.present else None
+            if chemin and cle == "hugin" and os.path.isfile(chemin):
+                chemin = os.path.dirname(chemin)          # les .ps1 attendent le dossier bin de Hugin
             resultat.append(replace(a, config=None, defaut=chemin if chemin else a.defaut))
         else:
             resultat.append(a)
@@ -110,6 +117,23 @@ def construire_ps(arguments, valeurs):
     return resultat
 
 
+def _titre_ps(chemin):
+    """Première ligne de commentaire d'un script PowerShell (son titre)."""
+    try:
+        for ligne in Path(chemin).read_text(encoding="utf-8").splitlines():
+            if ligne.startswith("#"):
+                return ligne.lstrip("# ").strip()
+            if ligne.strip():
+                break
+    except OSError:
+        pass
+    return ""
+
+
+def powershell_disponible(ctx):
+    return present(ctx, "pwsh") or shutil.which("powershell.exe") is not None
+
+
 def _executable_powershell(ctx):
     e = etat(ctx, "pwsh")
     return e.chemin if e and e.present else "powershell.exe"
@@ -118,7 +142,9 @@ def _executable_powershell(ctx):
 def powershell(ctx, script, arguments, ecrit, doc=None):
     """Menu de pilotage puis exécution d'un script PowerShell en paramètres nommés."""
     arguments = _prerempli_outils(ctx, arguments)
-    valeurs_menu = args_mod.menu(doc or script, arguments, ecrit, panorama=ctx.panorama, c=ctx.c,
+    if doc is None:
+        doc = _titre_ps(ctx.scripts / script) or script
+    valeurs_menu = args_mod.menu(doc, arguments, ecrit, panorama=ctx.panorama, c=ctx.c,
                                  lire=ctx.lire, ecrire=ctx.ecrire, construire=lambda a, v: construire_ps(a, v))
     if valeurs_menu is None:
         return None

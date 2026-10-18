@@ -48,6 +48,21 @@ class TestArgv(unittest.TestCase):
         self.assertTrue(ARGS[5].option)
 
 
+class TestDeclaration(unittest.TestCase):
+    def test_lire_declaration_sans_executer(self):
+        args, ecrit, doc = arguments.lire_declaration(Path(__file__).resolve().parent.parent / "scripts" / "placer_isoles.py")
+        self.assertEqual(len(args), 5)
+        self.assertEqual((args[0].type, args[0].phase), ("pto", "3_optimisation"))
+        self.assertEqual(ecrit, "le projet de sortie")
+        self.assertTrue(doc.startswith("Place les images"))
+
+    def test_drapeau_vrai_par_defaut(self):
+        a = [arguments.Arg("DOSSIER", "d", type="dossier"), arguments.Arg("--table", "t", type="drapeau", defaut=True)]
+        lignes = []
+        r = arguments.menu("T", a, None, c=C, lire=saisies("1", "D:\\x", "L"), ecrire=lignes.append, effacer=lambda: None)
+        self.assertEqual(r, ["D:\\x", "--table"])
+
+
 class TestConstantes(unittest.TestCase):
     def test_extraction_et_ecarts(self):
         g = {"COLS": 37, "PAS_V": 5.8, "AUTRE": 1}
