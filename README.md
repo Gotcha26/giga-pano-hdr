@@ -57,6 +57,7 @@ Le guide donne la **procédure** et ses raisons. L'étude de cas donne les **val
 ```
 giga-pano-hdr\
 ├── README.md                              ← ce fichier : l'aiguillage
+├── LICENSE, LICENSE-docs                  ← MIT (scripts), CC BY 4.0 (documentation)
 ├── docs\
 │   ├── GUIDE.md                           ← la méthode générale (phases 0 à 7)
 │   └── NETTOYAGE-ancien-depot.md          ← à faire dans l'ancien dépôt, après la clôture de son issue #46
@@ -92,6 +93,17 @@ python scripts\verifier_renvois.py             # numérotation du guide : identi
 ## 👏 Crédits
 
 Julien Moreau, avec ***Claude Code***. Les logiciels tiers (***Hugin***, ***multiblend***, ***libvips***, ***ExifTool***, ***OpenSeadragon***) appartiennent à leurs auteurs.
+
+---
+
+## 📜 Licence
+
+Libre, avec citation de l'auteur et de la source :
+
+| Contenu | Licence | En clair |
+| --- | --- | --- |
+| Scripts (`scripts/`, `tests/`) | [MIT](LICENSE) | Utilisez, modifiez, redistribuez ; conservez la mention de copyright |
+| Documentation (`docs/`, `etudes-de-cas/`, ce README) | [CC BY 4.0](LICENSE-docs) | Partagez, adaptez ; créditez Julien Moreau et pointez vers ce dépôt |
 
 ---
 

@@ -46,7 +46,7 @@ Le dossier `assemblage-panorama/` du dépôt privé de la visionneuse (`Gotcha26
 
 ## 🧭 Ce qu'il reste à décider ici (pas dans l'ancien dépôt)
 
-- **Licence** du dépôt public : aucun fichier `LICENSE` n'a été ajouté. À choisir (les scripts et la doc sont de l'auteur ; les préréglages Lightroom aussi).
+- **Licence** : choisie le 2026-10-18, MIT pour les scripts, CC BY 4.0 pour la documentation (`LICENSE`, `LICENSE-docs`).
 - **Lanceur unique** : prévu après la stabilisation ; les scripts gardent leurs interfaces actuelles.
 
 ---

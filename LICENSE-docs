@@ -1,0 +1,18 @@
+Documentation de ce dépôt (docs/, etudes-de-cas/, README.md)
+© 2026 Julien Moreau
+
+Mise à disposition sous licence Creative Commons Attribution 4.0 International
+(CC BY 4.0) : https://creativecommons.org/licenses/by/4.0/deed.fr
+
+Vous êtes libre de partager (copier, redistribuer) et d'adapter (remixer,
+transformer, créer à partir) ce matériel, pour toute utilisation, y compris
+commerciale, à condition de :
+
+- créditer l'auteur (Julien Moreau), indiquer la source
+  (https://github.com/Gotcha26/giga-pano-hdr), fournir un lien vers la licence
+  et signaler les modifications éventuelles ;
+- ne pas appliquer de restrictions juridiques ou techniques supplémentaires.
+
+Texte juridique complet : https://creativecommons.org/licenses/by/4.0/legalcode.fr
+
+Les scripts (scripts/, tests/) sont sous licence MIT : voir LICENSE.
