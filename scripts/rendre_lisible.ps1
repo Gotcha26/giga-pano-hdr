@@ -20,6 +20,7 @@
 #     -Panorama       le TIFF rendu (BigTIFF ou classique), par exemple ...\rendu\fenetre_A_multiblend.tif
 #     -ProfilDepuis   une image source dont copier le profil de couleur (ex. ...\Export-TIFF-H\L3_C22_E0.tif)
 #     -Projet         a defaut de -ProfilDepuis : le projet .pto, dont la premiere image sert de source du profil
+#     -Vips           executable vips (defaut D:\Outils\libvips\vips-dev-8.18\bin\vips.exe)
 #     Programmes appeles : vips.exe et vipsheader.exe (variable $vips), exiftool (dans le PATH).
 #
 # SORTIES
@@ -33,10 +34,11 @@
 param(
     [Parameter(Mandatory = $true)][string]$Panorama,
     [string]$ProfilDepuis = "",
-    [string]$Projet = ""
+    [string]$Projet = "",
+    [string]$Vips = 'D:\Outils\libvips\vips-dev-8.18\bin\vips.exe'   # executable vips
 )
 
-$vips = 'D:\Outils\libvips\vips-dev-8.18\bin\vips.exe'
+$vips = $Vips
 $vipsheader = Join-Path (Split-Path $vips) 'vipsheader.exe'
 
 if (-not (Test-Path -LiteralPath $Panorama)) { throw "panorama introuvable : $Panorama" }

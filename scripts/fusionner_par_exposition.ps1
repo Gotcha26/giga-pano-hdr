@@ -22,6 +22,8 @@
 #   -Expos        nombre d'expositions par pile (defaut 7)
 #   -Groupes      numeros de groupes a fusionner (defaut : tous, 0 a Expos-1)
 #   -OptionsFusionneur  options ajoutees au fusionneur, ex. "--wideblend" pour multiblend
+#   -Hugin        dossier bin de Hugin (defaut C:\Program Files\Hugin\bin)
+#   -Multiblend   executable multiblend (defaut D:\Outils\multiblend\multiblend.exe)
 #   -ExportExif   dossier des TIFF L_C_E de l'export L : pour chaque groupe k, recopie sur le panorama produit l'EXIF
 #                 d'exposition ET le profil de couleur (Adobe RGB) de L0_C00_E<k>.tif, avec exiftool. Indispensable pour
 #                 un HDR : multiblend n'ecrit aucun profil, et Lightroom classe les expositions d'apres l'EXIF.
@@ -41,11 +43,13 @@ param(
     [int]$Expos = 7,
     [int[]]$Groupes = @(),
     [string[]]$OptionsFusionneur = @(),
-    [string]$ExportExif = ''
+    [string]$ExportExif = '',
+    [string]$Hugin = 'C:\Program Files\Hugin\bin',                 # dossier bin de Hugin (enblend)
+    [string]$Multiblend = 'D:\Outils\multiblend\multiblend.exe'    # executable multiblend
 )
 
-$enblend = 'C:\Program Files\Hugin\bin\enblend.exe'
-$multiblend = 'D:\Outils\multiblend\multiblend.exe'
+$enblend = Join-Path $Hugin 'enblend.exe'
+$multiblend = $Multiblend
 if (-not $Prefixe) { $Prefixe = $Fusionneur }
 if ($Groupes.Count -eq 0) { $Groupes = 0..($Expos - 1) }
 New-Item -ItemType Directory $Sortie -Force | Out-Null
