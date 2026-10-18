@@ -17,12 +17,12 @@ Le dossier `assemblage-panorama/` du dépôt privé de la visionneuse (`Gotcha26
 
 | Dans l'ancien dépôt | Dans ce dépôt | Remarque |
 | --- | --- | --- |
-| `assemblage-panorama/docs/GUIDE_panorama_hugin.md` (v6.0, 1915 lignes) | `docs/GUIDE.md` (guide général) **+** `etudes-de-cas/2026-06-19-wattenberg-200mm/ETUDE-DE-CAS.md` | **Scindé** : la méthode d'un côté, les chiffres et incidents du panorama de l'autre. Même numérotation d'étapes |
-| `assemblage-panorama/docs/TESTS-ANALYSES.md` (v1.1) | `etudes-de-cas/2026-06-19-wattenberg-200mm/TESTS-ANALYSES.md` | Copie ; liens vers le guide réécrits ; une phrase d'introduction adaptée |
+| `assemblage-panorama/docs/GUIDE_panorama_hugin.md` (v6.0, 1915 lignes) | `docs/GUIDE.md` (guide général) **+** `etudes-de-cas/2026-06-19-wattenberg-200mm/ETUDE-DE-CAS.md` | **Scindé** : la méthode d'un côté, les chiffres et incidents du panorama de l'autre.<br>Même numérotation d'étapes |
+| `assemblage-panorama/docs/TESTS-ANALYSES.md` (v1.1) | `etudes-de-cas/2026-06-19-wattenberg-200mm/TESTS-ANALYSES.md` | <ul><li>Copie</li><li>Liens vers le guide réécrits</li><li>Une phrase d'introduction adaptée</li></ul> |
 | `assemblage-panorama/scripts/*.py`, `*.ps1`, `*.cmd` (42 fichiers) | `scripts/` | Copie à l'identique |
 | `page-autonome/tuiler.ps1` | `scripts/tuiler.ps1` | Copié aussi : il appartient à la chaîne d'assemblage (**7A**), pas au banc d'essai |
-| `assemblage-panorama/scripts/INDEX.md` | `scripts/INDEX.md` | Réécrit : colonne « portée », ***tuiler.ps1*** ajouté, liens vers le nouveau guide |
-| `assemblage-panorama/tests/*.py` | `tests/` | Copie ; chemins de lancement et fixtures adaptés (`GUIDE.md`) |
+| `assemblage-panorama/scripts/INDEX.md` | `scripts/INDEX.md` | <ul><li>Réécrit : colonne « portée »</li><li>***tuiler.ps1*** ajouté</li><li>Liens vers le nouveau guide</li></ul> |
+| `assemblage-panorama/tests/*.py` | `tests/` | Copie<br>chemins de lancement et fixtures adaptés (`GUIDE.md`) |
 | `assemblage-panorama/donnees/table_raw_LCE.csv` | `etudes-de-cas/…/donnees/` | Copie |
 | `assemblage-panorama/lightroom/presets/*` | `etudes-de-cas/…/lightroom/presets/` | Copie |
 

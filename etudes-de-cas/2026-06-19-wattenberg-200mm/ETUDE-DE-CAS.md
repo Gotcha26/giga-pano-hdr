@@ -23,10 +23,10 @@ flowchart LR
 | Vous cherchez… | Allez à |
 | --- | --- |
 | Le matériel et la machine | [Configuration de référence](#️-configuration-de-référence) |
-| Les valeurs à mettre dans les scripts (grille, pas, focale) | [Paramètres du panorama](#-paramètres-du-panorama) |
-| Les durées, la RAM, le disque, phase par phase | [Ce que ça a coûté](#-ce-que-ça-a-coûté--ram-disque-durées) |
+| Les valeurs à mettre dans les scripts<br>(grille, pas, focale) | [Paramètres du panorama](#-paramètres-du-panorama) |
+| Les durées, la RAM, le disque<br>phase par phase | [Ce que ça a coûté](#-ce-que-ça-a-coûté--ram-disque-durées) |
 | Ce qui s'est passé à chaque étape | [La méthode appliquée](#-la-méthode-appliquée-phase-par-phase) |
-| L'enquête sur les colonnes dans le ciel | [Phase 2](#phase-2--développer-et-exporter) et [Phase 6](#phase-6--pleine-résolution), puis l'[état du chantier](#-état-du-chantier) |
+| L'enquête sur les colonnes dans le ciel | <ul><li>[Phase 2](#phase-2--développer-et-exporter)</li><li>[Phase 6](#phase-6--pleine-résolution)</li><li>l'[état du chantier](#-état-du-chantier)</li></ul> |
 | Les fichiers fournis dans ce dossier | [Fichiers de cette étude](#-fichiers-de-cette-étude) |
 
 ---
@@ -38,21 +38,21 @@ Tout ce qui est chiffré ici a été **mesuré sur cette machine**. Une autre co
 | Composant | Valeur |
 | --- | --- |
 | Système | Windows 11 Professionnel |
-| Processeur | Intel Core i5-12600K, 10 cœurs (6 performants + 4 efficaces), 16 threads |
-| Mémoire vive | **32 Go** (2 × 16 Go DDR5 à 4 800 MHz) ; fichier d'échange ≈ 5,5 Go |
-| Carte graphique | NVIDIA GeForce RTX 3070 (8 Go) + Intel UHD 770 : ne sert qu'à l'aperçu OpenGL de ***Hugin*** |
-| Disques | 2 SSD NVMe de 1 To. **C:** (système, `TEMP`, cache de ***multiblend***) ; **D:** (photos, projets) |
-| Appareil et objectif | **Canon EOS-1D X** (plein format) + **EF 70-200 mm f/2.8L IS II USM** à **200 mm, f/10** ; images portrait 3456 × 5184 px. Profil Adobe disponible : « Adobe (Canon EF 70-200mm f/2.8 L IS II USM) » |
+| Processeur | Intel Core i5-12600K<br>10 cœurs (6 performants + 4 efficaces), 16 threads |
+| Mémoire vive | **32 Go** (2 × 16 Go DDR5 à 4 800 MHz)<br>fichier d'échange ≈ 5,5 Go |
+| Carte graphique | NVIDIA GeForce RTX 3070 (8 Go) + Intel UHD 770<br>ne sert qu'à l'aperçu OpenGL de ***Hugin*** |
+| Disques | 2 SSD NVMe de 1 To.<br>**C:** (système, `TEMP`, cache de ***multiblend***) ; **D:** (photos, projets) |
+| Appareil et objectif | <ul><li>**Canon EOS-1D X** (plein format) + **EF 70-200 mm f/2.8L IS II USM** à **200 mm, f/10**</li><li>Images portrait 3456 × 5184 px</li><li>Profil Adobe disponible : « Adobe (Canon EF 70-200mm f/2.8 L IS II USM) »</li></ul> |
 
 | Logiciel | Version utilisée |
 | --- | --- |
-| ***Hugin*** | 2025.0.1 (***nona*** 2025.0.1, ***enblend*** 4.3), `Hugin-2025.0.1-win64.msi` |
-| ***multiblend*** | 2.0.0 (archive `multiblend2.0rc5.zip`), dans `D:\Outils\multiblend\` |
+| ***Hugin*** | 2025.0.1 (***nona*** 2025.0.1, ***enblend*** 4.3)<br>`Hugin-2025.0.1-win64.msi` |
+| ***multiblend*** | 2.0.0 (archive `multiblend2.0rc5.zip`)<br>dans `D:\Outils\multiblend\` |
 | ***Python*** / ***Pillow*** | 3.14 (3.13 fonctionne) / 12.2 |
 | ***ExifTool*** | 13.33 |
 | ***Adobe Lightroom Classic*** | 15.4.1 |
-| ***libvips*** | 8.18.7, `vips-dev-x64-all-8.18.7.zip`, dans `D:\Outils\libvips\vips-dev-8.18\` |
-| ***PowerShell*** | 7.6.6 (Windows PowerShell 5.1 non essayé sur les scripts récents) |
+| ***libvips*** | <ul><li>8.18.7</li><li>`vips-dev-x64-all-8.18.7.zip`</li><li>dans `D:\Outils\libvips\vips-dev-8.18\`</li></ul> |
+| ***PowerShell*** | 7.6.6<br>(Windows PowerShell 5.1 non essayé sur les scripts récents) |
 | ***ImageMagick*** | 7.1.2 (facultatif) |
 
 **Ce que ça implique** : 32 Go suffisent largement jusqu'à 20 000 px (***multiblend*** moins de 4 Go). À 90 112 px, ***multiblend*** demanderait ≈ 37 Go sans cache : on le borne à 4 Go et le reste va sur C: (≈ 33 Go de cache). **Moins de 32 Go n'a pas été essayé.**
@@ -65,18 +65,18 @@ Les valeurs **en dur en tête des scripts** (voir la section [Configuration du g
 
 | Paramètre | Valeur | Où |
 | --- | --- | --- |
-| Grille | **6 lignes × 37 colonnes** = 222 positions | `ROWS`, `COLS` ; `--grille 6 37` ; `--lignes 6 --colonnes 37` |
-| Expositions | **7** : E0 (0 IL) puis −3, −2, −1, +1, +2, +3 IL | `--expos 7` |
-| Focale, capteur | **200 mm**, 24 mm horizontal (portrait, plein format) | `FOCALE`, `LARGEUR_MM` |
-| Champ d'une image | **6,87° × 10,29°** (le petit côté est horizontal) | calculé |
-| Pas horizontal | **5,0°** (recouvrement 1,87°, soit 27 %) | `PAS_H` |
-| Pas vertical | **5,8°**, mesuré en **3C.3** (théorique : estimé plus bas ; recouvrement 4,5°, soit 44 %) | `PAS_V` |
-| Sens de prise de vue | Chaque ligne commence au **bord droit** et avance vers la gauche ; ligne 0 en haut | signes du lacet dans ***generer_pto.py*** |
-| Numéro d'image | `k = ligne × 37 + colonne` ; image 0 = `L0_C00` | partout |
-| Export L | 1554 images, côté long **2 048 px** (1365 × 2048), ≈ 19 Go | `Export-TIFF-L` |
-| Export H | 222 vues centrées, **5 184 px** (3456 × 5184, aucun redimensionnement), 16,8 Go | `Export-TIFF-H` |
-| Largeur du HDR | **20 000 px** (toile 20 000 × 5 000) | `propager_geometrie.py … 20000` |
-| Largeur de la pleine résolution | **90 112 px** (toile 90 112 × 22 528 ; zone utile 88 658 × 20 312) | `--pano 90112` |
+| Grille | **6 lignes × 37 colonnes**<br>= 222 positions | <ul><li>`ROWS`, `COLS`</li><li>`--grille 6 37`</li><li>`--lignes 6 --colonnes 37`</li></ul> |
+| Expositions | **7**<br>E0 (0 IL) puis −3, −2, −1, +1, +2, +3 IL | `--expos 7` |
+| Focale, capteur | **200 mm**<br>24 mm horizontal (portrait, plein format) | `FOCALE`, `LARGEUR_MM` |
+| Champ d'une image | **6,87° × 10,29°**<br>(le petit côté est horizontal) | calculé |
+| Pas horizontal | **5,0°**<br>(recouvrement 1,87°, soit 27 %) | `PAS_H` |
+| Pas vertical | **5,8°**, mesuré en **3C.3**<br>(théorique : estimé plus bas ; recouvrement 4,5°, soit 44 %) | `PAS_V` |
+| Sens de prise de vue | <ul><li>Chaque ligne commence au **bord droit** et avance vers la gauche</li><li>Ligne 0 en haut</li></ul> | signes du lacet dans ***generer_pto.py*** |
+| Numéro d'image | `k = ligne × 37 + colonne`<br>image 0 = `L0_C00` | partout |
+| Export L | <ul><li>1554 images</li><li>Côté long **2 048 px** (1365 × 2048)</li><li>≈ 19 Go</li></ul> | `Export-TIFF-L` |
+| Export H | <ul><li>222 vues centrées</li><li>**5 184 px** (3456 × 5184, aucun redimensionnement)</li><li>16,8 Go</li></ul> | `Export-TIFF-H` |
+| Largeur du HDR | **20 000 px**<br>(toile 20 000 × 5 000) | `propager_geometrie.py … 20000` |
+| Largeur de la pleine résolution | **90 112 px**<br>(toile 90 112 × 22 528 ; zone utile 88 658 × 20 312) | `--pano 90112` |
 | Projet maître | `$P\3_optimisation\pano_grille_opt4.pto` | |
 
 **Emplacements** (variables PowerShell de **0D**) :
@@ -98,13 +98,13 @@ Chiffres mesurés pour **222 positions, 1554 images**. Les cases *non chronomét
 
 | Phase | Outil qui travaille | RAM (pic) | Disque produit | Durée |
 | --- | --- | :---: | --- | --- |
-| **1. Prise de vue** | l'appareil | — | 1554 RAW | **40 min 43 s** (09:13:35 → 09:54:18) |
-| **2. Développer et exporter** | ***Lightroom*** | export H : ≈ 7,0 Go | export L : **≈ 19 Go** ; export H : **16,8 Go** (≈ 78 Mo par TIFF) | export H : **3 min 54 s** ([M-14](TESTS-ANALYSES.md#m-14--export-h-depuis-222-copies-virtuelles--3-min-54-s)) ; export L *non chronométré* |
-| **3. Géométrie** | ***Hugin***, scripts Python | *non relevée* | projets `.pto`, légers | *non chronométrée* ; une optimisation au-delà de 3 min sans baisse de l'erreur ne converge pas |
-| **4. Vue centrée** à 6 000 px | ***nona*** + ***multiblend*** | 0,1 Go + 0,3 Go | 60 Mo | **1 min 26** (***nona*** 72 s, ***multiblend*** 14 s) |
-| **5. HDR** à 20 000 px | ***nona*** + ***multiblend***, puis ***Lightroom*** | ***nona*** 0,7 Go ; ***multiblend*** **3,5 Go** par groupe | intermédiaires 12 Go (supprimés), 7 calques 4,5 Go, DNG ≈ 80 Mo | **≈ 2 h** (*estimé* : ***nona*** ≈ 1 h 44 à 4,0 s par image, ***multiblend*** ≈ 16 min à 140 s par groupe) ; avec ***Hugin*** et ***enblend*** : **≈ 5 h** mesurées (1 h 09 + 3 h 52) |
-| **6. Pleine résolution** | ***nona***, puis ***multiblend*** | ***nona*** **13,5 Go** ; ***multiblend*** 4,2 Go de processus, **RAM libre du système à 0,2 Go** pendant ≈ 4 min | intermédiaires **35,1 Go** sur D:, cache **≈ 33 Go** sur C:, panorama **12,8 Go** | **≈ 3 h 35** : ***nona*** 12 080 s (3 h 21, ≈ 53 s par image), ***multiblend*** 1 305 s (21 min 45) ([M-16](TESTS-ANALYSES.md#m-16--rendu-complet-des-222-images-à-90-112-px-avec-le-développement-validé-brume-et-tonalité-à-0)) |
-| **7. Tuilage** WebP Q85 | ***libvips*** | 5,6 Go | temporaires ≈ 12 Go (supprimés), pyramides **239 Mo + 18 Mo** | pleine résolution **≈ 1 min 50**, HDR moins de 10 s |
+| **1. Prise de vue** | l'appareil | — | 1554 RAW | **40 min 43 s**<br>(09:13:35 → 09:54:18) |
+| **2. Développer et exporter** | ***Lightroom*** | export H : ≈ 7,0 Go | <ul><li>export L : **≈ 19 Go**</li><li>export H : **16,8 Go** (≈ 78 Mo par TIFF)</li></ul> | <ul><li>export H : **3 min 54 s** ([M-14](TESTS-ANALYSES.md#m-14--export-h-depuis-222-copies-virtuelles--3-min-54-s))</li><li>export L *non chronométré*</li></ul> |
+| **3. Géométrie** | ***Hugin***, scripts Python | *non relevée* | projets `.pto`, légers | *non chronométrée*<br>une optimisation au-delà de 3 min sans baisse de l'erreur ne converge pas |
+| **4. Vue centrée** à 6 000 px | ***nona*** + ***multiblend*** | 0,1 Go + 0,3 Go | 60 Mo | **1 min 26**<br>(***nona*** 72 s, ***multiblend*** 14 s) |
+| **5. HDR** à 20 000 px | <ul><li>***nona***</li><li>***multiblend***</li><li>***Lightroom***</li></ul> | <ul><li>***nona*** 0,7 Go</li><li>***multiblend*** **3,5 Go** par groupe</li></ul> | <ul><li>intermédiaires 12 Go (supprimés)</li><li>7 calques 4,5 Go</li><li>DNG ≈ 80 Mo</li></ul> | <ul><li>**≈ 2 h** (*estimé* : ***nona*** ≈ 1 h 44 à 4,0 s par image, ***multiblend*** ≈ 16 min à 140 s par groupe)</li><li>avec ***Hugin*** et ***enblend*** : **≈ 5 h** mesurées (1 h 09 + 3 h 52)</li></ul> |
+| **6. Pleine résolution** | ***nona***, puis ***multiblend*** | <ul><li>***nona*** **13,5 Go**</li><li>***multiblend*** 4,2 Go de processus</li><li>**RAM libre du système à 0,2 Go** pendant ≈ 4 min</li></ul> | <ul><li>intermédiaires **35,1 Go** sur D:</li><li>cache **≈ 33 Go** sur C:</li><li>panorama **12,8 Go**</li></ul> | **≈ 3 h 35**<br>***nona*** 12 080 s (3 h 21, ≈ 53 s par image), ***multiblend*** 1 305 s (21 min 45) ([M-16](TESTS-ANALYSES.md#m-16--rendu-complet-des-222-images-à-90-112-px-avec-le-développement-validé-brume-et-tonalité-à-0)) |
+| **7. Tuilage** WebP Q85 | ***libvips*** | 5,6 Go | temporaires ≈ 12 Go (supprimés)<br>pyramides **239 Mo + 18 Mo** | <ul><li>pleine résolution **≈ 1 min 50**</li><li>HDR moins de 10 s</li></ul> |
 
 **Totaux** :
 - **Calcul** : ≈ 5 h 40 pour les trois grands rendus, sans ***Lightroom*** ni ***CPFind*** ni optimisation. Avec ***Hugin*** et ***enblend*** pour le HDR : ≈ 8 h 40.
@@ -130,11 +130,11 @@ Valeurs **relevées dans l'EXIF des 1554 RAW** :
 
 | Réglage | Valeur |
 | --- | --- |
-| Mode, ouverture, ISO | Manuel, **f/10**, **ISO 100**, identiques sur 1554 images |
-| Vitesse de la vue centrée | **1/100 s** ; rafale : 1/800 (−3), 1/400 (−2), 1/200 (−1), 1/50 (+1), 1/25 (+2), 1/13 s (+3) |
-| Rafale | *Continuous High*, 7 images, 0,09 à 0,13 s entre deux ; positions séparées d'au moins 3,9 s |
+| Mode, ouverture, ISO | <ul><li>Manuel</li><li>**f/10**</li><li>**ISO 100**</li><li>identiques sur 1554 images</li></ul> |
+| Vitesse de la vue centrée | **1/100 s**<br>rafale : 1/800 (−3), 1/400 (−2), 1/200 (−1), 1/50 (+1), 1/25 (+2), 1/13 s (+3) |
+| Rafale | <ul><li>*Continuous High*, 7 images, 0,09 à 0,13 s entre deux</li><li>positions séparées d'au moins 3,9 s</li></ul> |
 | Mesure | Spot (sans effet en manuel) |
-| Balance des blancs du boîtier | **Auto** (4 765 à 5 807 K selon l'image) : sans conséquence, Lightroom applique sa valeur fixe |
+| Balance des blancs du boîtier | **Auto** (4 765 à 5 807 K selon l'image)<br>sans conséquence, Lightroom applique sa valeur fixe |
 | Mise au point | Manuelle |
 | Durée | 40 min 43 s |
 
@@ -149,9 +149,9 @@ Valeurs **relevées dans l'EXIF des 1554 RAW** :
 | Export | Brume | Tonalité | Ondulation du ciel, ligne 0 | Luminosité entre voisines, ligne 1 |
 | --- | :---: | --- | --- | --- |
 | Initial | +45 | Noirs −41 | 1,18 % (plus bas : 2,54 %) | — |
-| A | 0 | Contraste +25, Ombres −20, Noirs −10 | 0,80 % | −7 à +9 % |
-| B | 0 | Contraste +25, HL −100, Expo +0,3, Blancs −10 | 0,40 % | −11 à +7 % |
-| C | +24 | tous à 0 | 0,66 % | ≤ 3,7 %, sauts de teinte (−11 % en bleu) |
+| A | 0 | <ul><li>Contraste +25</li><li>Ombres −20</li><li>Noirs −10</li></ul> | 0,80 % | −7 à +9 % |
+| B | 0 | <ul><li>Contraste +25</li><li>HL −100</li><li>Expo +0,3</li><li>Blancs −10</li></ul> | 0,40 % | −11 à +7 % |
+| C | +24 | tous à 0 | 0,66 % | ≤ 3,7 %<br>sauts de teinte (−11 % en bleu) |
 | **D** (retenu) | **0** | **tous à 0** | **0,32 % / 0,51 %** | **−1,3 à +1,3 %** |
 
 Ce qui a été établi : le défaut vient des **images**, pas de la fusion (motif identique d'une image à l'autre, dispersion 0,2 à 0,35 %) ; la **brume** causait les sauts de teinte et le rouge écrêté à 0 dans le ciel (le bleu sortait du gamut Adobe RGB) ; les **curseurs de tonalité** causaient les sauts de luminosité de la ligne 1 (crête et ciel mêlés) alors que le RAW neutre était plat à ±0,6 %. Un essai de correction par **gain 2D** mesuré sur 13 ciels purs (de 0,94 à 1,11) ramenait l'ondulation de 1,18 à 0,61 % mais ne corrigeait pas les écarts de teinte : **non retenu**. Deux images portaient un *Point Color* posé par erreur (L2_C14, L3_C06), repérées par ***controle_reglages_export.py***. Les curseurs de tonalité ont été essayés **par groupes** : la part de chacun n'est pas isolée (Contraste +25 est commun aux exports fautifs A et B).
@@ -168,17 +168,17 @@ Fichiers successifs dans `3_grille\` et `3_optimisation\` (conservés, légers) 
 
 | Étape | Commande ou geste | Fichier produit | Résultat |
 | --- | --- | --- | --- |
-| **3A** | `generer_pto.py` | `pano_grille.pto` | 222 images `_E0`, chemins relatifs `..\..\Export-TIFF-L\` |
+| **3A** | `generer_pto.py` | `pano_grille.pto` | 222 images `_E0`<br>chemins relatifs `..\..\Export-TIFF-L\` |
 | **3B** | Hugin, CPFind *prealigned* | `pano_grille_cp.pto` | points bruts (source de **3G**) |
-| **3C.1** | `cpclean -p -n 2`, puis `deplacer_projet.py` (chemins remis en relatifs) | `pano_grille_cp_clean.pto` | |
-| **3C.2** | `diagnostic_cp.py` | | écart médian ≈ 1° en horizontal, **2,7° en vertical** : le pas vertical théorique était faux |
+| **3C.1** | `cpclean -p -n 2`, puis `deplacer_projet.py`<br>(chemins remis en relatifs) | `pano_grille_cp_clean.pto` | |
+| **3C.2** | `diagnostic_cp.py` | | écart médian ≈ 1° en horizontal, **2,7° en vertical**<br>le pas vertical théorique était faux |
 | **3C.3** | `diagnostic_pas_v.py`, `corriger_pas_v.py … 5.8` | `pano_grille_cp_clean_v58.pto` | minimum à **5,8°** |
 | **3D** | `filtrer_cp.py … 2.5` | `pano_grille_v58_f2.5.pto` | écart médian des bons points : 0,9° |
-| **3E** passe 1 | `preparer_optimisation.py`, Hugin | `pano_grille_opt1.pto` | erreur moyenne 0,66, **maximum 115** : une image expulsée (lacet inversé de ~180°) |
+| **3E** passe 1 | `preparer_optimisation.py`, Hugin | `pano_grille_opt1.pto` | erreur moyenne 0,66, **maximum 115**<br>une image expulsée (lacet inversé de ~180°) |
 | **3E** remède | `placer_isoles.py … 5 5.8 30`, `preparer_optimisation.py --objectif --exclure "1,7-19,30,45-51,221" --sans-cp-exclues` | `pano_grille_opt1_obj.pto` | les images faibles remises sur leur ligne et exclues |
-| **3E** passe 2 | Hugin | `pano_grille_opt2.pto` | champ de vue optimisé **7,18°** (Hugin affiche alors 191 mm au lieu de 200) |
-| **3G** | `filtrer_cp.py … 0.6`, `placer_isoles.py … 5 5.8 30`, `affiner_images_faibles.py … 1.5 5`, Hugin | `pano_grille_opt3.pto` puis **`pano_grille_opt4.pto`** (le maître) | **erreur moyenne 0,32 px** à 2 048 px (≈ 0,8 px à 5 184 px) |
-| **3H** | `detecter_trous.py … 1.0` | | trois paires à recouvrement **négatif** : 135-136 (L3, C24-C25, −0,52°), 165-166 (L4, C17-C18, −0,42°), 199-200 (L5, C14-C15, −0,94°) ; 0 point de contrôle sur ces paires ; plus 29-30 |
+| **3E** passe 2 | Hugin | `pano_grille_opt2.pto` | champ de vue optimisé **7,18°**<br>(Hugin affiche alors 191 mm au lieu de 200) |
+| **3G** | <ul><li>`filtrer_cp.py … 0.6`</li><li>`placer_isoles.py … 5 5.8 30`</li><li>`affiner_images_faibles.py … 1.5 5`</li><li>Hugin</li></ul> | `pano_grille_opt3.pto` puis **`pano_grille_opt4.pto`** (le maître) | **erreur moyenne 0,32 px** à 2 048 px (≈ 0,8 px à 5 184 px) |
+| **3H** | `detecter_trous.py … 1.0` | | <ul><li>trois paires à recouvrement **négatif** : 135-136 (L3, C24-C25, −0,52°), 165-166 (L4, C17-C18, −0,42°), 199-200 (L5, C14-C15, −0,94°)</li><li>0 point de contrôle sur ces paires</li><li>plus 29-30</li></ul> |
 
 **Incidents** :
 - **3D** : le filtre à 2,5° a retiré **75 points valides sur 100** à l'image 30, parce que la ligne du haut est décalée de **+4,6° de lacet** par rapport à la grille théorique : d'où un fantôme à la jonction 29-30, corrigé en **3G** en reprenant les points bruts.
@@ -205,9 +205,9 @@ Fichiers successifs dans `3_grille\` et `3_optimisation\` (conservés, légers) 
 
 | Largeur | Densité sur 185° | Rôle |
 | :---: | :---: | --- |
-| 20 000 px (HDR) | 108 px/° | Vue d'ensemble, plage dynamique complète |
-| 26 362 px (panorama Lightroom du 50 mm) | 142 px/° | comparaison |
-| **90 112 px** (pleine résolution) | 487 px/° | Le détail du 200 mm, **3,4 fois** plus défini que le 50 mm |
+| 20 000 px<br>(HDR) | 108 px/° | Vue d'ensemble, plage dynamique complète |
+| 26 362 px<br>(panorama Lightroom du 50 mm) | 142 px/° | comparaison |
+| **90 112 px**<br>(pleine résolution) | 487 px/° | Le détail du 200 mm, **3,4 fois** plus défini que le 50 mm |
 
 **Deux exports plutôt qu'un** ([D-02](TESTS-ANALYSES.md#-décisions-et-leurs-raisons)) : tout à 5 184 px aurait pesé ≈ 122 Go (167 Go non compressé, rapport ZIP 0,73 mesuré) et imposé à ***nona*** une réduction à 21 % pour le HDR ; les deux exports pèsent ≈ 36 Go.
 
@@ -227,7 +227,7 @@ Fichiers successifs dans `3_grille\` et `3_optimisation\` (conservés, légers) 
 | 5 000 px | 6 | 50 Mo | 0,09 Go | 42 Mo |
 | 20 000 px | 100 | 0,8 Go | 1,7 Go | 0,65 Go |
 | 45 056 px | 507 | 4,1 Go | 8,9 Go | 3,27 Go |
-| **90 112 px** | 2 030 (utile : 1 800) | 16 Go | **35,1 Go** | **12,8 Go** |
+| **90 112 px** | 2 030<br>(utile : 1 800) | 16 Go | **35,1 Go** | **12,8 Go** |
 
 **Pourquoi pas *enblend* à cette taille** ([M-06](TESTS-ANALYSES.md#m-06--enblend-lit-le-bigtiff-mais-ne-sait-pas-écrire-plus-de-4-go), [M-07](TESTS-ANALYSES.md#m-07--multiblend-écrit-le-bigtiff--enblend-vers-png-plante), [D-07](TESTS-ANALYSES.md#-décisions-et-leurs-raisons)) : ***enblend*** 4.3 s'arrête à `Maximum TIFF file size exceeded` au-delà de 4 Go et plante vers PNG ; ***multiblend*** a écrit un BigTIFF de 20 images en 109 s et 8,2 Go.
 

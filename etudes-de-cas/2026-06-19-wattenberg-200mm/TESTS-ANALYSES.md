@@ -13,7 +13,7 @@ Le guide donne la **procédure** et ne contient ni statut d'avancement, ni résu
 | Statut | Sens |
 | :---: | --- |
 | ✅ **Mesuré** | Résultat obtenu sur ce panorama, chiffres à l'appui |
-| 🔬 **À tester** | Hypothèse ou extrapolation : le test est décrit, il n'a pas été fait |
+| 🔬 **À tester** | Hypothèse ou extrapolation<br>le test est décrit, il n'a pas été fait |
 | 🗃️ **Piste** | Idée jamais essayée, hors du chemin principal |
 | 📌 **Décidé** | Choix pris, avec sa raison et ce qui permettrait de revenir dessus |
 
@@ -29,16 +29,16 @@ Le guide donne la **procédure** et ne contient ni statut d'avancement, ni résu
 | [M-04](#m-04--projections-avant-mesure-et-écarts) | Projections avant mesure et écarts | ✅ |
 | [M-05](#m-05--ouverture-dun-tiff-de-507-mpx-dans-lightroom) | Ouverture d'un TIFF de 507 Mpx dans Lightroom | ✅ |
 | [M-06](#m-06--enblend-lit-le-bigtiff-mais-ne-sait-pas-écrire-plus-de-4-go) | *enblend* lit le BigTIFF mais ne sait pas écrire plus de 4 Go | ✅ |
-| [M-07](#m-07--multiblend-écrit-le-bigtiff--enblend-vers-png-plante) | *multiblend* écrit le BigTIFF (109 s, 8,2 Go de RAM) ; *enblend* vers PNG plante | ✅ |
-| [M-08](#m-08--ciel--multiblend-contre-enblend---blend-colorspaceidentity) | Ciel : *multiblend* contre *enblend* `IDENTITY` (équivalent à l'intérieur, halo près des bordures) | ✅ |
-| [M-09](#m-09--palier-de-trois-lignes-111-images--durée-et-ram-de-nona-et-de-multiblend) | Palier de trois lignes (111 images) : durée et RAM de *nona* et de *multiblend* | ✅ |
-| [M-10](#m-10--multiblend---cache-threshold--la-ram-du-processus-est-plafonnée-le-fichier-est-identique) | *multiblend* `--cache-threshold` : RAM plafonnée, fichier identique | ✅ |
-| [M-11](#m-11--rendu-complet-des-222-images-à-90-112-px--nona-et-multiblend---cache-threshold4g) | Rendu complet des 222 images à 90 112 px : *nona* et *multiblend* | ✅ |
+| [M-07](#m-07--multiblend-écrit-le-bigtiff--enblend-vers-png-plante) | <ul><li>*multiblend* écrit le BigTIFF (109 s, 8,2 Go de RAM)</li><li>*enblend* vers PNG plante</li></ul> | ✅ |
+| [M-08](#m-08--ciel--multiblend-contre-enblend---blend-colorspaceidentity) | Ciel<br>*multiblend* contre *enblend* `IDENTITY` (équivalent à l'intérieur, halo près des bordures) | ✅ |
+| [M-09](#m-09--palier-de-trois-lignes-111-images--durée-et-ram-de-nona-et-de-multiblend) | Palier de trois lignes (111 images)<br>durée et RAM de *nona* et de *multiblend* | ✅ |
+| [M-10](#m-10--multiblend---cache-threshold--la-ram-du-processus-est-plafonnée-le-fichier-est-identique) | *multiblend* `--cache-threshold`<br>RAM plafonnée, fichier identique | ✅ |
+| [M-11](#m-11--rendu-complet-des-222-images-à-90-112-px--nona-et-multiblend---cache-threshold4g) | Rendu complet des 222 images à 90 112 px<br>*nona* et *multiblend* | ✅ |
 | [M-12](#m-12--multiblend-ou-enblend-pour-la-vue-centrée-et-le-hdr-à-20-000-px-issue-31) | *multiblend* ou *enblend* pour la vue centrée et le HDR à 20 000 px | ✅ |
-| [M-13](#m-13--nettoyage-des-poussières-sur-les-vues-centrées--2-h-pour-220-images) | Nettoyage des poussières sur les vues centrées : 2 h pour 220 images | ✅ |
-| [M-14](#m-14--export-h-depuis-222-copies-virtuelles--3-min-54-s) | Export H depuis 222 copies virtuelles : 3 min 54 s | ✅ |
-| [M-15](#m-15--correction-de-la-brume--des-écarts-de-teinte-entre-images) | Correction de la brume : des écarts de teinte entre images | ✅ |
-| [M-16](#m-16--rendu-complet-des-222-images-à-90-112-px-avec-le-développement-validé-brume-et-tonalité-à-0) | Rendu complet à 90 112 px avec le développement validé (brume et tonalité à 0) : durées, ciel homogène | ✅ |
+| [M-13](#m-13--nettoyage-des-poussières-sur-les-vues-centrées--2-h-pour-220-images) | Nettoyage des poussières sur les vues centrées<br>2 h pour 220 images | ✅ |
+| [M-14](#m-14--export-h-depuis-222-copies-virtuelles--3-min-54-s) | Export H depuis 222 copies virtuelles<br>3 min 54 s | ✅ |
+| [M-15](#m-15--correction-de-la-brume--des-écarts-de-teinte-entre-images) | Correction de la brume<br>des écarts de teinte entre images | ✅ |
+| [M-16](#m-16--rendu-complet-des-222-images-à-90-112-px-avec-le-développement-validé-brume-et-tonalité-à-0) | Rendu complet à 90 112 px avec le développement validé (brume et tonalité à 0)<br>durées, ciel homogène | ✅ |
 | [T-01](#t-01--enblend-et-les-fichiers-de-plus-de-4-go) | *enblend* et les fichiers de plus de 4 Go (résolu : M-06, réponse négative) | ✅ |
 | [T-02](#t-02--ram-du-fusionneur-à-2-gpx) | RAM du fusionneur (*multiblend*) à 2 Gpx | 🔬 |
 | [T-03](#t-03--durée-du-rendu-complet-à-90-112-px) | Durée du rendu complet à 90 112 px | 🔬 |
@@ -49,7 +49,7 @@ Le guide donne la **procédure** et ne contient ni statut d'avancement, ni résu
 | [T-08](#t-08--crénelage-de-nona-à-forte-réduction) | Crénelage de *nona* à forte réduction | 🔬 |
 | [T-09](#t-09--finitions-à-pleine-résolution) | Finitions à pleine résolution | 🔬 |
 | [T-10](#t-10--tuilage-à-2-gpx) | Tuilage à 2 Gpx | 🔬 |
-| [T-11](#t-11--fluidité-navigateurs-et-couleur-à-lœil) | Fluidité, navigateurs et couleur à l'œil | 🔬 |
+| [T-11](#t-11--fluidité-navigateurs-et-couleur-à-lœil) | <ul><li>Fluidité</li><li>navigateurs</li><li>couleur à l'œil</li></ul> | 🔬 |
 | [T-12](#t-12--ouverture-dun-tiff-de-507-mpx-dans-lightroom) | Ouverture d'un TIFF de 507 Mpx dans Lightroom (résolu : M-05) | ✅ |
 | [T-13](#t-13--vignettage-et-option-calques-de-hugin) | Vignettage et option Calques de *Hugin* | 🔬 |
 | [T-14](#t-14--coût-de-linterface-de-hugin-pendant-nona) | Coût de l'interface de *Hugin* pendant *nona* | 🔬 |
@@ -126,10 +126,10 @@ Le guide donne la **procédure** et ne contient ni statut d'avancement, ni résu
 
 | Étape | Résultat |
 | --- | --- |
-| ***nona*** `--bigtiff` | **1 034 s** (≈ 52 s par image), pic de RAM **13,4 Go**, code de sortie 0. Les 20 intermédiaires sont du **BigTIFF** (en-tête `49 49 2B 00`), **3,25 Go** au total (≈ 160 Mo par image) |
-| ***enblend*** : lecture et fusion | **Réussies** : les 20 intermédiaires BigTIFF sont lus et fusionnés |
-| ***enblend*** : écriture | **Échec** : `enblend: error: Maximum TIFF file size exceeded`, puis `Postcondition violation! exportImage(): Unable to write TIFF data` (*vigra*, `tiff.cxx:877`). Code de sortie 1 ; *enblend* supprime le fichier invalide : **aucun fichier produit** |
-| ***enblend*** : durée et RAM | **485 s** et **23,8 Go** (essai par le script), **464 s** et **24,1 Go** (second essai en direct, `-v`) : jusqu'à l'échec d'écriture |
+| ***nona*** `--bigtiff` | <ul><li>**1 034 s** (≈ 52 s par image)</li><li>pic de RAM **13,4 Go**</li><li>code de sortie 0</li><li>Les 20 intermédiaires sont du **BigTIFF** (en-tête `49 49 2B 00`), **3,25 Go** au total (≈ 160 Mo par image)</li></ul> |
+| ***enblend***<br>lecture et fusion | **Réussies**<br>les 20 intermédiaires BigTIFF sont lus et fusionnés |
+| ***enblend***<br>écriture | <ul><li>**Échec**<br>`enblend: error: Maximum TIFF file size exceeded`, puis `Postcondition violation! exportImage(): Unable to write TIFF data` (*vigra*, `tiff.cxx:877`)</li><li>Code de sortie 1</li><li>*enblend* supprime le fichier invalide<br>**aucun fichier produit**</li></ul> |
+| ***enblend***<br>durée et RAM | <ul><li>**485 s** et **23,8 Go** (essai par le script)</li><li>**464 s** et **24,1 Go** (second essai en direct, `-v`)</li><li>jusqu'à l'échec d'écriture</li></ul> |
 
 - **Analyse** : l'écrivain TIFF d'*enblend* (*vigra*) produit du **TIFF classique**, limité à 4 Go ; *enblend* **lit** le BigTIFF sans difficulté. L'aide d'*enblend* 4.3 ne propose aucune option BigTIFF. La fenêtre à 100 % (1 030 Mo en LZW) et le rendu à 45 056 px (3,27 Go) restaient sous la limite, d'où l'absence de signal jusqu'ici.
 - **Conséquence** : un rendu complet direct avec ***rendre_projet.ps1*** `-BigTiff -CompressionEnblend lzw` **échouerait à l'écriture finale, après plusieurs heures de calcul** : le panorama complet est estimé à ≈ 13 Go en LZW (**extrapolation**). Une chaîne de remplacement est nécessaire : voir [T-15](#t-15--alternative-à-un-tiff-unique-de-plus-de-4-go).
@@ -144,8 +144,8 @@ Le guide donne la **procédure** et ne contient ni statut d'avancement, ni résu
 
 | Essai | Commande | Durée | Pic de RAM | Résultat |
 | --- | --- | --- | --- | --- |
-| ***enblend*** vers PNG | `--blend-colorspace=IDENTITY -o essai_png.png @liste` | 477 s | 23,0 Go | **Plantage** (code `0xC0000005`, violation d'accès) ; fichier de 0 octet |
-| ***multiblend*** | `--bigtiff --compression=LZW --tempdir D:\tmp\multiblend -o essai_mb.tif` + les 20 images | **109 s** | **8,2 Go** | **Réussi**, code 0 ; BigTIFF valide (en-tête `49 49 2B 00`), **1,65 Go**, 25 439 × 7 996 px, 16 bits RVB + alpha |
+| ***enblend*** vers PNG | `--blend-colorspace=IDENTITY -o essai_png.png @liste` | 477 s | 23,0 Go | <ul><li>**Plantage** (code `0xC0000005`, violation d'accès)</li><li>fichier de 0 octet</li></ul> |
+| ***multiblend*** | `--bigtiff --compression=LZW --tempdir D:\tmp\multiblend -o essai_mb.tif` + les 20 images | **109 s** | **8,2 Go** | <ul><li>**Réussi**, code 0</li><li>BigTIFF valide (en-tête `49 49 2B 00`)</li><li>**1,65 Go**, 25 439 × 7 996 px, 16 bits RVB + alpha</li></ul> |
 
 - **Analyse** :
   - *multiblend* fait **4 à 5 fois plus vite** et avec **près de 3 fois moins de RAM** qu'*enblend* (485 s et 23,8 Go en M-06, qui échouait en plus à l'écriture). Il prend la boîte englobante des 20 images (d'où 25 439 × 7 996 px et non la toile entière) à partir des décalages écrits par *nona* dans les TIFF.
@@ -254,7 +254,7 @@ Le guide donne la **procédure** et ne contient ni statut d'avancement, ni résu
 | --- | :---: | --- |
 | ***nona***, images 111 à 221 (111 images) | **5 910 s** (53,2 s par image) | 13,5 Go de RAM au pic |
 | ***nona*** , équivalent des 222 images (avec les 1 903 s de la ligne 0 et les 3 762 s du palier) | ≈ 11 575 s (3 h 13) | |
-| ***multiblend*** `--cache-threshold=4G`, 222 images | **1 273 s (21 min)** | mémoire privée **4,2 Go** ; RAM libre du système **0,2 Go** au minimum, de 14 h 55 à 14 h 59 ; `TEMP` jusqu'à **33 Go** |
+| ***multiblend*** `--cache-threshold=4G`, 222 images | **1 273 s (21 min)** | <ul><li>mémoire privée **4,2 Go**</li><li>RAM libre du système **0,2 Go** au minimum, de 14 h 55 à 14 h 59</li><li>`TEMP` jusqu'à **33 Go**</li></ul> |
 
 - **Résultat** : BigTIFF LZW de **12,81 Go**, **88 658 × 20 312 px** (1,80 Gpx), 16 bits, lu par *libvips*, code 0. 222 intermédiaires : 35,11 Go. Aperçu complet : aucune couture visible.
 - **Durée linéaire malgré un cache plus grand que la RAM** : 1 273 s pour 1,80 Gpx, soit 0,71 s par Mpx (623 s pour 1,008 Gpx : 0,62 s par Mpx), et **conforme à l'extrapolation de 21 min** (T-03) alors que le cache (33 Go) dépassait la RAM disponible (≈ 24 Go) : levée de la limite de M-10. Pas de pic de durée visible ; l'effet du cache disque est de **+15 % par Mpx** au plus.
@@ -279,8 +279,8 @@ Le guide donne la **procédure** et ne contient ni statut d'avancement, ni résu
 | Essai (images par groupe) | *enblend* `IDENTITY` | *multiblend* | Rapport |
 | --- | :---: | :---: | :---: |
 | Forêt (12) | 17 s ; 1,4 Go | 6 s ; 0,5 Go | **2,8** |
-| Ciel + bord (12), 2 passages, ordre inversé | 19,0 s et 18,7 s ; 1,3 à 1,5 Go | 12,1 s et 12,7 s ; 0,8 Go | **1,5** |
-| **E0 complet (222)** | **1 572 s (26 min)** ; **4,0 Go** ; RAM libre ≥ 12,2 Go | **140 s (2 min 20)** ; **3,5 Go** ; RAM libre ≥ 12,6 Go | **11** |
+| <ul><li>Ciel + bord (12)</li><li>2 passages</li><li>ordre inversé</li></ul> | 19,0 s et 18,7 s ; 1,3 à 1,5 Go | 12,1 s et 12,7 s ; 0,8 Go | **1,5** |
+| **E0 complet (222)** | <ul><li>**1 572 s (26 min)**</li><li>**4,0 Go**</li><li>RAM libre ≥ 12,2 Go</li></ul> | <ul><li>**140 s (2 min 20)**</li><li>**3,5 Go**</li><li>RAM libre ≥ 12,6 Go</li></ul> | **11** |
 
 - Le rapport **croît avec le nombre d'images** (2,8 puis 1,5 à 12 images selon le contenu, 11 à 222). L'écart de 12 images entre « forêt » et « ciel » est du **contenu** de la fenêtre (une reprise avec *Lightroom* fermé donne les mêmes durées qu'avec).
 - ***nona*** : 338 s pour 84 images (4,0 s par image) ; 894 s pour 222 images, pic de RAM 0,7 Go, 1,81 Go d'intermédiaires.
@@ -317,7 +317,7 @@ Le guide donne la **procédure** et ne contient ni statut d'avancement, ni résu
 
 | Jeu de calques | Taille | Profil | Résultat |
 | --- | :---: | :---: | --- |
-| *enblend*, toile entière | 20 000 × 5 000 | Adobe RGB | Fusion impossible : cadre noir autour de la fenêtre |
+| *enblend*, toile entière | 20 000 × 5 000 | Adobe RGB | Fusion impossible<br>cadre noir autour de la fenêtre |
 | *multiblend* seul | 3 321 × 1 754 | **aucun** | Fusion réussie (DNG de 9,9 Mo) |
 | *enblend* rogné à la même boîte | 3 321 × 1 754 | Adobe RGB | Fusion réussie (DNG de 10,6 Mo) |
 | *multiblend* + profil Adobe RGB | 3 321 × 1 754 | Adobe RGB | Fusion réussie (DNG de 10,5 Mo) |
@@ -383,8 +383,8 @@ Le guide donne la **procédure** et ne contient ni statut d'avancement, ni résu
 
 | Export | Brume | Curseurs de tonalité | Ondulation du ciel, ligne 0 (y 1 000-2 000 / 2 500-3 500) | Écarts de luminosité entre voisines, ligne 1 (vert) |
 | --- | :---: | --- | --- | --- |
-| A | 0 | Contraste +25, Ombres −20, Noirs −10 | 0,80 % / 0,82 % | −7 à +9 % |
-| B | 0 | Contraste +25, Hautes lumières −100, Exposition +0,30, Blancs −10 | 0,40 % / 0,35 % | −11 à +7 % |
+| A | 0 | <ul><li>Contraste +25</li><li>Ombres −20</li><li>Noirs −10</li></ul> | 0,80 % / 0,82 % | −7 à +9 % |
+| B | 0 | <ul><li>Contraste +25</li><li>Hautes lumières −100</li><li>Exposition +0,30</li><li>Blancs −10</li></ul> | 0,40 % / 0,35 % | −11 à +7 % |
 | C | **+24** | tous à 0 | 0,66 % / 1,03 % | ≤ 3,7 % (sauts de teinte : C30→C31 −11 % en bleu) |
 | **D** | **0** | **tous à 0** | **0,32 % / 0,51 %** | **−1,3 à +1,3 %** (bruit 0,2 à 0,8 %) |
 
@@ -509,7 +509,7 @@ Pour un écran 4K, le milieu géométrique de l'échelle de zoom tombe à √(3 
 | Étape | Durée | Pic de RAM | Détail |
 | --- | :---: | :---: | --- |
 | `icc_transform` (Adobe RGB → sRGB, 8 bits, **avec `-ProfilEntree`**) | **48 s** | 1,5 Go | fichier temporaire de **6 870 Mo** (supprimé à la fin) |
-| `dzsave` | **14 s** | 6,8 Go | **9 311 tuiles, 518 Mo**, 18 niveaux (0 à 17), 6 960 tuiles au niveau le plus fin (174 × 40, comme attendu), **aucune tuile vide** |
+| `dzsave` | **14 s** | 6,8 Go | <ul><li>**9 311 tuiles, 518 Mo**</li><li>18 niveaux (0 à 17)</li><li>6 960 tuiles au niveau le plus fin (174 × 40, comme attendu)</li><li>**aucune tuile vide**</li></ul> |
 
   - **Le panorama fusionné par *multiblend* ne porte aucun profil ICC** (le HDR exporté de *Lightroom* et l'ancien `complet.tif` d'*enblend* portent Adobe RGB, 560 octets). Un premier tuilage, fait avec `--embedded` seul, n'a donc **pas converti** les couleurs : sur une zone de forêt, le rouge moyen passait de 120,7 (sans conversion) à 116,8 (avec) sur 255, soit ≈ 3 niveaux, davantage sur les couleurs saturées : la pleine résolution aurait paru plus terne que le HDR. **Corrigé** : `tuiler.ps1 -ProfilEntree` fournit le profil Adobe RGB (extrait de l'export HDR, `60_tuiles\profils\AdobeRGB_export_Lightroom.icc`), qui ne sert que si le TIFF n'en porte pas. La pyramide a été **refaite** (518 Mo au lieu de 494 Mo).
   - **Total : 62 s** pour 1,80 Gpx : bien en dessous de l'extrapolation (4 fois la surface de 45 056 px : ≈ 10 400 tuiles). Les 9 311 tuiles viennent de la zone utilisée (88 658 × 20 312 px), pas de la toile entière.
@@ -572,11 +572,11 @@ Pour un écran 4K, le milieu géométrique de l'échelle de zoom tombe à √(3 
 
 | Ordre | Piste | Effort | Durée de l'essai | Ce qu'on apprend |
 | :---: | --- | --- | --- | --- |
-| 1 | ***enblend* avec sortie PNG ou EXR** (`-o x.png`) : la limite de 4 Go tient peut-être au seul format TIFF, pas à *enblend*. *libvips* relit ensuite le fichier pour `dzsave` | une ligne de commande | ≈ 8 min, avec les intermédiaires de M-06 s'ils sont conservés | Si oui, rien ne change dans la chaîne. À vérifier : taille d'un PNG 16 bits à 2 Gpx, RAM (le pic de 24 Go restera) |
-| 2 | ***multiblend*** (David Horman, horman.net/multiblend) à la place d'*enblend* : lit les sorties de *nona*, fusion multi-bandes avec couture, conçu pour les très grands panoramas (bien moins de RAM, plus rapide), option `--bigtiff` et `--tempdir` **à confirmer par `--help`** | un exécutable à télécharger, une commande | < 8 min probablement | RAM, durée et qualité de couture sur les 20 images, à comparer à *enblend* (ciel surtout). Réserves : outil à mainteneur unique, 16 bits à confirmer. Touche aussi T-02 et T-03 |
-| 3 | **Rendre par blocs** (une ligne d'images, ou un groupe de colonnes) avec *nona* puis *enblend* ou *multiblend* : chaque sortie reste sous 4 Go en LZW ; assemblage dans ***libvips*** et tuilage sans fichier géant | script à écrire, jonctions à contrôler | ≥ 1 h | Faisable avec n'importe quel fusionneur. Point dur : la **jonction entre blocs** (chevauchement et fondu sur la zone commune, sinon couture visible) |
-| 4 | **Masques de couture d'*enblend*** (`--save-masks`) puis fusion dans ***libvips*** par blocs, avec écriture directe en BigTIFF ou en tuiles | lourd : la fusion multi-bandes est à réécrire | une demi-journée | Dernier recours côté *Hugin* |
-| 5 | ***Autopano Giga*** (licence disponible) : sortie native très grande taille (PSB ou tuiles), **à confirmer** | reprise d'un outil | inconnue | **Dernier recours** : l'outil est abandonné et l'auteur du projet n'y était pas parvenu, c'est la raison du passage à *Hugin* |
+| 1 | <ul><li>***enblend* avec sortie PNG ou EXR** (`-o x.png`)</li><li>la limite de 4 Go tient peut-être au seul format TIFF, pas à *enblend*</li><li>*libvips* relit ensuite le fichier pour `dzsave`</li></ul> | une ligne de commande | ≈ 8 min, avec les intermédiaires de M-06 s'ils sont conservés | <ul><li>Si oui, rien ne change dans la chaîne</li><li>À vérifier<br>taille d'un PNG 16 bits à 2 Gpx, RAM (le pic de 24 Go restera)</li></ul> |
+| 2 | <ul><li>***multiblend*** (David Horman, horman.net/multiblend) à la place d'*enblend*</li><li>lit les sorties de *nona*</li><li>fusion multi-bandes avec couture</li><li>conçu pour les très grands panoramas (bien moins de RAM, plus rapide)</li><li>option `--bigtiff` et `--tempdir` **à confirmer par `--help`**</li></ul> | un exécutable à télécharger, une commande | < 8 min probablement | <ul><li>RAM, durée et qualité de couture sur les 20 images, à comparer à *enblend* (ciel surtout)</li><li>Réserves<br>outil à mainteneur unique, 16 bits à confirmer</li><li>Touche aussi T-02 et T-03</li></ul> |
+| 3 | <ul><li>**Rendre par blocs** (une ligne d'images, ou un groupe de colonnes) avec *nona* puis *enblend* ou *multiblend*</li><li>chaque sortie reste sous 4 Go en LZW</li><li>assemblage dans ***libvips*** et tuilage sans fichier géant</li></ul> | script à écrire, jonctions à contrôler | ≥ 1 h | <ul><li>Faisable avec n'importe quel fusionneur</li><li>Point dur<br>la **jonction entre blocs** (chevauchement et fondu sur la zone commune, sinon couture visible)</li></ul> |
+| 4 | <ul><li>**Masques de couture d'*enblend*** (`--save-masks`)</li><li>puis fusion dans ***libvips*** par blocs</li><li>avec écriture directe en BigTIFF ou en tuiles</li></ul> | lourd<br>la fusion multi-bandes est à réécrire | une demi-journée | Dernier recours côté *Hugin* |
+| 5 | ***Autopano Giga*** (licence disponible)<br>sortie native très grande taille (PSB ou tuiles), **à confirmer** | reprise d'un outil | inconnue | **Dernier recours**<br>l'outil est abandonné et l'auteur du projet n'y était pas parvenu, c'est la raison du passage à *Hugin* |
 
 - **Écartés** : `-f` d'*enblend* (« manually set the size and position of the output »), qui n'avait pas réduit la toile lors d'un essai précédent, et dont la zone resterait au-delà de 4 Go en LZW ; sortie JPEG (65 535 px de côté maximum) ; *smartblend* (ancien, 32 bits), ImageMagick et GIMP (ni couture intelligente ni fusion multi-bandes).
 - **Enchaînement** : si 1 réussit, rien ne change. Si 1 échoue et 2 réussit, on remplace *enblend* par *multiblend* dans ***rendre_projet.ps1***. Si les deux échouent, on passe à 3, en connaissant les limites de chaque outil.
@@ -618,13 +618,13 @@ Pour un écran 4K, le milieu géométrique de l'échelle de zoom tombe à √(3 
 
 | Fiche | Piste | Remarque |
 | :---: | --- | --- |
-| **P-01** | **Paramètres d'objectif depuis la base *lensfun*** (onglet *Objectif* de *Hugin*) pour le vignettage et la distorsion | Dépend de la présence de l'objectif dans la base. Repli quand Lightroom n'a pas de profil |
-| **P-02** | **Image de référence (*flat-field*)** : photographier une surface uniforme avec le même objectif, la même focale et la même ouverture (f/10), puis la donner à *Hugin* | Bonne méthode si l'on refait des panoramas avec cet objectif. Non essayée |
-| **P-03** | **Piles automatiques de Lightroom** (*Photo → Piles → Mettre en pile automatiquement par heure de prise de vue*, intervalle de 1 à 2 s) pour isoler la vue centrée quand la prise de vue est moins rigoureuse | La séparation temporelle est **mesurée** (rafales à 0,09-0,13 s ; positions séparées d'au moins 3,9 s) ; le comportement d'une pile repliée à l'export est **à confirmer** sur un petit échantillon |
-| **P-04** | **Fusion HDR dans Lightroom par position**, puis assemblage de 222 images HDR (au lieu de 1554) | Non testé : la fusion automatique doit donner un rendu identique d'une position à l'autre, ce qui n'est pas garanti |
-| **P-05** | **Rotule sans respecter le point nodal** : optimiser une translation de la caméra (TrX, TrY, TrZ) dans *Hugin* | Délicat et déconseillé sur un panorama de cette taille. Pour un paysage lointain à 200 mm, la parallaxe est faible (analyse, non testée). Non essayée |
+| **P-01** | **Paramètres d'objectif depuis la base *lensfun*** (onglet *Objectif* de *Hugin*) pour le vignettage et la distorsion | Dépend de la présence de l'objectif dans la base<br>Repli quand Lightroom n'a pas de profil |
+| **P-02** | <ul><li>**Image de référence (*flat-field*)**</li><li>photographier une surface uniforme</li><li>avec le même objectif, la même focale et la même ouverture (f/10)</li><li>puis la donner à *Hugin*</li></ul> | Bonne méthode si l'on refait des panoramas avec cet objectif<br>Non essayée |
+| **P-03** | **Piles automatiques de Lightroom** (*Photo → Piles → Mettre en pile automatiquement par heure de prise de vue*, intervalle de 1 à 2 s) pour isoler la vue centrée quand la prise de vue est moins rigoureuse | <ul><li>La séparation temporelle est **mesurée** (rafales à 0,09-0,13 s ; positions séparées d'au moins 3,9 s)</li><li>le comportement d'une pile repliée à l'export est **à confirmer** sur un petit échantillon</li></ul> |
+| **P-04** | **Fusion HDR dans Lightroom par position**, puis assemblage de 222 images HDR (au lieu de 1554) | Non testé<br>la fusion automatique doit donner un rendu identique d'une position à l'autre, ce qui n'est pas garanti |
+| **P-05** | **Rotule sans respecter le point nodal**<br>optimiser une translation de la caméra (TrX, TrY, TrZ) dans *Hugin* | <ul><li>Délicat et déconseillé sur un panorama de cette taille</li><li>Pour un paysage lointain à 200 mm, la parallaxe est faible (analyse, non testée)</li><li>Non essayée</li></ul> |
 | **P-06** | **Grille numérotée autrement que dans l'ordre de prise de vue**, ou sens de rotation différent | Aucune étape du guide n'a été éprouvée sur autre chose qu'une grille numérotée dans l'ordre, de droite à gauche |
-| **P-07** | **Garder la vue centrée à 45 056 px** (`complet.tif`, qui s'ouvre dans *Lightroom*, M-05) comme support de retouche ou comme niveau intermédiaire entre le HDR (20 000 px) et la pleine résolution (90 112 px) | Idées, rien d'essayé. Une retouche faite sur ce rendu ne se reporte pas automatiquement sur la pleine résolution (voir T-09). Source non refaisable à l'identique (D-02) |
+| **P-07** | **Garder la vue centrée à 45 056 px** (`complet.tif`, qui s'ouvre dans *Lightroom*, M-05) comme support de retouche ou comme niveau intermédiaire entre le HDR (20 000 px) et la pleine résolution (90 112 px) | <ul><li>Idées, rien d'essayé</li><li>Une retouche faite sur ce rendu ne se reporte pas automatiquement sur la pleine résolution (voir T-09)</li><li>Source non refaisable à l'identique (D-02)</li></ul> |
 
 ---
 
@@ -632,14 +632,14 @@ Pour un écran 4K, le milieu géométrique de l'échelle de zoom tombe à √(3 
 
 | Fiche | Décision (date) | Raison | Pour revenir dessus |
 | :---: | --- | --- | --- |
-| **D-01** | **HDR figé à 20 000 px** (2026-10-09) | Déjà produit et validé dans Lightroom ; 45 056 px coûterait ≈ 20 h pour un gain jugé marginal ; la pleine résolution sert le détail. **Conséquence acceptée** : à 20 000 px, le HDR reste en dessous du panorama Lightroom du 50 mm (26 362 px) en définition ; le détail vient de la pleine résolution, pas du HDR | T-06, T-07 |
-| **D-02** | **Deux exports : L (2048 px, 1554 images) et H (pleine taille 5184 px, 222 vues centrées)** ; l'export 2560 est supprimé (2026-10-09) | L porte la géométrie du maître (erreur moyenne 0,32 px) et le HDR ; H ne sert que la pleine résolution. Le 2560 n'avait servi qu'aux rendus de mesure à 45 056 px | Refaire un export Lightroom |
+| **D-01** | **HDR figé à 20 000 px** (2026-10-09) | <ul><li>Déjà produit et validé dans Lightroom</li><li>45 056 px coûterait ≈ 20 h pour un gain jugé marginal</li><li>la pleine résolution sert le détail</li><li>**Conséquence acceptée**<br>à 20 000 px, le HDR reste en dessous du panorama Lightroom du 50 mm (26 362 px) en définition</li><li>le détail vient de la pleine résolution, pas du HDR</li></ul> | T-06, T-07 |
+| **D-02** | <ul><li>**Deux exports : L (2048 px, 1554 images) et H (pleine taille 5184 px, 222 vues centrées)**</li><li>l'export 2560 est supprimé (2026-10-09)</li></ul> | <ul><li>L porte la géométrie du maître (erreur moyenne 0,32 px) et le HDR</li><li>H ne sert que la pleine résolution</li><li>Le 2560 n'avait servi qu'aux rendus de mesure à 45 056 px</li></ul> | Refaire un export Lightroom |
 | **D-03** | **Deux pyramides superposées** plutôt qu'une seule (2026-10-09) | Une pyramide unique exigerait que le HDR soit exactement la moitié de la pleine résolution (45 056 px) | T-04 |
-| **D-04** | **Maître optimisé sur l'export L, transposé à chaque rendu** (`extraire_sous_projet` → `redimensionner_projet` → `deplacer_projet --images`) | La géométrie est en angles. Validé sur la fenêtre à 100 % (aucune dérive visible) et sur le rendu à 45 056 px | — |
-| **D-05** | **Ranger les images intermédiaires dès que le rendu est fait** ; les `.pto` restent (2026-10-09) | Une image reprojetée pèse autant que toute la toile ; un `.pto` est léger et garde l'historique | Option `-GarderIntermediaires` de ***rendre_projet.ps1*** |
-| **D-06** | **Plus de paliers intermédiaires** (36 758 px, 45 056 px) comme étapes du guide (2026-10-09) | Le HDR étant figé à 20 000 px, seules restent la fenêtre à 100 % et le rendu complet. Les mesures du palier à 45 056 px restent en M-01 comme justification | — |
-| **D-07** | **Fusion de la pleine résolution par *multiblend*, pas par *enblend*** (2026-10-09) | *enblend* 4.3 n'écrit que du TIFF classique (4 Go au plus) et plante vers PNG (M-06, M-07) ; or le panorama complet fait ≈ 13 Go. *multiblend* écrit du BigTIFF, en 109 s et 8,2 Go de RAM pour 20 images, sans couture visible aux jonctions contrôlées (M-07). Un rendu par blocs aurait demandé de gérer soi-même les jonctions (« rafistolage »). *Autopano Giga*, qui avait échoué avant le passage à *Hugin*, n'a pas été repris. Le reste de la chaîne (vue centrée à 45 056 px, HDR) **gardait *enblend*** avec `--blend-colorspace=IDENTITY` : **révisé par D-08** | Si la tonalité de *multiblend* au ciel est mauvaise (T-15 c) ou si la RAM dépasse 32 Go à 222 images (T-02) : rendu par blocs (T-15, piste 3) ou masques de couture d'*enblend* (piste 4) |
-| **D-08** | **Fusion par *multiblend* à toutes les échelles ; *enblend* réservé aux petits panoramas simples traités dans l'interface de *Hugin*** (2026-10-12) | À 222 images et 20 000 px (E0 complet), *multiblend* fusionne en **140 s** contre **1 572 s** (11 fois plus vite), avec 3,5 Go de RAM contre 4,0 Go. Qualité : ombres, ciel, bord extérieur, trou et raccords du ciel indiscernables ; *multiblend* **respecte la tonalité des images** (écart moyen de 0,16 % au centre des images, contre 0,84 % pour *enblend*) ; le halo de bordure de M-08 ne se reproduit pas ; retour dans *Lightroom* identique une fois le profil Adobe RGB recopié (M-12, issue #31). **Conséquences** : sortir de *Hugin* pour le rendu (*nona* `--ignore-exposure`, puis `fusionner_par_exposition.ps1` ou `rendre_projet.ps1 -Fusionneur multiblend`) ; recopier l'EXIF et le profil sur les calques HDR ; plus de `--blend-colorspace=IDENTITY` (sans objet pour *multiblend*) | Si une scène révèle des raccords visibles propres à *multiblend* (feuillage dense, trou), ou si la fusion HDR complète dans *Lightroom* diffère de celle d'*enblend* : revenir à *enblend* pour le cas concerné (le guide le garde comme voie simple) |
+| **D-04** | **Maître optimisé sur l'export L, transposé à chaque rendu** (`extraire_sous_projet` → `redimensionner_projet` → `deplacer_projet --images`) | La géométrie est en angles<br>Validé sur la fenêtre à 100 % (aucune dérive visible) et sur le rendu à 45 056 px | — |
+| **D-05** | <ul><li>**Ranger les images intermédiaires dès que le rendu est fait**</li><li>les `.pto` restent (2026-10-09)</li></ul> | <ul><li>Une image reprojetée pèse autant que toute la toile</li><li>un `.pto` est léger et garde l'historique</li></ul> | Option `-GarderIntermediaires` de ***rendre_projet.ps1*** |
+| **D-06** | **Plus de paliers intermédiaires** (36 758 px, 45 056 px) comme étapes du guide (2026-10-09) | Le HDR étant figé à 20 000 px, seules restent la fenêtre à 100 % et le rendu complet<br>Les mesures du palier à 45 056 px restent en M-01 comme justification | — |
+| **D-07** | **Fusion de la pleine résolution par *multiblend*, pas par *enblend*** (2026-10-09) | <ul><li>*enblend* 4.3 n'écrit que du TIFF classique (4 Go au plus) et plante vers PNG (M-06, M-07)</li><li>or le panorama complet fait ≈ 13 Go</li><li>*multiblend* écrit du BigTIFF, en 109 s et 8,2 Go de RAM pour 20 images, sans couture visible aux jonctions contrôlées (M-07)</li><li>Un rendu par blocs aurait demandé de gérer soi-même les jonctions (« rafistolage »)</li><li>*Autopano Giga*, qui avait échoué avant le passage à *Hugin*, n'a pas été repris</li><li>Le reste de la chaîne (vue centrée à 45 056 px, HDR) **gardait *enblend*** avec `--blend-colorspace=IDENTITY`<br>**révisé par D-08**</li></ul> | Si la tonalité de *multiblend* au ciel est mauvaise (T-15 c) ou si la RAM dépasse 32 Go à 222 images (T-02)<br>rendu par blocs (T-15, piste 3) ou masques de couture d'*enblend* (piste 4) |
+| **D-08** | <ul><li>**Fusion par *multiblend* à toutes les échelles**</li><li><b>*enblend* réservé aux petits panoramas simples traités dans l'interface de *Hugin*</b> (2026-10-12)</li></ul> | <ul><li>À 222 images et 20 000 px (E0 complet), *multiblend* fusionne en **140 s** contre **1 572 s** (11 fois plus vite), avec 3,5 Go de RAM contre 4,0 Go</li><li>Qualité<br>ombres, ciel, bord extérieur, trou et raccords du ciel indiscernables</li><li>*multiblend* **respecte la tonalité des images** (écart moyen de 0,16 % au centre des images, contre 0,84 % pour *enblend*)</li><li>le halo de bordure de M-08 ne se reproduit pas</li><li>retour dans *Lightroom* identique une fois le profil Adobe RGB recopié (M-12, issue #31)</li><li>**Conséquences**</li><li>sortir de *Hugin* pour le rendu (*nona* `--ignore-exposure`, puis `fusionner_par_exposition.ps1` ou `rendre_projet.ps1 -Fusionneur multiblend`)</li><li>recopier l'EXIF et le profil sur les calques HDR</li><li>plus de `--blend-colorspace=IDENTITY` (sans objet pour *multiblend*)</li></ul> | Si une scène révèle des raccords visibles propres à *multiblend* (feuillage dense, trou), ou si la fusion HDR complète dans *Lightroom* diffère de celle d'*enblend*<br>revenir à *enblend* pour le cas concerné (le guide le garde comme voie simple) |
 
 ---
 
@@ -666,7 +666,7 @@ Passages qui figuraient dans le [guide](../../docs/GUIDE.md) et qui relèvent de
 
 | Option | Avantage | Inconvénient |
 | --- | --- | --- |
-| Export JPEG 8 bits | Très léger (environ 1 Mo par image) | Perte de précision dans les ombres, pénalisante pour la fusion HDR. Acceptable **pour la validation de la vue centrée seulement** |
+| Export JPEG 8 bits | Très léger (environ 1 Mo par image) | Perte de précision dans les ombres, pénalisante pour la fusion HDR<br>Acceptable **pour la validation de la vue centrée seulement** |
 | Laisser ***Hugin*** lire les RAW | Pas d'export | Développement automatique non maîtrisé, différent de celui de Lightroom |
 
 ### J-03 — Tests du script verifier_ordre.py sur séries synthétiques
@@ -726,13 +726,13 @@ Les derniers défauts de la vue centrée sont des **limites de prise de vue** : 
 | Opération | Taille | Durée |
 | --- | --- | --- |
 | Ouverture de `pano_HDR_opt4.pto` dans *Hugin* | 1554 images | *non chronométrée* (très lente) |
-| Assemblage des 7 calques (nona + enblend) | 5000 px de large | **22 min** : *nona* ≈ 6-7 min (1554 images reprojetées, environ 3,7 par seconde), puis *enblend* ≈ 15 min (7 calques) |
-| Espace temporaire pendant le rendu | 5000 px de large | ≈ 0,6 Go (1554 intermédiaires de 0,5 Mo) ; les 7 fichiers finaux pèsent 37 à 42 Mo chacun |
-| Reprojection *nona* des 1554 images | 20 000 px de large | **69 min** (11:39 → 12:48), soit 13 images par minute : seulement ×10,6 par rapport à 5000 px, alors que les surfaces sont ×16 |
+| Assemblage des 7 calques (nona + enblend) | 5000 px de large | <ul><li>**22 min**</li><li>*nona* ≈ 6-7 min (1554 images reprojetées, environ 3,7 par seconde)</li><li>*enblend* ≈ 15 min (7 calques)</li></ul> |
+| Espace temporaire pendant le rendu | 5000 px de large | <ul><li>≈ 0,6 Go (1554 intermédiaires de 0,5 Mo)</li><li>les 7 fichiers finaux pèsent 37 à 42 Mo chacun</li></ul> |
+| Reprojection *nona* des 1554 images | 20 000 px de large | <ul><li>**69 min** (11:39 → 12:48)</li><li>soit 13 images par minute</li><li>seulement ×10,6 par rapport à 5000 px, alors que les surfaces sont ×16</li></ul> |
 | Intermédiaires *nona* | 20 000 px de large | **12,1 Go** (8,0 Mo en moyenne), contre 10 Go projetés |
-| Fusion *enblend*, **premier calque** | 20 000 px de large | **27 min** (12:48 → 13:15), fichier de 652 Mo, RAM d'*enblend* de 1 à 2 Go : ×12,9 par rapport aux ≈ 2 min par calque à 5000 px (surface ×16) |
-| Fusion *enblend*, 7 calques | 20 000 px de large | **3 h 52** (12:48 → 16:40), soit ≈ 33 min par calque en moyenne : les trois premiers ont pris 27 min chacun, les suivants plus (on ne le sait pas précisément : *Hugin* réécrit les 7 fichiers à la toute fin) |
-| **Rendu complet des 7 calques** | 20 000 px de large | **≈ 5 h** (≈ 11:38 → 16:40) : *nona* 1 h 09 + *enblend* 3 h 52. Fichiers finaux : 557 à 652 Mo chacun, **4,2 Go** pour les 7. Aucun intermédiaire restant |
+| Fusion *enblend*, **premier calque** | 20 000 px de large | <ul><li>**27 min** (12:48 → 13:15)</li><li>fichier de 652 Mo</li><li>RAM d'*enblend* de 1 à 2 Go</li><li>×12,9 par rapport aux ≈ 2 min par calque à 5000 px (surface ×16)</li></ul> |
+| Fusion *enblend*, 7 calques | 20 000 px de large | <ul><li>**3 h 52** (12:48 → 16:40), soit ≈ 33 min par calque en moyenne</li><li>les trois premiers ont pris 27 min chacun, les suivants plus (on ne le sait pas précisément : *Hugin* réécrit les 7 fichiers à la toute fin)</li></ul> |
+| **Rendu complet des 7 calques** | 20 000 px de large | <ul><li>**≈ 5 h** (≈ 11:38 → 16:40)</li><li>*nona* 1 h 09 + *enblend* 3 h 52</li><li>Fichiers finaux<br>557 à 652 Mo chacun, **4,2 Go** pour les 7</li><li>Aucun intermédiaire restant</li></ul> |
 | Assemblage de la vue centrée seule (222 images) | 6000 px de large | *quelques minutes (non chronométré)* |
 
 ### J-08 — Résultats des tests de rendu des calques HDR à 5000 px
@@ -745,9 +745,9 @@ Les derniers défauts de la vue centrée sont des **limites de prise de vue** : 
 
 | Point | Constat |
 | --- | --- |
-| Nombre de fichiers | **7** : `pano_HDR_opt_exposure_0000.tif` à `0006.tif` (option Calques seule cochée, préfixe court : plus d'erreur 206) |
-| Ordre | L'ordre suit les piles, pas la luminosité : 0000 = normale, 0001 à 0003 = −3, −2, −1 EV, 0004 à 0006 = +1, +2, +3 EV (vérifié par la luminosité moyenne) |
-| Format | TIFF 16 bits **RGBA** (canal alpha pour les zones sans image), profil Adobe RGB conservé, 40 à 45 Mo chacun à 5000 px |
+| Nombre de fichiers | **7**<br>`pano_HDR_opt_exposure_0000.tif` à `0006.tif` (option Calques seule cochée, préfixe court : plus d'erreur 206) |
+| Ordre | <ul><li>L'ordre suit les piles, pas la luminosité</li><li>0000 = normale</li><li>0001 à 0003 = −3, −2, −1 EV</li><li>0004 à 0006 = +1, +2, +3 EV (vérifié par la luminosité moyenne)</li></ul> |
+| Format | <ul><li>TIFF 16 bits **RGBA** (canal alpha pour les zones sans image)</li><li>profil Adobe RGB conservé</li><li>40 à 45 Mo chacun à 5000 px</li></ul> |
 | EXIF d'exposition | **Absents** (temps de pose, ouverture, ISO, compensation) |
 | Lightroom | **La fusion HDR fonctionne** après recopie de l'EXIF d'exposition (voir ci-dessous) |
 
@@ -785,22 +785,22 @@ Résultat vérifié (maître optimisé sur l'export 2048) : 12 images, 547 point
 
 | Mesure | Valeur |
 | --- | --- |
-| ***nona*** | **605 s** (≈ 50 s par image) ; **13,7 Go de RAM** au pic, parce que chaque image reprojetée est écrite sur **toute la toile** (2 Gpx), pas rognée ; 12 fichiers intermédiaires, 2,0 Go en LZW |
-| ***enblend*** | **272 s** (≈ 23 s par image) ; message `unable to run Dijkstra optimizer` sans gravité |
+| ***nona*** | <ul><li>**605 s** (≈ 50 s par image)</li><li>**13,7 Go de RAM** au pic, parce que chaque image reprojetée est écrite sur **toute la toile** (2 Gpx), pas rognée</li><li>12 fichiers intermédiaires, 2,0 Go en LZW</li></ul> |
+| ***enblend*** | <ul><li>**272 s** (≈ 23 s par image)</li><li>message `unable to run Dijkstra optimizer` sans gravité</li></ul> |
 | Total | **14 min 40 s** |
-| Netteté à 100 % | Détail de l'herbe, du tas de bois et de la bâche lisibles pixel par pixel (zone inspectée sur le fichier) |
-| Trou 135-136 | **Bande noire de 144 px** à 100 % (colonnes 8 689 à 8 832 de la zone), soit environ 0,30° au pas de 487 px/° : exactement le recouvrement négatif mesuré dans le maître (−0,30°). **La géométrie du maître se transpose donc à la pleine taille sans dérive visible** ; les haies de part et d'autre du trou se prolongent, décalées de la largeur du trou |
+| Netteté à 100 % | <ul><li>Détail de l'herbe</li><li>du tas de bois</li><li>de la bâche lisibles pixel par pixel (zone inspectée sur le fichier)</li></ul> |
+| Trou 135-136 | <ul><li>**Bande noire de 144 px** à 100 % (colonnes 8 689 à 8 832 de la zone), soit environ 0,30° au pas de 487 px/°<br>exactement le recouvrement négatif mesuré dans le maître (−0,30°)</li><li>**La géométrie du maître se transpose donc à la pleine taille sans dérive visible**</li><li>les haies de part et d'autre du trou se prolongent, décalées de la largeur du trou</li></ul> |
 | Autres raccords de la fenêtre | Aucun défaut visible à l'échelle de l'aperçu (toile de 16 300 × 8 100 px réduite à 1 800 px) |
 
 **Second rendu, 2026-10-17** : mêmes 12 images, mais exportées depuis les **copies virtuelles retouchées** (étape **6A.1** : rendu propre et nettoyage des poussières), renommées par ***renommer_par_raw.py***, rendues avec ***nona*** puis ***multiblend*** :
 
 | Mesure | Valeur |
 | --- | --- |
-| ***nona*** | **609 s** (≈ 51 s par image) ; **13,4 Go de RAM** au pic ; 12 intermédiaires, 1,76 Go |
-| ***multiblend*** | **68 s** ; **6,1 Go de RAM** au pic ; code de sortie 0 ; intermédiaires supprimés |
-| Total | **≈ 11 min 20 s** (contre 14 min 40 s avec *enblend*) ; panorama de 16 190 × 7 993 px (zone occupée), 907 Mo |
-| Trou 135-136 | Bande vide de **140 à 145 px** dans le canal alpha (lignes y = 1 200 et 2 000 de la rangée L3) : identique au premier rendu ; **le projet maître reste valable** avec un nouvel export H |
-| Netteté, raccords | Herbe et feuillage lisibles à 100 % (deux extraits de 1 200 × 800 px) ; aucune couture ni saut de tonalité sur l'aperçu à 1 800 px |
+| ***nona*** | <ul><li>**609 s** (≈ 51 s par image)</li><li>**13,4 Go de RAM** au pic</li><li>12 intermédiaires, 1,76 Go</li></ul> |
+| ***multiblend*** | <ul><li>**68 s**</li><li>**6,1 Go de RAM** au pic</li><li>code de sortie 0</li><li>intermédiaires supprimés</li></ul> |
+| Total | <ul><li>**≈ 11 min 20 s** (contre 14 min 40 s avec *enblend*)</li><li>panorama de 16 190 × 7 993 px (zone occupée), 907 Mo</li></ul> |
+| Trou 135-136 | <ul><li>Bande vide de **140 à 145 px** dans le canal alpha (lignes y = 1 200 et 2 000 de la rangée L3)</li><li>identique au premier rendu</li><li>**le projet maître reste valable** avec un nouvel export H</li></ul> |
+| Netteté, raccords | <ul><li>Herbe et feuillage lisibles à 100 % (deux extraits de 1 200 × 800 px)</li><li>aucune couture ni saut de tonalité sur l'aperçu à 1 800 px</li></ul> |
 
 ### J-14 — Affichage : ce qui a été vérifié sur ce panorama
 
@@ -830,13 +830,13 @@ Il sera intégré à un plugin ***Piwigo*** à développer (issue de suivi du d�
 
 | **Statut** | ✅ Validé : géométrie transposée sans dérive à la pleine taille (fenêtre à 100 %) |
 
-| **Statut** | ✅ Assemblage validé. Les finitions (**5D**) décrivent la retouche à faire ; elle n'a pas été menée à pleine résolution ([T-09](TESTS-ANALYSES.md#t-09--finitions-à-pleine-résolution)) |
+| **Statut** | <ul><li>✅ Assemblage validé</li><li>Les finitions (**5D**) décrivent la retouche à faire</li><li>elle n'a pas été menée à pleine résolution ([T-09](TESTS-ANALYSES.md#t-09--finitions-à-pleine-résolution))</li></ul> |
 
-| **Statut** | ✅ Validé à 20 000 px : 7 calques, fusion HDR dans *Lightroom* sans défaut constaté |
+| **Statut** | ✅ Validé à 20 000 px<br>7 calques, fusion HDR dans *Lightroom* sans défaut constaté |
 
-| **Statut** | ✅ **Fait** sur ce panorama : la géométrie du maître se transpose à la pleine taille (fenêtre à 100 %, **6B**), et le rendu complet des 222 images prend **≈ 3 h 35** (≈ 3 h 15 pour *nona*, 21 min pour *multiblend*) avec **13,5 Go de RAM** pour *nona*, **4 Go** pour *multiblend* grâce à un cache disque de ≈ 33 Go. **Reste** : les finitions (trous, bord supérieur, poussières) ; le tuilage est décrit en [Phase 7](../../docs/GUIDE.md#-phase-7--tuiler) |
+| **Statut** | <ul><li>✅ **Fait** sur ce panorama</li><li>la géométrie du maître se transpose à la pleine taille (fenêtre à 100 %, **6B**)</li><li>le rendu complet des 222 images prend **≈ 3 h 35** (≈ 3 h 15 pour *nona*, 21 min pour *multiblend*) avec **13,5 Go de RAM** pour *nona*, **4 Go** pour *multiblend* grâce à un cache disque de ≈ 33 Go</li><li>**Reste**<br>les finitions (trous, bord supérieur, poussières)</li><li>le tuilage est décrit en [Phase 7](../../docs/GUIDE.md#-phase-7--tuiler)</li></ul> |
 
-| **Statut** | 🔬 **En cours.** Validé : le tuilage du panorama complet en **WebP** (1,80 Gpx : ≈ 1 min 50, 9 311 tuiles, 239 Mo) et l'affichage d'une pyramide de 507 Mpx. La pyramide complète s'ouvre dans la page autonome et charge ses tuiles en moins d'une seconde (essai local). **Validé sur ce panorama** : la superposition du HDR et de la pleine résolution (alignement à ±1 px HDR), le raccord de tonalité (jugé très bon à l'œil) et la **fluidité sur un hébergement réel** (jugée parfaite par l'utilisateur). **À démontrer** : les autres navigateurs et la charge à plusieurs visiteurs, puis l'intégration au plugin *Piwigo* (voir le [carnet](TESTS-ANALYSES.md)) |
+| **Statut** | <ul><li>🔬 **En cours.**</li><li>Validé<br>le tuilage du panorama complet en **WebP** (1,80 Gpx : ≈ 1 min 50, 9 311 tuiles, 239 Mo) et l'affichage d'une pyramide de 507 Mpx</li><li>La pyramide complète s'ouvre dans la page autonome et charge ses tuiles en moins d'une seconde (essai local)</li><li>**Validé sur ce panorama**<br>la superposition du HDR et de la pleine résolution (alignement à ±1 px HDR), le raccord de tonalité (jugé très bon à l'œil) et la **fluidité sur un hébergement réel** (jugée parfaite par l'utilisateur)</li><li>**À démontrer**<br>les autres navigateurs et la charge à plusieurs visiteurs, puis l'intégration au plugin *Piwigo* (voir le [carnet](TESTS-ANALYSES.md))</li></ul> |
 
 ### J-18 — Préréglages Lightroom : état au 2026-10-11
 

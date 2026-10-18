@@ -30,7 +30,7 @@ flowchart LR
 | Vous voulez… | Ouvrez |
 | --- | --- |
 | **Comprendre et refaire** la méthode, phase par phase, sans les chiffres d'un panorama précis | [`docs/GUIDE.md`](docs/GUIDE.md) |
-| **Voir ce que ça donne en vrai** : 222 positions × 7 expositions, 200 mm, durées, RAM, tailles, incidents | [`etudes-de-cas/2026-06-19-wattenberg-200mm/ETUDE-DE-CAS.md`](etudes-de-cas/2026-06-19-wattenberg-200mm/ETUDE-DE-CAS.md) |
+| **Voir ce que ça donne en vrai** :<ul><li>222 positions × 7 expositions</li><li>200 mm</li><li>Durées</li><li>RAM</li><li>Tailles</li><li>Incidents</li></ul> | [`etudes-de-cas/2026-06-19-wattenberg-200mm/ETUDE-DE-CAS.md`](etudes-de-cas/2026-06-19-wattenberg-200mm/ETUDE-DE-CAS.md) |
 | Les **mesures, hypothèses et décisions** de cette étude de cas | [`…/TESTS-ANALYSES.md`](etudes-de-cas/2026-06-19-wattenberg-200mm/TESTS-ANALYSES.md) |
 | **Quel script pour quelle étape**, et sa portée (générique ou paramétré par la grille) | [`scripts/INDEX.md`](scripts/INDEX.md) |
 
@@ -102,8 +102,8 @@ Libre, avec citation de l'auteur et de la source :
 
 | Contenu | Licence | En clair |
 | --- | --- | --- |
-| Scripts (`scripts/`, `tests/`) | [MIT](LICENSE) | Utilisez, modifiez, redistribuez ; conservez la mention de copyright |
-| Documentation (`docs/`, `etudes-de-cas/`, ce README) | [CC BY 4.0](LICENSE-docs) | Partagez, adaptez ; créditez Julien Moreau et pointez vers ce dépôt |
+| Scripts (`scripts/`, `tests/`) | [MIT](LICENSE) | Utilisez, modifiez, redistribuez<br>conservez la mention de copyright |
+| Documentation (`docs/`, `etudes-de-cas/`, ce README) | [CC BY 4.0](LICENSE-docs) | Partagez, adaptez<br>créditez Julien Moreau et pointez vers ce dépôt |
 
 ---
 

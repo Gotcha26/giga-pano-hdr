@@ -54,10 +54,10 @@ Quatre règles de conduite en découlent :
 
 | Règle | Ce qu'elle impose | Où elle s'applique |
 | --- | --- | --- |
-| **Valider en petit avant de calculer en grand** | Aucun calcul de plusieurs heures sans le même calcul réussi à plus petite échelle | Phases 4 à 6 (rendus de test, fenêtre à 100 %) |
-| **Une seule géométrie, plusieurs rendus** | Le projet « maître » est établi une fois sur les vues centrées ; la vue centrée, le HDR et la pleine résolution en sont dérivés | Phases 3 à 6 |
-| **Ranger dès que c'est fait** | Une image intermédiaire dont le rendu est terminé et vérifié quitte le dossier : elle pèse autant que toute la toile. Les projets `.pto`, légers, restent | Chaque rendu |
-| **Chaque outil fait ce qu'il fait le mieux** | ***Lightroom*** développe et fusionne le HDR ; ***Hugin*** établit la géométrie ; ***nona*** reprojette ; ***multiblend*** fusionne ; de petits scripts mesurent, corrigent et enchaînent ; ***libvips*** tuile | Tout le guide |
+| **Valider en petit avant de calculer en grand** | <ul><li>Aucun calcul de plusieurs heures sans le même calcul réussi à plus petite échelle</li></ul> | Phases 4 à 6 (rendus de test, fenêtre à 100 %) |
+| **Une seule géométrie, plusieurs rendus** | <ul><li>Le projet « maître » est établi une fois sur les vues centrées</li><li>La vue centrée, le HDR et la pleine résolution en sont dérivés</li></ul> | Phases 3 à 6 |
+| **Ranger dès que c'est fait** | <ul><li>Une image intermédiaire dont le rendu est terminé et vérifié quitte le dossier : elle pèse autant que toute la toile</li><li>Les projets `.pto`, légers, restent</li></ul> | Chaque rendu |
+| **Chaque outil fait ce qu'il fait le mieux** | <ul><li>***Lightroom*** développe et fusionne le HDR</li><li>***Hugin*** établit la géométrie</li><li>***nona*** reprojette</li><li>***multiblend*** fusionne</li><li>De petits scripts mesurent, corrigent et enchaînent</li><li>***libvips*** tuile</li></ul> | Tout le guide |
 
 ### Les bonnes questions
 
@@ -67,12 +67,12 @@ Quatre règles de conduite en découlent :
 | Pourquoi ne pas laisser l'assistant d'***Hugin*** faire ? | Sur des centaines d'images avec de grandes zones de ciel, il compare des dizaines de milliers de paires inutiles, trouve de faux points dans les feuillages et rien dans le ciel : lent, et il diverge. | [Phase 3](#-phase-3--établir-la-géométrie) |
 | Pourquoi partir d'une grille théorique ? | Les images sans point de contrôle (ciel) n'ont que ça pour être placées, et elle permet de **détecter les faux points** : un bon point tombe près de son homologue quand les images sont à leur place de grille. | [**3A**](#3a--générer-le-projet-de-grille) à **3D** |
 | Pourquoi traiter d'abord la vue centrée, seule ? | Un défaut de prise de vue (trou, recouvrement faible) se voit aussi bien sur les vues centrées que sur toutes les expositions, mais coûte N fois moins cher à découvrir. | [Phase 4](#-phase-4--assembler-la-vue-centrée) |
-| Pourquoi un HDR *et* une pleine résolution ? | La fusion HDR se fait dans ***Lightroom***, plafonné à 512 Mpx, alors que la pleine résolution en fait plusieurs milliers et n'existe qu'en une exposition. On produit **deux panoramas** superposables. | Phases [5](#-phase-5--le-hdr), [6](#-phase-6--pleine-résolution) et [7](#-phase-7--tuiler) |
-| Pourquoi des rendus de test avant le rendu complet ? | Se tromper coûte une nuit de calcul. Un rendu de quelques milliers de pixels révèle les défauts en minutes ; une fenêtre de quelques positions vérifie le HDR et la pleine résolution avant le gros calcul. | Phases 4 à 6 |
+| Pourquoi un HDR *et* une pleine résolution ? | <ul><li>La fusion HDR se fait dans ***Lightroom***, plafonné à 512 Mpx, alors que la pleine résolution en fait plusieurs milliers et n'existe qu'en une exposition</li><li>On produit **deux panoramas** superposables</li></ul> | Phases [5](#-phase-5--le-hdr), [6](#-phase-6--pleine-résolution) et [7](#-phase-7--tuiler) |
+| Pourquoi des rendus de test avant le rendu complet ? | <ul><li>Se tromper coûte une nuit de calcul</li><li>Un rendu de quelques milliers de pixels révèle les défauts en minutes ; une fenêtre de quelques positions vérifie le HDR et la pleine résolution avant le gros calcul</li></ul> | Phases 4 à 6 |
 | Pourquoi développer dans ***Lightroom***, une fois, identiquement ? | ***Hugin*** ne développe pas correctement les RAW, et le moindre réglage différent d'une image à l'autre devient un raccord visible. | [Phase 2](#-phase-2--développer-et-exporter) |
-| Pourquoi deux exports ? | Exporter plus grand que nécessaire remplit le disque, et réduire fortement pendant l'assemblage risque du crénelage (***nona*** n'a pas d'anti-crénelage). Un export **réduit** (toutes les expositions) sert à la géométrie et au HDR ; un export **pleine taille** (les vues centrées) au zoom à 100 %. | [**2D**](#2d--exporter-l-et-h) |
+| Pourquoi deux exports ? | <ul><li>Exporter plus grand que nécessaire remplit le disque, et réduire fortement pendant l'assemblage risque du crénelage (***nona*** n'a pas d'anti-crénelage)</li><li>Un export **réduit** (toutes les expositions) sert à la géométrie et au HDR</li><li>Un export **pleine taille** (les vues centrées) au zoom à 100 %</li></ul> | [**2D**](#2d--exporter-l-et-h) |
 | Pourquoi des tuiles ? | Un fichier de plusieurs Go ne se montre pas tel quel : une pyramide de tuiles ne charge que ce qui est à l'écran, au bon niveau de zoom. | [Phase 7](#-phase-7--tuiler) |
-| Et les trous qu'on ne peut pas boucher ? | On les détecte tôt ([**3H**](#3h--détecter-les-trous)) et on les retouche à la fin ([**5D**](#5d--finitions-sur-le-hdr)) ; la vraie parade est un recouvrement d'au moins 15 %. | Phases 1, 3 et 5 |
+| Et les trous qu'on ne peut pas boucher ? | <ul><li>On les détecte tôt ([**3H**](#3h--détecter-les-trous)) et on les retouche à la fin ([**5D**](#5d--finitions-sur-le-hdr))</li><li>La vraie parade est un recouvrement d'au moins 15 %</li></ul> | Phases 1, 3 et 5 |
 
 ---
 
@@ -92,14 +92,14 @@ flowchart LR
 
 | Phase | Question à laquelle elle répond | Entrée → Sortie | Étapes |
 | :---: | --- | --- | :---: |
-| **[0. Préparer le poste et l'appareil](#-phase-0--préparer-le-poste-et-lappareil)** | De quoi a-t-on besoin avant de commencer ? | Un PC Windows et l'appareil → logiciels, préréglages, disques et capteur prêts | 0A – 0E |
-| **[1. Prise de vue](#-phase-1--prise-de-vue)** | Qu'est-ce qui conditionne tout le reste ? | Une grille → L × C × N RAW dans l'ordre | 1A – 1B |
-| **[2. Développer et exporter](#-phase-2--développer-et-exporter)** | Comment obtenir des images identiques et nommées ? | RAW → TIFF `L{ligne}_C{colonne}_E{expo}` | 2A – 2F |
-| **[3. Établir la géométrie](#-phase-3--établir-la-géométrie)** | Où est chaque image, avec certitude ? | TIFF → **projet maître** (vues centrées optimisées) | 3A – 3H |
-| **[4. Assembler la vue centrée](#-phase-4--assembler-la-vue-centrée)** | Le maître donne-t-il un panorama propre ? | Maître → panorama de contrôle, trous repérés | 4A – 4B |
-| **[5. Le HDR](#-phase-5--le-hdr)** | Comment étendre aux N expositions ? | Maître → N calques alignés → fusion HDR, finitions | 5A – 5D |
-| **[6. Pleine résolution](#-phase-6--pleine-résolution)** | Comment atteindre 100 % des pixels sans se tromper ? | Maître + export pleine taille → panorama géant (BigTIFF) | 6A – 6C |
-| **[7. Tuiler](#-phase-7--tuiler)** | Comment le rendre affichable à n'importe quel zoom ? | Panoramas → pyramides de tuiles → contrôle local → (cadrage) | 7A – 7C |
+| **[0. Préparer le poste et l'appareil](#-phase-0--préparer-le-poste-et-lappareil)** | De quoi a-t-on besoin avant de commencer ? | Un PC Windows et l'appareil<br>→ logiciels, préréglages, disques et capteur prêts | 0A – 0E |
+| **[1. Prise de vue](#-phase-1--prise-de-vue)** | Qu'est-ce qui conditionne tout le reste ? | Une grille<br>→ L × C × N RAW dans l'ordre | 1A – 1B |
+| **[2. Développer et exporter](#-phase-2--développer-et-exporter)** | Comment obtenir des images identiques et nommées ? | RAW<br>→ TIFF `L{ligne}_C{colonne}_E{expo}` | 2A – 2F |
+| **[3. Établir la géométrie](#-phase-3--établir-la-géométrie)** | Où est chaque image, avec certitude ? | TIFF<br>→ **projet maître** (vues centrées optimisées) | 3A – 3H |
+| **[4. Assembler la vue centrée](#-phase-4--assembler-la-vue-centrée)** | Le maître donne-t-il un panorama propre ? | Maître<br>→ panorama de contrôle, trous repérés | 4A – 4B |
+| **[5. Le HDR](#-phase-5--le-hdr)** | Comment étendre aux N expositions ? | Maître<br>→ N calques alignés<br>→ fusion HDR, finitions | 5A – 5D |
+| **[6. Pleine résolution](#-phase-6--pleine-résolution)** | Comment atteindre 100 % des pixels sans se tromper ? | Maître + export pleine taille<br>→ panorama géant (BigTIFF) | 6A – 6C |
+| **[7. Tuiler](#-phase-7--tuiler)** | Comment le rendre affichable à n'importe quel zoom ? | <ul><li>Panoramas</li><li>Pyramides de tuiles</li><li>Contrôle local</li><li>(Cadrage)</li></ul> | 7A – 7C |
 
 > **Numérotation.** Chaque geste porte un identifiant : le chiffre de sa phase, puis une lettre qui repart à A dans chaque phase (**3E** : cinquième étape de la Phase 3) ; une sous-étape ajoute un point et un chiffre (**3C.2**). Les scripts, l'index et l'étude de cas citent les mêmes identifiants.
 
@@ -115,20 +115,20 @@ Pressé ? La séquence complète des commandes est dans l'[aide-mémoire](#aide-
 
 | | |
 | --- | --- |
-| **Entrée** | Un PC Windows, ***Lightroom Classic***, l'appareil et l'objectif de la prise de vue |
-| **Sortie** | Logiciels installés et vérifiés, préréglages en place, dossiers de travail créés, place libre, capteur propre et sa carte des poussières |
-| **Étapes** | **0A** (installer), **0B** (vérifier), **0C** (préréglages), **0D** (disques et emplacements), **0E** (capteur) |
+| **Entrée** | <ul><li>Un PC Windows</li><li>***Lightroom Classic***</li><li>L'appareil et l'objectif de la prise de vue</li></ul> |
+| **Sortie** | <ul><li>Logiciels installés et vérifiés</li><li>Préréglages en place</li><li>Dossiers de travail créés, place libre</li><li>Capteur propre et sa carte des poussières</li></ul> |
+| **Étapes** | <ul><li>**0A** (installer)</li><li>**0B** (vérifier)</li><li>**0C** (préréglages)</li><li>**0D** (disques et emplacements)</li><li>**0E** (capteur)</li></ul> |
 
 ### 0A — Installer les logiciels
 
 | Logiciel | Rôle | Où |
 | --- | --- | --- |
-| ***Hugin*** | Géométrie (***CPFind***, optimiseur, ***cpclean***) et reprojection (***nona***) ; ***enblend*** pour la variante simple de fusion | <https://hugin.sourceforge.io/download/> (installeur Windows 64 bits) |
-| ***multiblend*** | Fusion des images reprojetées, **à toutes les échelles** : bien plus rapide qu'***enblend***, moins de RAM, et BigTIFF au-delà de 4 Go. Un exécutable seul, à installer **hors d'un dossier temporaire** (par exemple `D:\Outils\multiblend\`) | <http://horman.net/multiblend/> |
-| ***Python*** 3 | Tous les scripts du guide. Les scripts de géométrie n'utilisent que la bibliothèque standard ; les scripts de **mesure sur images** demandent **Pillow** | <https://www.python.org/downloads/windows/> ; cocher *Add python.exe to PATH* ; puis `pip install pillow` |
-| ***ExifTool*** | Lecture et copie des métadonnées d'exposition | <https://exiftool.org/> : renommer `exiftool(-k).exe` en `exiftool.exe`, le placer dans le `PATH` |
+| ***Hugin*** | <ul><li>Géométrie (***CPFind***, optimiseur, ***cpclean***) et reprojection (***nona***)</li><li>***enblend*** pour la variante simple de fusion</li></ul> | <https://hugin.sourceforge.io/download/><br>(installeur Windows 64 bits) |
+| ***multiblend*** | <ul><li>Fusion des images reprojetées, **à toutes les échelles** : bien plus rapide qu'***enblend***, moins de RAM, et BigTIFF au-delà de 4 Go</li><li>Un exécutable seul, à installer **hors d'un dossier temporaire** (par exemple `D:\Outils\multiblend\`)</li></ul> | <http://horman.net/multiblend/> |
+| ***Python*** 3 | <ul><li>Tous les scripts du guide</li><li>Les scripts de géométrie n'utilisent que la bibliothèque standard</li><li>Les scripts de **mesure sur images** demandent **Pillow**</li></ul> | <ul><li><https://www.python.org/downloads/windows/></li><li>Cocher *Add python.exe to PATH*</li><li>Puis `pip install pillow`</li></ul> |
+| ***ExifTool*** | Lecture et copie des métadonnées d'exposition | <https://exiftool.org/><br>Renommer `exiftool(-k).exe` en `exiftool.exe`, le placer dans le `PATH` |
 | ***Adobe Lightroom Classic*** | Développement des RAW, export, fusion HDR, finitions | Abonnement Adobe |
-| ***libvips*** | Conversion de couleur et découpe en tuiles (Phase 7), recadrage en flux | <https://github.com/libvips/build-win64-mxe/releases/latest> : archive `vips-dev-x64-all-*.zip`, dézippée dans un dossier **durable** (par exemple `D:\Outils\libvips`). Les scripts prennent le chemin de `vips.exe` en paramètre |
+| ***libvips*** | <ul><li>Conversion de couleur et découpe en tuiles (Phase 7)</li><li>Recadrage en flux</li></ul> | <ul><li><https://github.com/libvips/build-win64-mxe/releases/latest></li><li>Archive `vips-dev-x64-all-*.zip`, dézippée dans un dossier **durable** (par exemple `D:\Outils\libvips`)</li><li>Les scripts prennent le chemin de `vips.exe` en paramètre</li></ul> |
 | ***PowerShell*** | Les scripts `.ps1`, écrits sans caractères accentués pour tourner **aussi bien sous Windows PowerShell 5.1 que sous PowerShell 7** | Inclus dans Windows ; PowerShell 7 : <https://learn.microsoft.com/powershell/> |
 | ***ImageMagick*** | Facultatif : conversions ponctuelles de petites images | <https://imagemagick.org/> |
 
@@ -156,7 +156,7 @@ Trois préréglages, à créer une fois et à conserver dans un dépôt :
 
 | Préréglage | Type | Rôle |
 | --- | --- | --- |
-| Développement « PANO – *boîtier* + *objectif* – WB *valeur* » | `.xmp` (sous-dossier `Settings\`) | Correction de profil, aberrations chromatiques, balance des blancs fixe, profil couleur, réduction du bruit ([**2B**](#2b--appliquer-un-développement-identique)) |
+| Développement « PANO – *boîtier* + *objectif* – WB *valeur* » | `.xmp` (sous-dossier `Settings\`) | <ul><li>Correction de profil, aberrations chromatiques</li><li>Balance des blancs fixe, profil couleur, réduction du bruit</li></ul> ([**2B**](#2b--appliquer-un-développement-identique)) |
 | Export « PANO TIFF (H) E0 » | `.lrtemplate` (`Export Presets\User Presets\`) | Export H, pleine taille, vues centrées ([**2D**](#2d--exporter-l-et-h)) |
 | Export « PANO TIFF (L) HDR » | `.lrtemplate` | Export L, réduit, toutes les expositions ([**2D**](#2d--exporter-l-et-h)) |
 
@@ -174,7 +174,7 @@ Il garantit que la correction optique et la balance des blancs sont identiques p
 
 | Groupe | Contenu | Remarque |
 | --- | --- | --- |
-| **Corrections de l'objectif** | *Activer les corrections de profil* + *Supprimer les aberrations chromatiques* | Mode **Par défaut** ou **Auto** : le profil est retrouvé d'après les métadonnées. Un autre objectif demande son propre préréglage |
+| **Corrections de l'objectif** | <ul><li>*Activer les corrections de profil*</li><li>*Supprimer les aberrations chromatiques*</li></ul> | Mode **Par défaut** ou **Auto** :<br>le profil est retrouvé d'après les métadonnées.<br>Un autre objectif demande son propre préréglage |
 | **Balance des blancs** | Un réglage **fixe** (« Lumière du jour », ou une température et une teinte chiffrées) | Jamais « Auto ». Pour un panorama en pleine lumière, la même valeur partout |
 | Traitement | Profil couleur (ex. Adobe Color) | Le même partout |
 | Détails | Réduction du bruit | Identique partout |
@@ -188,9 +188,9 @@ Les **outils**, les **images** et les **projets** ne sont pas au même endroit, 
 | Variable | Contenu | Où | Dans le dépôt Git ? |
 | --- | --- | --- | :---: |
 | `$OUTILS` | les scripts `.py` / `.ps1` de ce dépôt | `…\giga-pano-hdr\scripts` | **oui** |
-| `$T` | le **dossier de travail** du panorama : exports Lightroom et projets. **Pas les RAW** : ils restent dans le catalogue Lightroom | `D:\Panoramas\<date>\<focale>` *(exemple)* | **non** (plusieurs dizaines de Go) |
+| `$T` | le **dossier de travail** du panorama : exports Lightroom et projets.<br>**Pas les RAW** : ils restent dans le catalogue Lightroom | `D:\Panoramas\<date>\<focale>` *(exemple)* | **non** (plusieurs dizaines de Go) |
 | `$P` | les projets ***Hugin***, **un sous-dossier par phase** | `$T\Assemblage-Hugin` | **non** |
-| `$H` | les **calques HDR et le DNG HDR**, seuls fichiers de ce guide que ***Lightroom*** référence. **Dans** le dossier des RAW du catalogue | `<dossier des RAW>\HDR` | **non** |
+| `$H` | les **calques HDR et le DNG HDR**, seuls fichiers de ce guide que ***Lightroom*** référence.<br>**Dans** le dossier des RAW du catalogue | `<dossier des RAW>\HDR` | **non** |
 
 L'export Lightroom (`$T\Export-TIFF-L\`) est l'**entrée**, jamais modifiée après le renommage ; tout ce que produisent les étapes suivantes va dans `$P`.
 
@@ -275,8 +275,8 @@ python deplacer_projet.py ancien\pano_grille_cp.pto "$P\3_grille\pano_grille_cp.
 | --- | --- |
 | **Entrée** | Un site, un trépied de niveau, une rotule, un appareil en tout manuel |
 | **Sortie** | L × C × N RAW dans l'ordre de la grille |
-| **Étapes** | **1A** (régler l'appareil), **1B** (respecter l'ordre de la séquence) |
-| **À retenir** | Tout en manuel · recouvrement ≥ 15 % partout · **l'ordre de la séquence** |
+| **Étapes** | <ul><li>**1A** (régler l'appareil)</li><li>**1B** (respecter l'ordre de la séquence)</li></ul> |
+| **À retenir** | <ul><li>Tout en manuel</li><li>Recouvrement ≥ 15 % partout</li><li>**L'ordre de la séquence**</li></ul> |
 
 ```
 Prise de vue ──► Ordre garanti ──► Rafale de N par position ──► L x C x N RAW
@@ -300,7 +300,7 @@ Rien ne change d'une image à l'autre :
 | Sensibilité | **Fixe**, la plus basse | Bruit minimal et constant |
 | Vitesse | Fixe pour la vue centrée ; la rafale d'expositions en dépend | Seule variable de l'exposition |
 | Mise au point | **Manuelle** | Un autofocus qui accroche différemment change l'échelle et la netteté |
-| Balance des blancs | **Fixe** (kelvins) | Un ciel à la teinte variable est le défaut le plus visible. Lightroom applique ensuite sa propre valeur fixe |
+| Balance des blancs | **Fixe** (kelvins) | Un ciel à la teinte variable est le défaut le plus visible.<br>Lightroom applique ensuite sa propre valeur fixe |
 | Format | RAW | Développement maîtrisé dans Lightroom |
 
 #### Ce qui n'est pas dans l'EXIF, mais qu'il faut respecter
@@ -347,8 +347,8 @@ Calcul du nom d'après le rang `R` (à partir de 1) : `position = (R − 1) ÷ N
 | --- | --- |
 | **Entrée** | Les RAW (Phase 1) |
 | **Sortie** | Des TIFF 16 bits, vérifiés, nommés `L{ligne}_C{colonne}_E{expo}.tif` |
-| **Étapes** | **2A** (sélectionner), **2B** (développer), **2C** (ne pas retoucher les originaux), **2D** (exporter), **2E** (vérifier), **2F** (renommer) |
-| **Outils** | ***Lightroom***, ***verifier_ordre.py***, ***controle_reglages_export.py***, ***ecart_paires.py***, ***renommer_pano.py***, ***renommer_par_raw.py*** |
+| **Étapes** | <ul><li>**2A** (sélectionner)</li><li>**2B** (développer)</li><li>**2C** (ne pas retoucher les originaux)</li><li>**2D** (exporter)</li><li>**2E** (vérifier)</li><li>**2F** (renommer)</li></ul> |
+| **Outils** | <ul><li>***Lightroom***</li><li>***verifier_ordre.py***</li><li>***controle_reglages_export.py***</li><li>***ecart_paires.py***</li><li>***renommer_pano.py***</li><li>***renommer_par_raw.py***</li></ul> |
 
 ```mermaid
 flowchart LR
@@ -390,10 +390,10 @@ Régler **une** image de référence (exposition centrale, au milieu du panorama
 | **Profil de l'objectif** | Activé, profil de l'objectif d'origine | Corrige la distorsion **et le vignettage** à la source |
 | Supprimer les aberrations chromatiques | Activé | Évite des franges différentes d'une image à l'autre |
 | Balance des blancs | **Valeur fixe**, identique partout | Un ciel à la teinte variable est le défaut le plus visible |
-| Exposition, Contraste, Hautes lumières, Ombres, Blancs, Noirs | **0 partout** | Les écarts d'exposition viennent de la prise de vue ; ces curseurs créent des sauts entre voisines (encadré) |
-| Recadrage, Redressement, Transformation (*Upright*) | **Aucun** | Modifient la géométrie image par image |
-| Masques, filtres gradués et radiaux, pinceaux | **Aucun** | Retouches locales différentes d'une image à l'autre |
-| Poussières, véhicules, oiseaux | **Aucune retouche** sur les originaux | Une retouche par finalité : **2C** |
+| <ul><li>Exposition</li><li>Contraste</li><li>Hautes lumières</li><li>Ombres</li><li>Blancs</li><li>Noirs</li></ul> | **0 partout** | Les écarts d'exposition viennent de la prise de vue.<br>Ces curseurs créent des sauts entre voisines (encadré) |
+| <ul><li>Recadrage</li><li>Redressement</li><li>Transformation (*Upright*)</li></ul> | **Aucun** | Modifient la géométrie image par image |
+| <ul><li>Masques</li><li>Filtres gradués et radiaux</li><li>Pinceaux</li></ul> | **Aucun** | Retouches locales différentes d'une image à l'autre |
+| <ul><li>Poussières</li><li>Véhicules</li><li>Oiseaux</li></ul> | **Aucune retouche** sur les originaux | Une retouche par finalité : **2C** |
 | ⛔ **Correction de la brume** (*Dehaze*) | **0, jamais** | Ne s'applique pas uniformément à un lot (encadré) |
 | Texture, Clarté | **0** | À appliquer sur le panorama final |
 | Netteté, réduction du bruit | **Identiques partout** | Une netteté différente se voit au raccord |
@@ -433,8 +433,8 @@ Les originaux alimentent **les deux exports**, et à travers l'export L la géom
 
 | Export | Photos | Taille (côté long) | Dossier | Rôle |
 | --- | --- | :---: | --- | --- |
-| **L** (*Low*, réduit) | L × C × N | **Réduite** : assez pour la largeur du HDR visé (tableau ci-dessous) | `Export-TIFF-L` | Phases 3 à 5 : projet maître, vue centrée, HDR |
-| **H** (*High*, pleine taille) | Les L × C vues centrées | **Aucun redimensionnement** | `Export-TIFF-H` | Phase 6 : fenêtre à 100 %, puis pleine résolution |
+| **L** (*Low*, réduit) | L × C × N | **Réduite** : assez pour la largeur du HDR visé (tableau ci-dessous) | `Export-TIFF-L` | Phases 3 à 5<br>projet maître, vue centrée, HDR |
+| **H** (*High*, pleine taille) | Les L × C vues centrées | **Aucun redimensionnement** | `Export-TIFF-H` | Phase 6<br>fenêtre à 100 %, puis pleine résolution |
 
 **Pourquoi « L » et « H » plutôt qu'une taille dans le nom** : le rôle d'un export ne change pas d'un appareil à l'autre, sa taille si. Les dossiers, les préréglages et toutes les commandes du guide restent les mêmes ; les scripts lisent la taille réelle dans les fichiers.
 
@@ -442,7 +442,7 @@ Réglages communs aux deux exports :
 
 | Réglage Lightroom | Valeur |
 | --- | --- |
-| Format | TIFF, 16 bits, compression ZIP : ***nona*** et ***enblend*** la lisent |
+| Format | TIFF, 16 bits, compression ZIP<br>***nona*** et ***enblend*** la lisent |
 | Espace colorimétrique | Adobe RGB (1998), celui qui a été testé avec ***Hugin*** |
 | Netteté de sortie | Aucune |
 | Métadonnées | **Toutes** (l'EXIF d'exposition sert à ***Hugin*** et à la fusion HDR) |
@@ -451,7 +451,7 @@ Réglages communs aux deux exports :
 
 | Paramètre | Préréglage « PANO TIFF (H) E0 » | Préréglage « PANO TIFF (L) HDR » |
 | --- | --- | --- |
-| Emplacement | **Choisir le dossier ultérieurement** ; sous-dossier `Export-TIFF-H` | idem, sous-dossier `Export-TIFF-L` |
+| Emplacement | **Choisir le dossier ultérieurement**<br>sous-dossier `Export-TIFF-H` | idem<br>sous-dossier `Export-TIFF-L` |
 | Ajouter à ce catalogue | **Décoché** | **Décoché** |
 | Nom des fichiers | `Pano_E0-` + numéro de séquence | `Pano_HDR-` + numéro de séquence |
 | Redimensionnement | **Aucun** | Côté long **réduit**, *Ne pas agrandir* coché |
@@ -547,7 +547,7 @@ python renommer_pano.py "$T\Export-TIFF-L" --undo                               
 | **Entrée** | Les vues centrées (`_E0`), nommées (Phase 2) |
 | **Sortie** | Le projet maître (positions et objectif optimisés) |
 | **Étapes** | **3A** à **3H** |
-| **Outils** | ***generer_pto.py***, ***Hugin*** (***CPFind***, optimiseur), ***cpclean***, ***filtrer_cp.py***, ***placer_isoles.py***… |
+| **Outils** | <ul><li>***generer_pto.py***</li><li>***Hugin*** (***CPFind***, optimiseur)</li><li>***cpclean***</li><li>***filtrer_cp.py***</li><li>***placer_isoles.py***…</li></ul> |
 
 ```mermaid
 flowchart TD
@@ -689,7 +689,7 @@ python preparer_optimisation.py "$P\3_optimisation\pano_grille_opt1_ciel.pto" "$
 
 | Ligne | Choix | Pourquoi |
 | --- | --- | --- |
-| **Photométrique** | **Haute plage dynamique, exposition fixe**, puis **Calculer** | Les expositions sont connues (EXIF) et constantes d'une position à l'autre : on n'optimise que le **vignettage** (Vb, Vc, Vd) |
+| **Photométrique** | **Haute plage dynamique, exposition fixe**<br>puis **Calculer** | Les expositions sont connues (EXIF) et constantes d'une position à l'autre : on n'optimise que le **vignettage** (Vb, Vc, Vd) |
 | **Géométrique** | **Ne pas toucher** | La géométrie est déjà optimisée et les images du ciel ont été placées à la main : un nouveau calcul les déplacerait |
 
 Le vignettage est une propriété de l'**objectif**, partagée par toutes les images, y compris celles du ciel sans point de contrôle.
@@ -760,8 +760,8 @@ Le premier liste les paires de voisines qui se recouvrent de **moins de 1°** ; 
 | --- | --- |
 | **Entrée** | Le projet maître (Phase 3) et les images `_E0` |
 | **Sortie** | Un panorama de la vue centrée, la liste des défauts à retoucher |
-| **Étapes** | **4A** (assembler), **4B** (ranger les intermédiaires) |
-| **Outils** | ***redimensionner_projet.py***, ***rendre_projet.ps1*** (***nona*** puis ***multiblend***), ***ranger_intermediaires.py*** ; variante simple : ***Hugin*** (***nona***, ***enblend***) |
+| **Étapes** | <ul><li>**4A** (assembler)</li><li>**4B** (ranger les intermédiaires)</li></ul> |
+| **Outils** | <ul><li>***redimensionner_projet.py***</li><li>***rendre_projet.ps1*** (***nona*** puis ***multiblend***)</li><li>***ranger_intermediaires.py***</li><li>Variante simple : ***Hugin*** (***nona***, ***enblend***)</li></ul> |
 
 ```mermaid
 flowchart LR
@@ -813,7 +813,7 @@ Pour un **petit panorama** (quelques dizaines d'images), l'onglet **Assemblage**
 | Projection | Cylindrique |
 | Largeur du canevas | Quelques milliers de pixels pour un test |
 | Recadrer | **Adapter le recadrage aux images** |
-| Sortie | *Corrigé en exposition, faible plage dynamique*, TIFF, compression LZW |
+| Sortie | <ul><li>*Corrigé en exposition, faible plage dynamique*</li><li>TIFF</li><li>Compression LZW</li></ul> |
 | Outil de construction | **Nona** |
 | Outil de raccord | **enblend**, options : `--blend-colorspace=IDENTITY` |
 
@@ -850,7 +850,7 @@ python ranger_intermediaires.py $P --apply    # range
 
 | Rangé | Jamais touché |
 | --- | --- |
-| `f_*.tif`, `*_exposure_layers_*.tif`, `liste_enblend.txt` | Les projets `.pto`, les panoramas rendus, les DNG, les PNG, les journaux, les tuiles |
+| <ul><li>`f_*.tif`</li><li>`*_exposure_layers_*.tif`</li><li>`liste_enblend.txt`</li></ul> | <ul><li>Les projets `.pto`</li><li>Les panoramas rendus</li><li>Les DNG, les PNG</li><li>Les journaux, les tuiles</li></ul> |
 
 ---
 
@@ -863,8 +863,8 @@ python ranger_intermediaires.py $P --apply    # range
 | **Entrée** | Le projet maître et les L × C × N images de l'export L |
 | **Sortie** | N calques alignés (un par exposition), puis un HDR fusionné dans ***Lightroom*** |
 | **Prérequis** | Phases 3 et 4 concluantes |
-| **Étapes** | **5A** (reporter la géométrie), **5B** (assembler les calques), **5C** (retour dans Lightroom, fusion), **5D** (finitions) |
-| **Outils** | ***propager_geometrie.py***, ***nona_images.ps1***, ***fusionner_par_exposition.ps1*** (***multiblend***), ***Lightroom*** ; variante : ***Hugin*** (calques seuls, ***enblend***) |
+| **Étapes** | <ul><li>**5A** (reporter la géométrie)</li><li>**5B** (assembler les calques)</li><li>**5C** (retour dans Lightroom, fusion)</li><li>**5D** (finitions)</li></ul> |
+| **Outils** | <ul><li>***propager_geometrie.py***</li><li>***nona_images.ps1***</li><li>***fusionner_par_exposition.ps1*** (***multiblend***)</li><li>***Lightroom***</li><li>Variante : ***Hugin*** (calques seuls, ***enblend***)</li></ul> |
 
 ```mermaid
 flowchart LR
@@ -884,7 +884,7 @@ flowchart LR
 
 | Projet | Images | Rôle | Qui le modifie |
 | --- | :---: | --- | --- |
-| Le **maître** (`pano_grille_opt.pto`) | L × C (`_E0`) | Valide la géométrie et tout le processus ; ouverture et rendu rapides | ***Hugin*** (optimisation) et les scripts |
+| Le **maître** (`pano_grille_opt.pto`) | L × C (`_E0`) | Valide la géométrie et tout le processus<br>ouverture et rendu rapides | ***Hugin*** (optimisation) et les scripts |
 | Le **dérivé** (`pano_HDR.pto`) | L × C × N | Même géométrie, appliquée à tout le lot, pour produire les N calques | **Aucun** : on le **régénère** depuis le maître |
 
 Toute correction de géométrie se fait **sur le maître**, puis ***propager_geometrie.py*** régénère le dérivé (une seconde). ***Hugin*** n'offre pas de filtre par exposition, et son interface est trop lente à plus de mille images pour désactiver les images une à une.
@@ -995,10 +995,10 @@ Ces retouches se font **après** l'assemblage final. Elles ne concernent que ce 
 
 | Finition | Origine | Comment |
 | --- | --- | --- |
-| **Bandes noires** (paires qui ne se recouvrent pas) | La matière manque | Retouche locale (Tampon, remplissage selon le contenu). ***detecter_trous.py*** donne leur position |
+| **Bandes noires** (paires qui ne se recouvrent pas) | La matière manque | Retouche locale (Tampon, remplissage selon le contenu).<br>***detecter_trous.py*** donne leur position |
 | **Bord supérieur en escalier** | Roulis des images | Recadrer ; pour les panoramas diffusés, [**7C**](#7c--cadrer-les-deux-sources-facultatif) |
 | **Poussières du capteur** | À la même place dans chaque image | Outil *Correction des taches*, avec *Visualiser les taches* : elles se répètent à intervalle régulier |
-| Dehaze, Texture, Clarté, netteté de sortie | Traitement d'image | Une seule fois, sur le panorama final. **Attention à la Correction de la brume** : la pleine résolution ne peut pas la recevoir ([**2B**](#-un-réglage-identique-nest-pas-une-transformation-identique)), et un HDR qui l'aurait ne s'accorderait plus avec elle |
+| Dehaze, Texture, Clarté, netteté de sortie | Traitement d'image | Une seule fois, sur le panorama final.<br>**Attention à la Correction de la brume** : la pleine résolution ne peut pas la recevoir ([**2B**](#-un-réglage-identique-nest-pas-une-transformation-identique)), et un HDR qui l'aurait ne s'accorderait plus avec elle |
 
 #### Recadrage
 
@@ -1014,8 +1014,8 @@ Le HDR et la pleine résolution sont destinés à être superposés et doivent g
 | --- | --- |
 | **Entrée** | Le projet maître et l'export H (les vues centrées à pleine taille) |
 | **Sortie** | Un panorama d'une seule exposition, en **BigTIFF** 16 bits LZW, écrit par ***multiblend*** |
-| **Étapes** | **6A** (export H, avec nettoyage facultatif), **6B** (fenêtre à 100 %), **6C** (rendu complet) |
-| **Outils** | ***extraire_sous_projet.py***, ***redimensionner_projet.py***, ***deplacer_projet.py***, ***nona_images.ps1***, ***rendre_projet.ps1***, ***rendre_lisible.ps1***, ***surveiller_multiblend.ps1***, ***profil_jonction.ps1***, ***nona*** `--bigtiff`, ***multiblend*** |
+| **Étapes** | <ul><li>**6A** (export H, avec nettoyage facultatif)</li><li>**6B** (fenêtre à 100 %)</li><li>**6C** (rendu complet)</li></ul> |
+| **Outils** | <ul><li>***extraire_sous_projet.py***</li><li>***redimensionner_projet.py***</li><li>***deplacer_projet.py***</li><li>***nona_images.ps1***</li><li>***rendre_projet.ps1***</li><li>***rendre_lisible.ps1***</li><li>***surveiller_multiblend.ps1***</li><li>***profil_jonction.ps1***</li><li>***nona*** `--bigtiff`</li><li>***multiblend***</li></ul> |
 
 ```mermaid
 flowchart LR
@@ -1048,10 +1048,10 @@ Le HDR et la pleine résolution ne peuvent pas être le même fichier : la fusio
 
 | Limite | Valeur | Conséquence |
 | --- | --- | --- |
-| **TIFF classique** | **4 Go par fichier** | Atteint à ≈ 500 Mpx en RGBA 16 bits non compressé. **BigTIFF obligatoire** au-delà. ***nona*** accepte `--bigtiff`. ***enblend*** 4.3 **lit** le BigTIFF mais **ne sait pas écrire plus de 4 Go** (`Maximum TIFF file size exceeded`) : on le remplace par ***multiblend*** |
+| **TIFF classique** | **4 Go par fichier** | <ul><li>Atteint à ≈ 500 Mpx en RGBA 16 bits non compressé. **BigTIFF obligatoire** au-delà</li><li>***nona*** accepte `--bigtiff`</li><li>***enblend*** 4.3 **lit** le BigTIFF mais **ne sait pas écrire plus de 4 Go** (`Maximum TIFF file size exceeded`) : on le remplace par ***multiblend***</li></ul> |
 | **Lightroom Classic** | 65 000 px sur un côté **et** 512 Mpx | La pleine résolution ne passe jamais par Lightroom après l'export |
 | **Photoshop** | PSD : 30 000 px ; PSB : 300 000 px | La pleine résolution n'est ouvrable qu'en PSB, et pèse plusieurs Go en mémoire |
-| **RAM** | Celle du poste | ***nona*** écrit chaque image reprojetée sur toute la toile (de l'ordre de 8 octets par pixel de toile, en RGBA 16 bits). ***multiblend*** demande, sans cache, de l'ordre de 25 Go par Gpx de zone utilisée : on borne sa mémoire avec `--cache-threshold`, le reste va dans un cache sur le disque système (**6C**) |
+| **RAM** | Celle du poste | <ul><li>***nona*** écrit chaque image reprojetée sur toute la toile (de l'ordre de 8 octets par pixel de toile, en RGBA 16 bits)</li><li>***multiblend*** demande, sans cache, de l'ordre de 25 Go par Gpx de zone utilisée : on borne sa mémoire avec `--cache-threshold`, le reste va dans un cache sur le disque système (**6C**)</li></ul> |
 | **Disque** | Intermédiaires de ***nona*** + fichier final + cache | Budget en **6C.5** |
 
 ### Deux exports plutôt qu'un seul à pleine taille
@@ -1080,12 +1080,12 @@ L'export H ne sert **qu'à la pleine résolution** : c'est le seul endroit où l
 | Retouche sur les copies | Admise ? | Pourquoi |
 | --- | :---: | --- |
 | Suppression d'une poussière, d'un véhicule, d'un oiseau (outil de **suppression des taches**), image par image | **Oui** | Remplace quelques pixels par une matière voisine, sans rien déplacer |
-| Balance des blancs, TSL, étalonnage, calibration, Vibrance, netteté, réduction du bruit, **identiques sur toutes les copies** | **Oui** | Global et synchronisé : aucun raccord mesuré |
-| ⛔ Exposition, Contraste, Hautes lumières, Ombres, Blancs, Noirs, même valeur partout | **Non** | Sauts de luminosité entre voisines malgré des réglages identiques ([**2B**](#-un-réglage-identique-nest-pas-une-transformation-identique)) |
+| <ul><li>Balance des blancs</li><li>TSL, étalonnage, calibration</li><li>Vibrance, netteté, réduction du bruit</li><li>**Identiques sur toutes les copies**</li></ul> | **Oui** | Global et synchronisé : aucun raccord mesuré |
+| ⛔ <ul><li>Exposition</li><li>Contraste</li><li>Hautes lumières</li><li>Ombres</li><li>Blancs</li><li>Noirs</li></ul> même valeur partout | **Non** | Sauts de luminosité entre voisines malgré des réglages identiques ([**2B**](#-un-réglage-identique-nest-pas-une-transformation-identique)) |
 | ⛔ **Correction de la brume**, même valeur partout | **Non** | Agit selon le contenu de chaque image |
 | Le même réglage, différent d'une copie à l'autre | **Non** | Raccord visible |
-| Masques, filtres gradués et radiaux, pinceaux | **Non** | Retouche locale de tonalité |
-| Recadrage, redressement, *Upright*, distorsion ou vignettage manuels, changement de profil d'objectif | **Non** | Déplace les pixels : la géométrie du maître ne correspond plus |
+| <ul><li>Masques</li><li>Filtres gradués et radiaux</li><li>Pinceaux</li></ul> | **Non** | Retouche locale de tonalité |
+| <ul><li>Recadrage, redressement, *Upright*</li><li>Distorsion ou vignettage manuels</li><li>Changement de profil d'objectif</li></ul> | **Non** | Déplace les pixels : la géométrie du maître ne correspond plus |
 
 **Les poussières : seulement là où elles se voient.** La carte de [**0E**](#0e--vérifier-la-propreté-du-capteur) dit où regarder ; on ne corrige que les images où la tache se voit réellement (une tache légère invisible sur un feuillage ne se voit que sur une surface uniforme ; la remplacer partout fabrique plus de défauts qu'elle n'en retire).
 
@@ -1203,9 +1203,9 @@ Une fois la fusion réussie, ***rendre_projet.ps1*** **supprime les intermédiai
 | --- | --- |
 | **Entrée** | Le HDR (niveaux bas) et le panorama pleine résolution (niveau haut) |
 | **Sortie** | Une pyramide de tuiles par panorama : un fichier `.dzi` et un dossier `_files` |
-| **Étapes** | **7A** (tuiler), **7B** (contrôler en local), **7C** (cadrer, facultatif) |
-| **Outils** | ***libvips*** (`vips dzsave`, `vips extract_area`), ***tuiler.ps1***, une visionneuse locale, ***cadrage_lightroom.py*** |
-| **Ordre** | On **tuile d'abord les panoramas tels qu'ils sont**, on les **contrôle en local**, et seulement ensuite, si l'on veut, on **cadre** (puis on retuile et on recontrôle) |
+| **Étapes** | <ul><li>**7A** (tuiler)</li><li>**7B** (contrôler en local)</li><li>**7C** (cadrer, facultatif)</li></ul> |
+| **Outils** | <ul><li>***libvips*** (`vips dzsave`, `vips extract_area`)</li><li>***tuiler.ps1***</li><li>Une visionneuse locale</li><li>***cadrage_lightroom.py***</li></ul> |
+| **Ordre** | <ul><li>On **tuile d'abord les panoramas tels qu'ils sont**</li><li>On les **contrôle en local**</li><li>Seulement ensuite, si l'on veut, on **cadre** (puis on retuile et on recontrôle)</li></ul> |
 
 ```mermaid
 flowchart LR
@@ -1337,17 +1337,17 @@ $H = <dossier des RAW>\HDR\              ← dans le catalogue Lightroom
 | Étape | Dans ***Hugin*** seul ? | Ce qu'il faut en plus | Pourquoi |
 | --- | :---: | --- | --- |
 | **2A** à **2D** — développement et export | Non (Lightroom) | Lightroom | ***Hugin*** ne développe pas correctement les RAW |
-| **2E** — vérifier l'export | Non | ***verifier_ordre.py***, ***controle_reglages_export.py***, ***ecart_paires.py*** (+ ***exiftool***, ***libvips***) | Ordre et motif ; réglages uniformes ; rendu entre voisines |
+| **2E** — vérifier l'export | Non | <ul><li>***verifier_ordre.py***</li><li>***controle_reglages_export.py***</li><li>***ecart_paires.py***</li><li>(+ ***exiftool***, ***libvips***)</li></ul> | Ordre et motif ; réglages uniformes ; rendu entre voisines |
 | **2F** — renommer en `L_C_E` | Non | ***renommer_pano.py***, ***renommer_par_raw.py*** | ***Hugin*** ne connaît pas la grille |
 | **3A** — placer les images en grille | **Non** | ***generer_pto.py*** | Saisir à la main le lacet et le tangage de centaines d'images n'est pas réaliste |
 | **3B** — points de contrôle | **Oui** | rien | *CPFind (prealigned)* |
 | **3C.1** — nettoyage statistique | Non | `cpclean.exe` (livré avec ***Hugin***) | Absent de l'interface 2025 |
-| **3C** et **3D** — mesurer le pas, filtrer les faux points | Non | ***diagnostic_pas_v.py***, ***corriger_pas_v.py***, ***filtrer_cp.py*** | Propres à la grille |
+| **3C** et **3D** — mesurer le pas, filtrer les faux points | Non | <ul><li>***diagnostic_pas_v.py***</li><li>***corriger_pas_v.py***</li><li>***filtrer_cp.py***</li></ul> | Propres à la grille |
 | **3E** — optimiser | **Oui** | ***preparer_optimisation.py*** (facultatif) | Les cases se cochent aussi à la main |
 | **3G** — images du ciel | Non | ***placer_isoles.py***, ***affiner_images_faibles.py*** | Propres aux images sans point de contrôle |
-| **4A** — assembler la vue centrée | Possible (variante) | ***redimensionner_projet.py***, ***rendre_projet.ps1*** | Hors ***Hugin*** : bien plus rapide. Dans ***Hugin*** pour un petit panorama |
+| **4A** — assembler la vue centrée | Possible (variante) | ***redimensionner_projet.py***, ***rendre_projet.ps1*** | Hors ***Hugin*** : bien plus rapide<br>Dans ***Hugin*** pour un petit panorama |
 | **4B** — ranger les intermédiaires | Non | ***ranger_intermediaires.py*** | ***Hugin*** laisse ses images de travail sur le disque |
-| **5B** — assembler les calques HDR | Possible (variante) | ***propager_geometrie.py***, ***nona_images.ps1***, ***fusionner_par_exposition.ps1*** | Interface très lente à plus de mille images |
+| **5B** — assembler les calques HDR | Possible (variante) | <ul><li>***propager_geometrie.py***</li><li>***nona_images.ps1***</li><li>***fusionner_par_exposition.ps1***</li></ul> | Interface très lente à plus de mille images |
 | **5C** — retour dans Lightroom | Non (Lightroom) | `Move-Item`, ***exiftool*** | Les calques reviennent par `$H` |
 | **5D** — finitions | Non (Lightroom) | Lightroom | |
 | **7A** — tuiler | Non | ***tuiler.ps1*** (`vips dzsave`) | |
