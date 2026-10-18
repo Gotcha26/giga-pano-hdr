@@ -18,6 +18,7 @@
 #     -Sortie    dossier de rendu (cree si besoin) ; recoit les f_NNNN.tif
 #     -De, -A    premiere et derniere image a rendre (numeros du projet, bornes comprises)
 #     -BigTiff   (option) ecrit des TIFF BigTIFF : necessaire quand une image reprojetee depasse 4 Go
+#     -Hugin     (option) dossier bin de Hugin (defaut C:\Program Files\Hugin\bin)
 #     -IgnorerExposition   (option) nona --ignore-exposure : ne corrige pas l'exposition (Eev) des images ; indispensable pour
 #                          les calques HDR " sans correction d'exposition " (sinon toutes les expositions sortent identiques et
 #                          saturees) ; inutile pour une vue centree en une seule exposition
@@ -38,10 +39,11 @@ param(
     [Parameter(Mandatory = $true)][int]$De,
     [Parameter(Mandatory = $true)][int]$A,
     [switch]$BigTiff,
-    [switch]$IgnorerExposition
+    [switch]$IgnorerExposition,
+    [string]$Hugin = 'C:\Program Files\Hugin\bin'   # dossier bin de Hugin (nona.exe)
 )
 
-$nona = 'C:\Program Files\Hugin\bin\nona.exe'
+$nona = Join-Path $Hugin 'nona.exe'
 New-Item -ItemType Directory $Sortie -Force | Out-Null
 $log = Join-Path $Sortie 'rendu_log.txt'
 $t0 = Get-Date

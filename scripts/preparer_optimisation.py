@@ -31,6 +31,18 @@ Usage : python preparer_optimisation.py entree.pto sortie.pto [--objectif] [--an
 """
 import argparse
 
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("entree.pto", "Projet source", type="pto", phase="3_optimisation"),
+    Arg("sortie.pto", "Projet à écrire", type="pto"),
+    Arg("--objectif", "Optimise aussi v, a, b, c", type="drapeau"),
+    Arg("--ancre", "Image de référence, jamais déplacée (défaut 0)", type="entier"),
+    Arg("--exclure", "Images à ne pas optimiser, ex. 7-17,47-51", type="plage"),
+    Arg("--sans-cp-exclues", "Retire aussi les points de contrôle des images exclues", type="drapeau"),
+]
+piloter(__doc__, ARGUMENTS, ecrit='le projet de sortie', globals_=globals())
+
 ap = argparse.ArgumentParser()
 ap.add_argument("entree")
 ap.add_argument("sortie")

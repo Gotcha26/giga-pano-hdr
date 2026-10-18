@@ -90,6 +90,28 @@ $H      = 'D:\Gotcha\Mes images\Image Transfer\2026-06-19 - Wattenberg - GigaPan
 
 Le dossier des RAW contient aussi deux autres séries de la même sortie, au 50 mm (91 CR2, panorama HDR rendu par Lightroom à 26 362 px) et au 85 mm (273 CR2, non traité).
 
+**Le même panorama pour le lanceur** : `$T\panorama.json`, tel que le menu **Nouveau panorama** l'écrit (le projet maître se renseigne à la main une fois **3G** terminé) :
+
+```json
+{
+  "T": "D:\\Panoramas\\2026-06-19\\200mm",
+  "P": "D:\\Panoramas\\2026-06-19\\200mm\\Assemblage-Hugin",
+  "H": "D:\\Gotcha\\Mes images\\Image Transfer\\2026-06-19 - Wattenberg - GigaPanorama\\200mm\\HDR",
+  "lignes": 6,
+  "colonnes": 37,
+  "expos": 7,
+  "focale": 200.0,
+  "largeur_mm": 24.0,
+  "pas_h": 5.0,
+  "pas_v": 5.8,
+  "largeur_hdr": 20000,
+  "largeur_pleine": 90112,
+  "maitre": "3_optimisation\\pano_grille_opt4.pto",
+  "export_l": "Export-TIFF-L",
+  "export_h": "Export-TIFF-H"
+}
+```
+
 ---
 
 ## 📦 Ce que ça a coûté : RAM, disque, durées
@@ -279,5 +301,5 @@ Prise de vue, développement et décisions : Julien Moreau. Scripts, mesures et 
 
 ---
 
-**Version** : 1.0
+**Version** : 1.1
 **Dernière mise à jour** : 2026-10-18

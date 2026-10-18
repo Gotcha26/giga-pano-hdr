@@ -61,6 +61,14 @@ def decouper(ligne):
         jetons.append((mm.group(1), mm.group(2)))
     return jetons, m.group(1)
 
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("entree.pto", "Projet d'origine", type="pto", config="maitre", phase="3_optimisation"),
+    Arg("sortie.pto", "Projet à écrire", type="pto"),
+    Arg("--images", "Numéros des images à garder, ex. 133-138,170-175", type="plage"),
+]
+piloter(__doc__, ARGUMENTS, ecrit='le projet de sortie', globals_=globals())
 
 def main():
     args = sys.argv[1:]

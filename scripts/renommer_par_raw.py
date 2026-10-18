@@ -59,6 +59,16 @@ def raw_names(dossier):
         res[Path(ligne["SourceFile"]).name] = ligne.get("RawFileName")
     return res
 
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("REFERENCE", "Dossier déjà renommé, ou table CSV raw,lce", type="chemin", config="table"),
+    Arg("NOUVEL_EXPORT", "Dossier à renommer (ou CSV à écrire avec --table)", type="dossier", config="export_h"),
+    Arg("--apply", "Renomme réellement et écrit correspondance_raw.csv", type="drapeau"),
+    Arg("--undo", "Restaure les noms d'origine", type="drapeau"),
+    Arg("--table", "Écrit la table raw,lce d'après le dossier REFERENCE", type="drapeau"),
+]
+piloter(__doc__, ARGUMENTS, ecrit='les noms de fichiers du nouvel export, ou la table CSV (essai à blanc sans --apply)', globals_=globals())
 
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]

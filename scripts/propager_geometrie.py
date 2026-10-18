@@ -40,6 +40,17 @@ EXPOS = 7
 EV = {0: 0, 1: -3, 2: -2, 3: -1, 4: 1, 5: 2, 6: 3}
 EEV_E0 = 13.2877        # log2(f/10 ^ 2 / (1/100 s)) à ISO 100, exposition 0
 
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("optimise_E0.pto", "Projet optimisé de la vue centrée", type="pto", config="maitre", phase="3_optimisation"),
+    Arg("sortie.pto", "Projet à écrire (toutes les expositions)", type="pto"),
+    Arg("LARGEUR", "Largeur du panorama en pixels", type="entier", config="largeur_hdr", defaut=20000),
+    Arg("LARG_IMAGE", "Largeur des images à assembler, si différente du projet", type="entier", obligatoire=False),
+    Arg("HAUT_IMAGE", "Hauteur des images à assembler", type="entier", obligatoire=False),
+]
+piloter(__doc__, ARGUMENTS, ecrit='le projet de sortie', globals_=globals())
+
 entree, sortie = sys.argv[1], sys.argv[2]
 largeur = int(sys.argv[3]) if len(sys.argv) > 3 else LARGEUR_DEFAUT
 

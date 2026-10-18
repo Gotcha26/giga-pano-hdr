@@ -41,12 +41,25 @@ import statistics
 import sys
 from collections import defaultdict
 
+COLS = 37
+
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("base.pto", "Projet optimisé, images faibles déjà replacées", type="pto", phase="3_optimisation"),
+    Arg("source_cp.pto", "Projet contenant tous les points de contrôle d'origine", type="pto", config="cp_pto"),
+    Arg("sortie.pto", "Projet à écrire", type="pto"),
+    Arg("SEUIL_DEG", "Écart maximal toléré entre un point et son homologue, en degrés", type="nombre", defaut=1.5),
+    Arg("MIN_CP", "Nombre minimal de points valides pour affiner une image", type="entier", defaut=5),
+    Arg("--rapport", "Affiche seulement l'analyse, n'écrit rien", type="drapeau"),
+]
+piloter(__doc__, ARGUMENTS, ecrit='le projet de sortie', globals_=globals())
+
 args = [a for a in sys.argv[1:] if not a.startswith("--")]
 base, source, sortie = args[:3]
 seuil = float(args[3]) if len(args) > 3 else 1.0
 min_cp = int(args[4]) if len(args) > 4 else 8
 rapport = "--rapport" in sys.argv
-COLS = 37
 NUM = r"(-?[\d.]+(?:[eE][+-]?\d+)?)"
 
 lignes = open(base, encoding="utf-8").read().splitlines()

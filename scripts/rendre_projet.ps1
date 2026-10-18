@@ -21,7 +21,9 @@
 #     -Nom                     nom du panorama produit, sans extension (defaut "panorama")
 #     -BigTiff                 nona --bigtiff : intermediaires > 4 Go (pleine resolution)
 #     -CompressionEnblend      "lzw" ou "deflate" : force la compression de sortie du fusionneur
-#     -Fusionneur              enblend (defaut) ou multiblend (D:\Outils\multiblend\multiblend.exe)
+#     -Fusionneur              enblend (defaut) ou multiblend
+#     -Hugin                   dossier bin de Hugin (defaut C:\Program Files\Hugin\bin)
+#     -Multiblend              executable multiblend (defaut D:\Outils\multiblend\multiblend.exe)
 #     -OptionsMultiblend       options ajoutees a multiblend, ex. "--cache-threshold=12G" (memoire au-dela de 12 Go sur disque)
 #     -SansNona                reutilise les f_NNNN.tif deja presents (comparer deux fusionneurs sans refaire nona)
 #     -GarderIntermediaires    conserve f_NNNN.tif et liste_enblend.txt apres une fusion reussie, pour relancer le
@@ -57,11 +59,13 @@ param(
     [switch]$SansNona,                # reutilise les f_NNNN.tif deja presents (comparer deux fusionneurs sans refaire nona)
     [switch]$GarderIntermediaires,    # conserve f_NNNN.tif et liste_enblend.txt apres une fusion reussie
     [switch]$NettoyerIntermediaires,  # obsolete : le nettoyage est le comportement par defaut
-    [switch]$Lisible                  # copie lisible du panorama (TIFF classique + JPEG sRGB), voir rendre_lisible.ps1
+    [switch]$Lisible,                 # copie lisible du panorama (TIFF classique + JPEG sRGB), voir rendre_lisible.ps1
+    [string]$Hugin = 'C:\Program Files\Hugin\bin',                 # dossier bin de Hugin (nona, enblend)
+    [string]$Multiblend = 'D:\Outils\multiblend\multiblend.exe'    # executable multiblend
 )
 
-$hb = 'C:\Program Files\Hugin\bin'
-$multiblend = 'D:\Outils\multiblend\multiblend.exe'
+$hb = $Hugin
+$multiblend = $Multiblend
 New-Item -ItemType Directory $Sortie -Force | Out-Null
 $log = Join-Path $Sortie 'rendu_log.txt'
 if ($SansNona) { $ajout = @{ Append = $true } } else { $ajout = @{} }   # -SansNona : le journal du premier rendu est conserve

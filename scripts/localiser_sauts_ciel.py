@@ -33,6 +33,20 @@ import sys
 from PIL import Image
 
 Image.MAX_IMAGE_PIXELS = None
+
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("panorama.tif", "Panorama assemblé (vue centrée)", type="chemin"),
+    Arg("LIGNE_DEBUT", "Première ligne de pixels de ciel pur", type="entier"),
+    Arg("LIGNE_FIN", "Dernière ligne de pixels de ciel pur", type="entier"),
+    Arg("X_DEBUT", "Première colonne analysée (sans bord noir)", type="entier"),
+    Arg("X_FIN", "Dernière colonne analysée", type="entier"),
+    Arg("SEUIL", "Écart de luminosité (0-255) au-delà duquel on signale", type="entier", defaut=6),
+    Arg("LARGEUR_DEG", "Largeur du panorama en degrés", type="nombre", defaut=185),
+]
+piloter(__doc__, ARGUMENTS, ecrit=None, globals_=globals())
+
 f = sys.argv[1]
 y0, y1, xd, xf = (int(a) for a in sys.argv[2:6])
 seuil = float(sys.argv[6]) if len(sys.argv) > 6 else 6.0

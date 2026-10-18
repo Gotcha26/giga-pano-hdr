@@ -29,6 +29,15 @@ import sys
 
 COLS, ROWS = 37, 6
 FOV_H, FOV_V = 6.87, 10.29
+
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("projet.pto", "Projet Hugin", type="pto", config="maitre", phase="3_optimisation"),
+    Arg("MARGE_DEG", "Recouvrement minimal exigé, en degrés", type="nombre", defaut=1.0),
+]
+piloter(__doc__, ARGUMENTS, ecrit=None, globals_=globals())
+
 marge = float(sys.argv[2]) if len(sys.argv) > 2 else 0.8
 NUM = r"(-?[\d.]+(?:[eE][+-]?\d+)?)"
 

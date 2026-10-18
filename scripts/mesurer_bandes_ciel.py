@@ -35,6 +35,20 @@ import sys
 from PIL import Image
 
 Image.MAX_IMAGE_PIXELS = None
+
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("panorama.tif", "Panorama assemblé (vue centrée)", type="chemin"),
+    Arg("LIGNE_DEBUT", "Première ligne de pixels de ciel", type="entier"),
+    Arg("LIGNE_FIN", "Dernière ligne de pixels de ciel", type="entier"),
+    Arg("LARGEUR_DEG", "Largeur du panorama en degrés", type="nombre", defaut=185),
+    Arg("PAS_DEG", "Pas angulaire entre images, en degrés", type="nombre", config="pas_h", defaut=5),
+    Arg("X_DEBUT", "Première colonne analysée (ciel seul ; défaut : toute la largeur)", type="entier", obligatoire=False),
+    Arg("X_FIN", "Dernière colonne analysée", type="entier", obligatoire=False),
+]
+piloter(__doc__, ARGUMENTS, ecrit=None, globals_=globals())
+
 f, y0, y1 = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
 largeur_deg = float(sys.argv[4]) if len(sys.argv) > 4 else 185.0
 pas_deg = float(sys.argv[5]) if len(sys.argv) > 5 else 5.0

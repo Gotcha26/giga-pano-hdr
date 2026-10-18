@@ -48,6 +48,18 @@ import subprocess
 from collections import Counter
 from pathlib import Path
 
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("DOSSIER", "Dossier d'export (TIFF, JPG ou DNG)", type="dossier", config="export_l"),
+    Arg("--grille", "LIGNES COLONNES : contrôle du nombre total d'images", nargs=2),
+    Arg("--expos", "Expositions par rafale (détecté par défaut)", type="entier"),
+    Arg("--pas", "Pas attendu entre expositions voisines, en IL", type="nombre"),
+    Arg("--tol", "Tolérance sur les valeurs EXIF, en IL (0,1 par défaut)", type="nombre"),
+    Arg("--motif", "Motif imposé, IL dans l'ordre de prise, ex. 0,-0.3,-0.7"),
+]
+piloter(__doc__, ARGUMENTS, ecrit=None, globals_=globals())
+
 ap = argparse.ArgumentParser()
 ap.add_argument("dossier")
 ap.add_argument("--expos", type=int, default=None, help="expositions par rafale (détecté par défaut)")

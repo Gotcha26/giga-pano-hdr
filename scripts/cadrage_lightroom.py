@@ -215,6 +215,20 @@ def controler_vide(fichier, vips):
     print("Ce contrôle n'impose rien : un peu de noir dans les coins peut être voulu pour garder la matière "
           "sur toute la largeur.")
 
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("--catalogue", "Catalogue Lightroom .lrcat (demandé si absent)", type="chemin"),
+    Arg("--fichier", "Nom (ou partie du nom) de l'image HDR dans le catalogue"),
+    Arg("--dng", "Lire le recadrage dans ce DNG / .xmp au lieu du catalogue", type="chemin"),
+    Arg("--pleine", "Toile de la pleine résolution, LxH"),
+    Arg("--zone", "Zone utile du TIFF de multiblend dans la toile : x,y,LxH"),
+    Arg("--origine-hdr", "X,Y : position du HDR dans la toile HDR (calques de multiblend)"),
+    Arg("--toile-hdr", "LxH : taille de la toile HDR, avec --origine-hdr"),
+    Arg("--controle", "Mesure le vide par coin d'une pleine résolution recadrée", type="chemin"),
+    Arg("--vips", "Chemin de vips.exe (avec --controle)", type="chemin"),
+]
+piloter(__doc__, ARGUMENTS, ecrit=None, globals_=globals())
 
 def main():
     sys.stdout.reconfigure(errors="replace")

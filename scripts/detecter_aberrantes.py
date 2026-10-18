@@ -31,6 +31,15 @@ import statistics
 import sys
 
 COLS, ROWS = 37, 6
+
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("projet.pto", "Projet optimisé", type="pto", phase="3_optimisation"),
+    Arg("SEUIL_DEG", "Écart maximal toléré par axe, en degrés", type="nombre", defaut=1.0),
+]
+piloter(__doc__, ARGUMENTS, ecrit=None, globals_=globals())
+
 fichier = sys.argv[1]
 seuil = float(sys.argv[2]) if len(sys.argv) > 2 else 1.0
 PAS_H, PAS_V = 5.0, 5.8

@@ -31,6 +31,22 @@ import sys
 from PIL import Image, ImageChops, ImageFilter
 
 Image.MAX_IMAGE_PIXELS = None
+
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("rendu.tif", "Panorama assemblé", type="chemin"),
+    Arg("sortie.png", "Image à écrire", type="chemin"),
+    Arg("X0", "Zone : première colonne", type="entier"),
+    Arg("X1", "Zone : dernière colonne", type="entier"),
+    Arg("Y0", "Zone : première ligne", type="entier"),
+    Arg("Y1", "Zone : dernière ligne", type="entier"),
+    Arg("GAIN", "Facteur d'amplification", type="nombre", defaut=20),
+    Arg("RAYON_FLOU", "Rayon du flou gaussien, en pixels", type="entier", defaut=60),
+    Arg("LARGEUR_SORTIE", "Largeur de l'image produite, en pixels", type="entier", defaut=1800),
+]
+piloter(__doc__, ARGUMENTS, ecrit="l'image de sortie", globals_=globals())
+
 f, sortie = sys.argv[1], sys.argv[2]
 x0, x1, y0, y1 = (int(v) for v in sys.argv[3:7])
 gain = float(sys.argv[7]) if len(sys.argv) > 7 else 20.0

@@ -32,6 +32,15 @@ import re
 import sys
 from pathlib import Path
 
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("entree.pto", "Projet d'origine", type="pto"),
+    Arg("sortie.pto", "Projet à écrire (peut être le même fichier)", type="pto"),
+    Arg("--images", "Dossier où chercher chaque image par son nom", type="dossier"),
+]
+piloter(__doc__, ARGUMENTS, ecrit='le projet de sortie', globals_=globals())
+
 args = sys.argv[1:]
 if len(args) not in (2, 4) or (len(args) == 4 and args[2] != "--images"):
     sys.exit(__doc__)

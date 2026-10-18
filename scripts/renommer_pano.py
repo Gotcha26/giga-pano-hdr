@@ -40,6 +40,19 @@ import re
 import sys
 from pathlib import Path
 
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("DOSSIER", "Dossier d'export Lightroom", type="dossier", config="export_l"),
+    Arg("--apply", "Renomme réellement (sinon essai à blanc)", type="drapeau"),
+    Arg("--undo", "Restaure les noms d'origine depuis correspondance.csv", type="drapeau"),
+    Arg("--lignes", "Lignes de la grille", type="entier", config="lignes"),
+    Arg("--colonnes", "Colonnes de la grille", type="entier", config="colonnes"),
+    Arg("--expos", "Expositions par position", type="entier", config="expos"),
+    Arg("--force", "Ignore un écart de nombre ou un trou de numérotation", type="drapeau"),
+]
+piloter(__doc__, ARGUMENTS, ecrit='les noms de fichiers du dossier (essai à blanc sans --apply)', globals_=globals())
+
 ap = argparse.ArgumentParser()
 ap.add_argument("dossier")
 ap.add_argument("--apply", action="store_true")

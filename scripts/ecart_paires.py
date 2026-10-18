@@ -120,6 +120,16 @@ def tuiles(vips, img, x, y, lg, ht, tmp):
         res.append([float(t) for t in (tmp / "t.csv").read_text().replace(",", ".").split()])
     return res
 
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("projet.pto", "Projet optimisé (positions et champ des images)", type="pto", config="maitre", phase="3_optimisation"),
+    Arg("DOSSIER", "Dossier des images L_C_E0", type="dossier", config="export_l"),
+    Arg("LIGNE", "Ligne de la grille", type="entier", defaut=0),
+    Arg("COL_DEBUT", "Première paire à comparer (défaut : toute la ligne)", type="entier", obligatoire=False),
+    Arg("COL_FIN", "Dernière paire à comparer", type="entier", obligatoire=False),
+]
+piloter(__doc__, ARGUMENTS, ecrit=None, globals_=globals())
 
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv

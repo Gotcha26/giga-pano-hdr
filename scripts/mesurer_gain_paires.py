@@ -37,6 +37,18 @@ from PIL import Image
 Image.MAX_IMAGE_PIXELS = None
 COLS = 37
 NUM = r"(-?[\d.]+(?:[eE][+-]?\d+)?)"
+
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("projet.pto", "Projet optimisé", type="pto", config="maitre", phase="3_optimisation"),
+    Arg("DOSSIER_IMAGES", "Dossier des images L_C_E0", type="dossier", config="export_l"),
+    Arg("LIGNE", "Ligne de la grille", type="entier"),
+    Arg("COL_DEBUT", "Première paire à comparer", type="entier"),
+    Arg("COL_FIN", "Dernière paire à comparer", type="entier"),
+]
+piloter(__doc__, ARGUMENTS, ecrit=None, globals_=globals())
+
 projet, dossier = sys.argv[1], Path(sys.argv[2])
 ligne, c0, c1 = (int(v) for v in sys.argv[3:6])
 

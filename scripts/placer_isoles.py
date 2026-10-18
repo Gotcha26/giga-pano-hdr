@@ -35,6 +35,18 @@ import re
 import sys
 
 COLS, ROWS = 37, 6
+
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("optimise.pto", "Projet optimisé par Hugin", type="pto", phase="3_optimisation"),
+    Arg("sortie.pto", "Projet à écrire", type="pto"),
+    Arg("PAS_H", "Pas horizontal de la grille, en degrés", type="nombre", config="pas_h", defaut=5.0),
+    Arg("PAS_V", "Pas vertical de la grille, en degrés", type="nombre", config="pas_v", defaut=5.8),
+    Arg("SEUIL_CP", "Nombre minimal de points pour être solide (le guide emploie 30)", type="entier", defaut=30),
+]
+piloter(__doc__, ARGUMENTS, ecrit='le projet de sortie', globals_=globals())
+
 entree, sortie = sys.argv[1], sys.argv[2]
 pas_h = float(sys.argv[3]) if len(sys.argv) > 3 else 5.0
 pas_v = float(sys.argv[4]) if len(sys.argv) > 4 else 5.8

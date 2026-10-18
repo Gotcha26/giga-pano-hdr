@@ -53,6 +53,13 @@ def a_ranger(racine):
         and any(m.fullmatch(f.name) for m in INTERMEDIAIRES)
     )
 
+from pilotage.arguments import Arg, piloter
+
+ARGUMENTS = [
+    Arg("DOSSIER", "Dossier des projets ($P)", type="dossier", config="P"),
+    Arg("--apply", "Déplace réellement (sinon essai à blanc)", type="drapeau"),
+]
+piloter(__doc__, ARGUMENTS, ecrit='déplace les intermédiaires vers _a_supprimer (essai à blanc sans --apply)', globals_=globals())
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
