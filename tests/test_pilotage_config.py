@@ -60,8 +60,17 @@ class TestPanorama(unittest.TestCase):
             crees = config.creer_arborescence(p)
             self.assertTrue((T / "Export-TIFF-L").is_dir())
             self.assertTrue((T / "Assemblage-Hugin" / "7_tuiles").is_dir())
+            self.assertTrue((T / "Assemblage-Hugin" / "7_galerie").is_dir())
             self.assertEqual(len(crees), 4 + len(config.DOSSIERS_PHASE))   # T, L, H, P + phases
             self.assertEqual(config.creer_arborescence(p), [])
+
+    def test_arborescence_avec_dossier_hdr(self):
+        with tempfile.TemporaryDirectory() as d:
+            T, H = Path(d) / "pano", Path(d) / "RAW" / "HDR"
+            p = config.Panorama(T=str(T), P=str(T / "Assemblage-Hugin"), H=str(H))
+            crees = config.creer_arborescence(p)
+            self.assertTrue((H / "TIFF").is_dir())
+            self.assertEqual(len(crees), 4 + len(config.DOSSIERS_PHASE) + 2)   # + $H et $H\TIFF
 
     def test_valeur(self):
         p = config.Panorama(T=r"D:\T", P=r"D:\T\A", pas_v=5.8, maitre=r"3_optimisation\m.pto")

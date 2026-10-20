@@ -12,7 +12,8 @@ from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 from typing import Optional
 
-DOSSIERS_PHASE = ["3_grille", "3_optimisation", "4_vue_centree", "5_hdr", "6_pleine_res", "7_tuiles", "_a_supprimer"]
+DOSSIERS_PHASE = ["3_grille", "3_optimisation", "4_vue_centree", "5_hdr", "6_pleine_res", "7_tuiles", "7_galerie",
+                  "_a_supprimer"]
 NOM_FICHIER_PANORAMA = "panorama.json"
 
 
@@ -94,9 +95,12 @@ def panorama_courant(poste):
 
 
 def creer_arborescence(p):
-    """Crée $T, les deux dossiers d'export, $P et ses dossiers de phase ; retourne les dossiers créés."""
+    """Crée, dès la Phase 0, tous les dossiers du panorama : $T, les deux dossiers d'export, $P et ses dossiers de
+    phase (jusqu'à 7_galerie), et, si $H est renseigné, $H et $H\\TIFF (export du HDR) ; retourne les dossiers créés."""
     voulus = [Path(p.T), Path(p.T) / p.export_l, Path(p.T) / p.export_h, Path(p.P)]
     voulus += [Path(p.P) / d for d in DOSSIERS_PHASE]
+    if p.H:
+        voulus += [Path(p.H), Path(p.H) / "TIFF"]
     crees = []
     for dossier in voulus:
         if not dossier.exists():
