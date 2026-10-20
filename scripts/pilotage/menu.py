@@ -3,6 +3,8 @@
 Règles : les numéros ne vont qu'aux entrées disponibles qui ont une action ; ils sont cadrés à droite sur la
 largeur du plus grand numéro affiché ; les têtes d'une même section sont alignées ; l'effet est déclaré en fin
 de libellé ([écrit — cible] ou [lecture seule]) ; 0 revient, x annule une saisie, ENTRÉE garde la valeur.
+Après une action, « Appuyez sur Entrée » laisse lire ce qu'elle a affiché ; pas après un sous-menu ni après une
+action marquée sans_pause (un menu de pilotage marque lui-même sa pause après chaque exécution).
 """
 
 from dataclasses import dataclass, field
@@ -88,6 +90,12 @@ def rendre(entrees, ctx, c, ecrire=print):
     return table
 
 
+def sans_pause(action):
+    """Marque une action après laquelle la boucle ne demande pas « Appuyez sur Entrée »."""
+    action.sans_pause = True
+    return action
+
+
 def pause(c, lire=input):
     try:
         lire(f"{c.DIM}Appuyez sur Entrée...{c.RESET}")
@@ -129,8 +137,10 @@ def boucle(titre, entrees, ctx, c, entete=None, lire=input, ecrire=print, efface
         if choix == "0":
             return
         if choix in table:
-            table[choix].action(ctx)
-            pause(c, lire)
+            e = table[choix]
+            e.action(ctx)
+            if not (e.navigation or getattr(e.action, "sans_pause", False)):
+                pause(c, lire)
         else:
             ecrire(c.erreur(f'Choix invalide : "{choix}"'))
             pause(c, lire)

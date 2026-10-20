@@ -72,6 +72,21 @@ class TestBoucle(unittest.TestCase):
         m.boucle("TEST", entrees_exemple(), ctx, C, lire=lire, ecrire=lignes.append, effacer=lambda: None)
         self.assertEqual(ctx, ["diag"])
 
+    def test_pas_de_pause_apres_un_sous_menu_ni_une_action_sans_pause(self):
+        vu = []
+        entrees = [m.Entree("Sous-menu", action=lambda ctx: vu.append("sous-menu"), navigation=True),
+                   m.Entree("Script", action=m.sans_pause(lambda ctx: vu.append("script"))),
+                   m.Entree("Tableau", action=lambda ctx: vu.append("tableau"))]
+        lues = []
+        valeurs = iter(["1", "2", "3", "", "0"])     # seule l'action « Tableau » attend Entrée
+
+        def lire(invite=""):
+            lues.append(invite)
+            return next(valeurs)
+        m.boucle("TEST", entrees, [], C, lire=lire, ecrire=lambda *a: None, effacer=lambda: None)
+        self.assertEqual(vu, ["sous-menu", "script", "tableau"])
+        self.assertEqual(sum("Entrée" in i for i in lues), 1)
+
     def test_saisie_invalide_reaffiche(self):
         ctx, lignes = [], []
         lire = saisies("9", "", "0")
