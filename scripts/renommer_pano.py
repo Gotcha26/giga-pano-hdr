@@ -193,5 +193,8 @@ if args.apply:
         w.writerow(["ancien", "nouveau"])
         w.writerows(plan)
     print(f"Fait. Correspondance écrite dans {mapfile}")
+    if args.expos > 1:      # export complet en rafales : le seul moment où la table RAW -> L_C_E s'écrit sans effort
+        print("Étape suivante (2F) : écrire la table RAW -> L_C_E, matrice à conserver :\n"
+              f'  python renommer_par_raw.py "{dossier}" "<$P>\\table_raw_LCE.csv" --table')
 else:
     print("Essai à blanc : rien n'a été modifié (--apply pour appliquer)")

@@ -285,10 +285,10 @@ def menu_phase2(ctx):
         Entree("Lire la taille d'un TIFF", "tiffinfo.py", action=_py("tiffinfo.py"), section=S),
         Entree("Renommer le premier export en L_C_E", "renommer_pano.py (2F)", effet="noms de fichiers du dossier (essai à blanc sans --apply)",
                action=_py("renommer_pano.py"), section=S),
-        Entree("Renommer un export d'après la table RAW", "renommer_par_raw.py (2D)", effet="noms de fichiers du nouvel export (essai à blanc sans --apply)",
-               action=_py("renommer_par_raw.py"), section=S),
-        Entree("Écrire la table RAW → L_C_E", "renommer_par_raw.py --table", effet="table_raw_LCE.csv",
+        Entree("Écrire la table RAW → L_C_E", "renommer_par_raw.py --table (2F, juste après le premier renommage)", effet="table_raw_LCE.csv",
                action=_py("renommer_par_raw.py", table, "la table CSV"), section=S),
+        Entree("Renommer un export d'après la table RAW", "renommer_par_raw.py (2D, 6A.2)", effet="noms de fichiers du nouvel export (essai à blanc sans --apply)",
+               action=_py("renommer_par_raw.py"), section=S),
     ]
 
 

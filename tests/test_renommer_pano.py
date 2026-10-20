@@ -57,6 +57,7 @@ class TestRenommerPano(unittest.TestCase):
             self.assertEqual(r.returncode, 0, r.stderr)
             self.assertIn("vues centrées seules", r.stdout)
             self.assertIn("Exposition identique sur les 6 vues", r.stdout)
+            self.assertNotIn("table RAW", r.stdout)      # un export de vues centrées ne fait pas la table
             self.assertEqual(noms(d), sorted(f"L{l}_C{c:02d}_E0.tif" for l in range(2) for c in range(3)))
 
     def test_rafales_completes(self):
@@ -66,6 +67,7 @@ class TestRenommerPano(unittest.TestCase):
             self.assertEqual(r.returncode, 0, r.stderr)
             self.assertIn("identique sur les 6 rafales", r.stdout)
             self.assertTrue((Path(d) / "L1_C02_E2.tif").exists())
+            self.assertIn("table RAW -> L_C_E", r.stdout)       # rappel de l'étape suivante (2F)
 
     def test_nombre_faux_bloque(self):
         with tempfile.TemporaryDirectory() as d:
