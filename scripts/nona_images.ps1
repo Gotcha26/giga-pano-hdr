@@ -57,6 +57,10 @@ $restes = @(Get-ChildItem -LiteralPath $Sortie -Filter 'tmp_*.tif' -File)
 foreach ($r in $restes) { Remove-Item -LiteralPath $r.FullName -Force }
 if ($restes.Count) { "reprise : {0} image(s) inachevee(s) supprimee(s) ({1})" -f $restes.Count, ($restes.Name -join ', ') | Out-File $log -Append -Encoding utf8 }
 
+# Avertissement attendu de nona sur les TIFF de Lightroom : prevenir avant qu'il ne s'affiche a chaque image
+Write-Host "A savoir : nona affiche pour chaque image 'Warning: TIFFDecoder: no TIFFTAG_SAMPLEFORMAT ... guessing pixeltype UINT16'." -ForegroundColor Cyan
+Write-Host "  Sans gravite : les TIFF de Lightroom n'ont pas cette balise ; la norme TIFF dit alors entiers non signes, ce que nona retient." -ForegroundColor Cyan
+
 for ($i = $De; $i -le $A; $i++) {
     $fichier = Join-Path $Sortie ('f_{0:D4}.tif' -f $i)
     $provisoire = Join-Path $Sortie ('tmp_{0:D4}.tif' -f $i)

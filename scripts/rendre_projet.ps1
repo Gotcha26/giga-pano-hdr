@@ -30,15 +30,15 @@
 #                              fusionneur avec d'autres options sans refaire nona (47 min pour 222 images a 45 056 px)
 #     -NettoyerIntermediaires  obsolete : encore accepte, sans effet
 #     -Lisible                 apres une fusion reussie, ecrit aussi une copie lisible du panorama (TIFF classique 16 bits
-#                              avec le profil de couleur des images, et JPEG sRGB) par rendre_lisible.ps1 ; ignore au-dela
-#                              d'environ 700 Mpx (fenetres et echantillons seulement, pas la pleine resolution)
+#                              avec le profil de couleur des images, et JPEG sRGB) par rendre_lisible.ps1 ; au-dela
+#                              d'environ 700 Mpx (pleine resolution), copie reduite a 6000 px de large
 #     Programmes appeles : C:\Program Files\Hugin\bin\nona.exe et enblend.exe ; multiblend (variables $hb, $multiblend).
 #
 # SORTIES
 #     Dans le dossier Sortie : le panorama <Nom>.tif (taille de la TOILE du projet, ligne p) et rendu_log.txt (durees,
 #     pics de RAM, codes de sortie, bilan du nettoyage). Le journal est aussi affiche a la fin.
 #     Avec -GarderIntermediaires : en plus les f_NNNN.tif et liste_enblend.txt.
-#     Avec -Lisible : en plus <Nom>_lisible.tif et <Nom>_sRGB.jpg.
+#     Avec -Lisible : en plus <Nom>_lisible.tif et <Nom>_sRGB.jpg (au-dela de la limite : <Nom>_apercu_*, reduits).
 #
 # EXEMPLE
 #     .\rendre_projet.ps1 -Projet "...\fenetre.pto" -Sortie "...\rendu" -Nom "fenetre" -GarderIntermediaires
@@ -91,7 +91,12 @@ function Lancer($exe, $arguments, $etiquette, $dossier = $null) {
 
 $argsNona = @('-z', 'LZW', '-o', "`"$Sortie\f_`"", "`"$Projet`"")
 if ($BigTiff) { $argsNona = @('--bigtiff') + $argsNona }
-if (-not $SansNona) { $null = Lancer "$hb\nona.exe" $argsNona 'nona' }
+if (-not $SansNona) {
+    # Avertissement attendu de nona sur les TIFF de Lightroom : prevenir avant qu'il ne s'affiche a chaque image
+    Write-Host "A savoir : nona affiche pour chaque image 'Warning: TIFFDecoder: no TIFFTAG_SAMPLEFORMAT ... guessing pixeltype UINT16'." -ForegroundColor Cyan
+    Write-Host "  Sans gravite : les TIFF de Lightroom n'ont pas cette balise ; la norme TIFF dit alors entiers non signes, ce que nona retient." -ForegroundColor Cyan
+    $null = Lancer "$hb\nona.exe" $argsNona 'nona'
+}
 
 $tuiles = Get-ChildItem $Sortie -Filter 'f_*.tif' | Sort-Object Name | ForEach-Object { $_.FullName }
 "nona : {0} images reprojetees{1}" -f $tuiles.Count, $(if ($SansNona) { ' (deja presentes)' }) | Out-File $log -Append -Encoding utf8

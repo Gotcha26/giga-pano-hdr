@@ -526,7 +526,12 @@ Un écart supérieur à 1 ou 2 % entre voisines, avec un **bruit faible** (moins
 
 Les fichiers exportés sont classés par le **numéro qui termine leur nom**, qui suit l'ordre de prise de vue. Le rang `R` de chaque fichier donne `R − 1 = position × N + exposition`, avec `position = ligne × C + colonne`.
 
-Avant de renommer, le script contrôle que le **nombre de fichiers** est celui attendu et que la **numérotation est continue** (aucun trou).
+Avant de renommer, le script contrôle que le **nombre de fichiers** est celui attendu et que la **numérotation est continue** (aucun trou). Le **préfixe** des préréglages de [**2D**](#2d--exporter-l-et-h) donne le type d'export : `Pano_E0-` (export H) attend **L × C** vues centrées, toutes nommées `_E0` quel que soit `--expos` ; `Pano_HDR-` (export L) attend des rafales de `--expos` expositions. Avec un autre préfixe, un export de L × C fichiers est pris pour des vues centrées. Deux préfixes dans le même dossier (deux exports mélangés) arrêtent le script.
+
+Il contrôle aussi le **motif d'exposition** lu dans l'EXIF (***exiftool***), et **s'arrête sans rien renommer** à la moindre anomalie (`--force` ne lève pas ce contrôle) :
+
+- **rafales HDR** : chaque rafale reproduit le même motif, d'un nombre impair d'expositions toutes différentes, la première étant la référence (valeur médiane) autour de laquelle les autres sont décalées, puisqu'elle devient `_E0` ;
+- **vues centrées seules** : toutes les images portent la même compensation, quelle qu'elle soit (pas forcément 0 IL). Une image d'une autre exposition glissée dans le lot est signalée par son nom.
 
 ```powershell
 python renommer_pano.py "$T\Export-TIFF-L" --lignes <L> --colonnes <C> --expos <N>            # essai à blanc
@@ -983,7 +988,7 @@ Les N calques sont l'unique production de l'assemblage qui **revient** dans le c
 3. **Importer**, module **Bibliothèque** : clic droit sur le dossier des RAW → **Synchroniser le dossier…**, ou **Importer** depuis `$H` en mode **Ajouter**.
 4. **Lire l'EXIF** : sélectionner les calques → **Métadonnées → Lire les métadonnées à partir du fichier**.
 5. **Fusionner** : *Photo → Fusion de photos → HDR*. Le DNG HDR se range dans `$H`. Un avertissement sur `WhiteBalance` est sans conséquence.
-6. **Exporter le TIFF** du HDR dans `$H\TIFF\`, **sans recadrage** : c'est cette version que l'on tuile d'abord ([**7A**](#7a--tuiler-avec-libvips)) ; le cadrage se décide plus tard ([**7C**](#7c--cadrer-les-deux-sources-facultatif)).
+6. **Exporter le TIFF** du HDR dans `$H\TIFF\`, **sans recadrage** : c'est cette version que l'on tuile ([**7A**](#7a--tuiler-avec-libvips)), et c'est elle que l'on recadre par calcul ([**7C**](#7c--cadrer-les-deux-sources-facultatif)). Lightroom n'ayant pas d'option « ignorer le recadrage » à l'export, et la fusion HDR rognant d'office quelques pixels : **exporter depuis une copie virtuelle** du DNG, recadrage **réinitialisé**. **Contrôler la taille** (`vipsheader`) : celle de la toile HDR (ex. 20 000 × 5 000). À refaire après chaque retouche du DNG (**5D**), sur une **nouvelle** copie virtuelle : l'ancienne garde l'ancien développement.
 
 > **Si le catalogue signale le dossier comme manquant** : clic droit → **Rechercher le dossier manquant…**.
 
@@ -1002,7 +1007,15 @@ Ces retouches se font **après** l'assemblage final. Elles ne concernent que ce 
 
 #### Recadrage
 
-Le HDR et la pleine résolution sont destinés à être superposés et doivent garder **le même cadre**. Un recadrage fait sur le HDR seul doit être reporté à l'identique sur la pleine résolution ([**7C**](#7c--cadrer-les-deux-sources-facultatif)), ou transmis à la visionneuse ([Position des deux sources](#position-des-deux-sources-lune-par-rapport-à-lautre)). Le recadrage reste une décision de composition, **sans rotation** : un décalage d'horizon se corrige dans ***Hugin***, avant le rendu.
+Le HDR et la pleine résolution sont destinés à être superposés et doivent garder **le même cadre**. Le cadre se **décide** ici, à l'œil sur le HDR, mais ne s'**applique** à aucun export :
+
+| Quoi | Où | Qui |
+| --- | --- | --- |
+| **Décider** le cadre | Sur le **DNG HDR lui-même** (pas sur la copie virtuelle de l'export) : outil Recadrage, rapport libre, angle à 0 | Vous, dans ***Lightroom*** |
+| **Garder la mesure** | Le catalogue l'enregistre en **fractions de l'image** (gauche, haut, droite, bas), valables pour les deux sources | ***Lightroom***, sans export ni sidecar |
+| **Lire la mesure** et l'appliquer aux **deux** TIFF non recadrés | [**7C**](#7c--cadrer-les-deux-sources-facultatif) : `vips extract_area` sur le HDR **et** sur la pleine résolution, même rectangle | ***cadrage_lightroom.py*** |
+
+D'où l'export **non recadré** de **5C** : un TIFF déjà recadré par ***Lightroom*** ne pourrait plus être mis au même cadre que la pleine résolution, que ***Lightroom*** ne peut pas ouvrir. Le recadrage reste une décision de composition, **sans rotation** : un décalage d'horizon se corrige dans ***Hugin***, avant le rendu.
 
 ---
 
@@ -1123,7 +1136,7 @@ Contrôle : les chemins d'images du projet doivent tous exister.
 .\rendre_projet.ps1 -Projet "$F\fenetre_A_pleine.pto" -Sortie "$F\rendu" -Nom fenetre_A -BigTiff -CompressionEnblend lzw -Fusionneur multiblend -SansNona -Lisible
 ```
 
-**Rendre l'échantillon lisible** : avec `-Lisible`, ***rendre_lisible.ps1*** écrit à côté du panorama `<Nom>_lisible.tif` (TIFF **classique** 16 bits, transparence aplatie sur noir, profil de couleur des images) et `<Nom>_sRGB.jpg`. Le panorama de ***multiblend*** est un **BigTIFF sans profil** : la plupart des logiciels ne l'ouvrent pas. C'est la copie à ouvrir dans ***Lightroom*** pour juger les retouches de **6A.1**. Au-delà d'environ 700 Mpx, le script ne fait rien : la pleine résolution se regarde par extraits (`vips crop`) ou en aperçu (`vips thumbnail`).
+**Rendre l'échantillon lisible** : avec `-Lisible`, ***rendre_lisible.ps1*** écrit à côté du panorama `<Nom>_lisible.tif` (TIFF **classique** 16 bits, transparence aplatie sur noir, profil de couleur des images) et `<Nom>_sRGB.jpg`. Le panorama de ***multiblend*** est un **BigTIFF sans profil** : la plupart des logiciels ne l'ouvrent pas. C'est la copie à ouvrir dans ***Lightroom*** pour juger les retouches de **6A.1**. Au-delà d'environ 700 Mpx, ni le TIFF classique ni le JPEG ne contiendraient le panorama : la copie est **réduite** à 6 000 px de large (`-LargeurApercu`), sous les noms `<Nom>_apercu_lisible.tif` et `<Nom>_apercu_sRGB.jpg`. C'est la vue d'ensemble du contrôle **6C.5** ; le détail de la pleine résolution se regarde par extraits (`vips crop`).
 
 **Ce qu'il faut vérifier** : la **géométrie** (la bande noire du trou connu a la largeur attendue : recouvrement négatif × définition en px/° ; les détails se prolongent de part et d'autre), la **netteté** à 100 %, les **raccords** sur un aperçu d'ensemble. La largeur d'une bande se mesure dans le canal alpha (`vips extract_band … 3`, puis `vips crop` d'une ligne et `vips csvsave`).
 
@@ -1199,14 +1212,14 @@ Une fois la fusion réussie, ***rendre_projet.ps1*** **supprime les intermédiai
 
 ## 🌐 Phase 7 — Tuiler
 
-**Pourquoi cette phase ?** Un fichier de plusieurs gigaoctets ne se montre pas tel quel. On le découpe en une **pyramide de tuiles** : une visionneuse à zoom profond ne charge que ce qui est à l'écran. Ce guide s'arrête là : afficher et publier dépend de la visionneuse choisie.
+**Pourquoi cette phase ?** Un fichier de plusieurs gigaoctets ne se montre pas tel quel. On le découpe en une **pyramide de tuiles** : une visionneuse à zoom profond ne charge que ce qui est à l'écran. Le guide s'arrête au paquet prêt à mettre en ligne : la publication elle-même dépend de la visionneuse et de l'hébergement.
 
 | | |
 | --- | --- |
 | **Entrée** | Le HDR (niveaux bas) et le panorama pleine résolution (niveau haut) |
 | **Sortie** | Une pyramide de tuiles par panorama : un fichier `.dzi` et un dossier `_files` |
-| **Étapes** | <ul><li>**7A** (tuiler)</li><li>**7B** (contrôler en local)</li><li>**7C** (cadrer, facultatif)</li></ul> |
-| **Outils** | <ul><li>***libvips*** (`vips dzsave`, `vips extract_area`)</li><li>***tuiler.ps1***</li><li>Une visionneuse locale</li><li>***cadrage_lightroom.py***</li></ul> |
+| **Étapes** | <ul><li>**7A** (tuiler)</li><li>**7B** (contrôler en local)</li><li>**7C** (cadrer, facultatif)</li><li>**7D** (empaqueter pour la mise en ligne)</li></ul> |
+| **Outils** | <ul><li>***libvips*** (`vips dzsave`, `vips extract_area`)</li><li>***tuiler.ps1***</li><li>***controler_tuiles.py***</li><li>***cadrage_lightroom.py***</li><li>***empaqueter.py***</li></ul> |
 | **Ordre** | <ul><li>On **tuile d'abord les panoramas tels qu'ils sont**</li><li>On les **contrôle en local**</li><li>Seulement ensuite, si l'on veut, on **cadre** (puis on retuile et on recontrôle)</li></ul> |
 
 ```mermaid
@@ -1242,7 +1255,14 @@ flowchart LR
 
 **Pourquoi** : c'est le seul endroit où l'on voit le **fruit de tout le travail** comme le verra le visiteur : les deux pyramides superposées, à tous les zooms, avec les vraies couleurs. **À faire avant tout envoi en ligne** : les navigateurs gardent les tuiles en cache, un défaut vu après coup coûte un nouveau dossier et un nouveau dépôt.
 
-**Lancer** : toute visionneuse Deep Zoom locale convient (une page ***OpenSeadragon*** servie en HTTP : `file://` bloque le chargement des tuiles). Il faut lui donner les deux pyramides et le **cadre de la pleine résolution dans celui du HDR** ([Position des deux sources](#position-des-deux-sources-lune-par-rapport-à-lautre)).
+**Lancer** : ***controler_tuiles.py*** sert une page ***OpenSeadragon*** (embarquée dans `scripts\visionneuse\`) et les deux pyramides sur ce poste, puis ouvre le navigateur ; Entrée arrête le serveur. Une page doit être servie en HTTP : `file://` bloque le chargement des tuiles. La pleine résolution apparaît avec le zoom (`--fondu curseur` pour un curseur). Pour des sources **non recadrées**, il faut donner le **cadre de la pleine résolution dans celui du HDR** ([Position des deux sources](#position-des-deux-sources-lune-par-rapport-à-lautre)) ; des sources cadrées ensemble (**7C**) ont le même cadre.
+
+```powershell
+python controler_tuiles.py "$P\7_tuiles\hdr_webp\hdr.dzi" "$P\7_tuiles\complet_webp\complet.dzi" --box <x>,<y>,<largeur>   # sources non recadrées
+python controler_tuiles.py "$P\7_tuiles\hdr_cadre_webp\hdr.dzi" "$P\7_tuiles\complet_cadre_webp\complet.dzi"            # sources cadrées (7C)
+```
+
+Toute autre visionneuse Deep Zoom convient, avec les mêmes données.
 
 **Que regarder** (à 100 %, puis en dézoomant) :
 
@@ -1263,7 +1283,7 @@ Le contrôle ne modifie rien : il décide de la suite : **panorama bon** (mise e
 
 **Le principe** : le cadrage est un choix de composition, fait **à l'œil sur le HDR**, seule vue d'ensemble lisible. Le HDR et la pleine résolution sont la même projection à deux échelles : le recadrage de Lightroom, enregistré en **fractions de l'image**, vaut pour les deux. ***cadrage_lightroom.py*** le relit, le convertit en pixels de chaque source et refuse un cadre qui sortirait de la zone utile de la pleine résolution. **Sans rotation**.
 
-1. **Cadrer dans Lightroom**, sur le DNG HDR, outil Recadrage, rapport libre, angle à 0. Ne pas valider par un export recadré.
+1. **Cadrer dans Lightroom**, sur le DNG HDR, outil Recadrage, rapport libre, angle à 0 (si ce n'est déjà fait en [**5D**](#recadrage)). Ne pas valider par un export recadré.
 2. **Lire le recadrage** (rien n'est modifié) :
    ```powershell
    python cadrage_lightroom.py        # demande l'emplacement du catalogue .lrcat, puis le nom du fichier
@@ -1282,6 +1302,18 @@ Le contrôle ne modifie rien : il décide de la suite : **panorama bon** (mise e
    **Contrôle facultatif du vide** : `python cadrage_lightroom.py --controle "$C\complet_cadre.tif"` donne, **par coin**, la largeur et la hauteur du vide dans le canal alpha. Il ne juge pas : laisser un peu de noir dans les coins est un choix de composition légitime.
 5. **Tuiler** les deux TIFF cadrés (**7A**, `-ProfilEntree` toujours donné à la pleine résolution), puis **recontrôler** (**7B**). Les deux sources ayant **le même cadre**, aucun décalage n'est à corriger entre elles.
 6. **Supprimer** `$C` une fois les tuiles contrôlées.
+
+### 7D — Empaqueter pour la mise en ligne
+
+**Quand** : une fois les tuiles contrôlées (**7B**), cadrées ou non. L'hébergement reçoit **un seul fichier ZIP**, décompressé sur place dans la racine des panoramas.
+
+```powershell
+python empaqueter.py pano-<focale>-<date> "$P\7_tuiles\hdr_cadre_webp\hdr.dzi" "$P\7_tuiles\complet_cadre_webp\complet.dzi" "$P\7_galerie" --titre "<titre>"
+```
+
+***empaqueter.py*** copie les deux pyramides dans `<Sortie>\<Nom>\` (`hdr\`, `complet\`), y écrit `panorama.json` (tailles lues dans les `.dzi`, cadre `box` de la pleine résolution dans le HDR), puis `<Nom>.zip` **sans compression** (les tuiles le sont déjà). `--box` vaut `0,0,1` par défaut, pour des sources cadrées ensemble ; pour des sources non recadrées, donner le cadre de la [position des deux sources](#position-des-deux-sources-lune-par-rapport-à-lautre). Le format est celui de la visionneuse ***GigaPanoramaViewer*** (`panorama.json` version 1).
+
+**Un nouveau rendu va sous un nouveau nom** : les navigateurs gardent les tuiles en cache, des tuiles remplacées sous le même nom ne seraient pas revues. Le script refuse un dossier `<Nom>` déjà présent.
 
 ### Position des deux sources l'une par rapport à l'autre
 
@@ -1353,8 +1385,9 @@ $H = <dossier des RAW>\HDR\              ← dans le catalogue Lightroom
 | **5C** — retour dans Lightroom | Non (Lightroom) | `Move-Item`, ***exiftool*** | Les calques reviennent par `$H` |
 | **5D** — finitions | Non (Lightroom) | Lightroom | |
 | **7A** — tuiler | Non | ***tuiler.ps1*** (`vips dzsave`) | |
-| **7B** — contrôler en local | Non | une visionneuse Deep Zoom servie en HTTP | Contrôle avant toute mise en ligne |
+| **7B** — contrôler en local | Non | ***controler_tuiles.py*** (page ***OpenSeadragon*** servie en HTTP) | Contrôle avant toute mise en ligne |
 | **7C** — cadrage (facultatif) | Non (Lightroom) | ***cadrage_lightroom.py***, `vips extract_area` | La pleine résolution, trop grande pour Lightroom, reçoit le cadrage par calcul |
+| **7D** — empaqueter | Non | ***empaqueter.py*** | Un seul ZIP à mettre en ligne, au format de la visionneuse |
 
 **Pour un petit panorama** (une ligne, quelques dizaines d'images), l'assistant d'***Hugin*** suffit en général : ces scripts ne servent que pour les grandes grilles où l'assistant se perd.
 
@@ -1421,11 +1454,14 @@ python deplacer_projet.py       "$D6\complet.pto" "$D6\complet.pto" --images "$T
 $V = 'D:\Outils\libvips\vips-dev-8.18\bin\vips.exe'
 .\tuiler.ps1 -Image "$D6\rendu\complet_multiblend.tif" -Sortie "$P\7_tuiles\complet_webp\complet" -ProfilEntree "$P\7_tuiles\profils\AdobeRGB.icc" -Vips $V
 .\tuiler.ps1 -Image "$H\TIFF\pano_HDR_non_recadre.tif" -Sortie "$P\7_tuiles\hdr_webp\hdr" -Vips $V
+python controler_tuiles.py "$P\7_tuiles\hdr_webp\hdr.dzi" "$P\7_tuiles\complet_webp\complet.dzi" --box <x>,<y>,<largeur>   # Entrée pour arrêter
 # 7C. Cadrer les deux sources (facultatif), puis retuiler (7A) et recontrôler (7B)
 python cadrage_lightroom.py                      # imprime les commandes extract_area (valeurs X Y L H)
 $C = "$P\7_tuiles\cadrage"; New-Item -ItemType Directory -Force $C | Out-Null
 & $V extract_area "$H\TIFF\pano_HDR_non_recadre.tif" "$C\hdr_cadre.tif" X Y L H
 & $V extract_area "$D6\rendu\complet_multiblend.tif" "$C\complet_cadre.tif[bigtiff,tile]" X Y L H
+# 7D. Empaqueter les tuiles contrôlées : dossier autonome et ZIP à mettre en ligne (nouveau nom à chaque rendu)
+python empaqueter.py pano-<focale>-<date> "$P\7_tuiles\hdr_cadre_webp\hdr.dzi" "$P\7_tuiles\complet_cadre_webp\complet.dzi" "$P\7_galerie" --titre "<titre>"
 ```
 
 ---
@@ -1442,8 +1478,8 @@ Les scripts du dossier `scripts\` (`$OUTILS`) sont classés par étape dans [`IN
 
 Toutes les commandes de ce guide restent valables telles quelles. Deux facilités s'y ajoutent, sans rien changer aux scripts appelés avec des arguments :
 
-- **Le lanceur** ***panorama.py*** (`python panorama.py` depuis `$OUTILS`) aiguille vers le bon script **par phase du guide** : chaque sous-menu liste des tâches, nomme le script appelé et déclare ce qu'il écrit et où (`[écrit — cible]` ou `[lecture seule]`). Les gestes qui se font dans ***Hugin*** ou ***Lightroom*** (**3B**, **3E**, **5C**, **6A**, **7B**, **7C**) y apparaissent grisés, avec leur rappel. La Phase 0 y est outillée : versions des outils, installation de ce qui manque (sur confirmation), dossiers des préréglages ***Lightroom***, création de l'arborescence d'un nouveau panorama.
-- **Le menu de pilotage** d'un script Python s'affiche quand on le lance **sans argument, dans un terminal** : la liste numérotée de ses arguments, préremplie, où l'on règle chaque valeur avant de taper `L` pour lancer. Avec des arguments, ou appelé par un autre programme, un script ne pose **jamais** de question. Les scripts PowerShell n'ont pas ce menu : le lanceur le leur fournit.
+- **Le lanceur** ***panorama.py*** (`python panorama.py` depuis `$OUTILS`) aiguille vers le bon script **par phase du guide** : chaque sous-menu liste des tâches, nomme le script appelé et déclare ce qu'il écrit et où (`[écrit — cible]` ou `[lecture seule]`). Les gestes qui se font dans ***Hugin*** ou ***Lightroom*** (**3B**, **3E**, **5C**, **6A**, **7C**) y apparaissent grisés, avec leur rappel. La Phase 0 y est outillée : versions des outils, installation de ce qui manque (sur confirmation), dossiers des préréglages ***Lightroom***, création de l'arborescence d'un nouveau panorama.
+- **Le menu de pilotage** d'un script Python s'affiche quand on le lance **sans argument, dans un terminal** : la liste numérotée de ses arguments, préremplie, où l'on règle chaque valeur avant de taper `L` pour lancer. Avec des arguments, ou appelé par un autre programme, un script ne pose **jamais** de question. Les scripts PowerShell n'ont pas ce menu : le lanceur le leur fournit. Depuis le lanceur, après chaque exécution, le menu de pilotage revient avec les mêmes réglages (un essai à blanc se relance avec `--apply`), et les chemins se saisissent **en entier** : le lanceur exécute les scripts depuis `$OUTILS`, où un chemin relatif ou abrégé (`…\rendu`) créerait un dossier dans le dépôt ; il le refuse avant de lancer.
 
 Le préremplissage vient de deux fichiers JSON, hors dépôt :
 

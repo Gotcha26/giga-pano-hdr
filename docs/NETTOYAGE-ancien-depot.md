@@ -1,4 +1,4 @@
-# Nettoyage de l'ancien dépôt : fait le 2026-10-18
+# Nettoyage de l'ancien dépôt : 2026-10-18 et 2026-10-20
 
 Le dossier `assemblage-panorama/` du dépôt privé de la visionneuse (`Gotcha26/piwigo-GigaPanoramaViewer_private`, dossier local `…\Piwigo\GigaPanoramaViewer\`) a été **recopié** dans ce dépôt le 2026-10-18, puis **retiré** de l'ancien le même jour par la PR [#58](https://github.com/Gotcha26/piwigo-GigaPanoramaViewer_private/pull/58). Ce document garde la trace de ce qui a été déplacé, de ce qui est resté, et de ce que la PR a changé là-bas.
 
@@ -37,6 +37,22 @@ Le dossier `assemblage-panorama/` du dépôt privé de la visionneuse (`Gotcha26
 
 ---
 
+## 🧹 Second nettoyage : `page-autonome/` (2026-10-20)
+
+Laissé dans la visionneuse le 18 octobre, `page-autonome/` servait en réalité la chaîne de ce dépôt (contrôler les tuiles, empaqueter), pas le plugin. Ses usages ont maintenant un équivalent ici, et le dossier est retiré de la visionneuse.
+
+| Dans la visionneuse | Ici | Remarque |
+| --- | --- | --- |
+| `page-autonome/index.html` + `vendor/openseadragon/` | `scripts/visionneuse/` (page + *OpenSeadragon* 6.1.1), servis par ***controler_tuiles.py*** (**7B**) | Plus de copie ni de jonction : le script sert les dossiers des deux `.dzi` où qu'ils soient |
+| `page-autonome/empaqueter.ps1` | ***empaqueter.py*** (**7D**) | Même format (`panorama.json` version 1, ZIP sans compression), mêmes refus |
+| `page-autonome/tests/tester_empaqueter.ps1` | `tests/test_empaqueter.py` | Mêmes cas, plus le contenu du ZIP |
+| `page-autonome/README.md` (mise en route, empaquetage) | Guide, **7B** et **7D** | |
+| `page-autonome/hebergement/` (`.htaccess`, `gigapanorama-ping.txt`) | **Pas ici** : propre à l'hébergement du plugin | Leur contenu est dans la documentation utilisateur de la visionneuse (page 03) |
+
+**Donnée vérifiée avant le retrait** : le cadre d'un HDR non recadré (`0,016135 / 0,012329 / 0,983864`), cité en commentaire de `index.html`, figure dans **T-04** et dans l'étude de cas (**7B**).
+
+---
+
 ## 🧭 Décisions prises ici
 
 - **Licence** : MIT pour les scripts, CC BY 4.0 pour la documentation (`LICENSE`, `LICENSE-docs`).
@@ -44,5 +60,5 @@ Le dossier `assemblage-panorama/` du dépôt privé de la visionneuse (`Gotcha26
 
 ---
 
-**Version** : 2.0
-**Dernière mise à jour** : 2026-10-18
+**Version** : 2.1
+**Dernière mise à jour** : 2026-10-20

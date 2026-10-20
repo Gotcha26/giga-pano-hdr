@@ -356,9 +356,11 @@ def menu_phase7(ctx):
     S = "PHASE 7 — TUILER ET CADRER"
     return [
         entree_ps("Tuiler un panorama en pyramide Deep Zoom", "tuiler.ps1", "la pyramide .dzi et _files", "vips", etape="7A", section=S),
-        geste("7B — Contrôler en local", "dans une visionneuse Deep Zoom servie en HTTP (file:// bloque les tuiles) : raccords, couleurs, position HDR / pleine résolution", section=S),
+        Entree("Contrôler les tuiles dans le navigateur", "controler_tuiles.py (7B)", action=_py("controler_tuiles.py"), section=S),
         geste("7C — Cadrer", "dans Lightroom, sur le DNG HDR : outil Recadrage, angle 0 ; exporter une copie virtuelle NON recadrée", section=S),
         Entree("Lire le cadrage Lightroom et imprimer les commandes", "cadrage_lightroom.py (7C)", action=_py("cadrage_lightroom.py"), section=S),
+        Entree("Empaqueter pour la mise en ligne", "empaqueter.py (7D)", effet="<Sortie>\\<Nom>\\ et <Nom>.zip",
+               action=_py("empaqueter.py"), section=S),
     ]
 
 

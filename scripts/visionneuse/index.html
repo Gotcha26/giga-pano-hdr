@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contrôle des tuiles</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { --fond: #111; --barre: #1b1b1b; --texte: #ddd; --discret: #9a9a9a; --erreur: #ff8a8a; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; background: var(--fond); color: var(--texte); font: 14px system-ui, sans-serif; }
+  #barre { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; padding: .5rem 1rem; background: var(--barre); }
+  #barre label { display: flex; gap: .4rem; align-items: center; }
+  #viewer { position: absolute; top: 3rem; bottom: 0; left: 0; right: 0; }
+  #infos { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--discret); }
+  #erreur { color: var(--erreur); }
+</style>
+</head>
+<body>
+<div id="barre">
+  <strong id="titre">Contrôle des tuiles (7B)</strong>
+  <span id="erreur"></span>
+  <label id="bloc-fondu" hidden>HDR
+    <input id="fondu" type="range" min="0" max="100" value="100" aria-label="Fondu entre HDR et pleine résolution">
+    Pleine résolution</label>
+  <span id="infos"></span>
+</div>
+<div id="viewer"></div>
+
+<script src="openseadragon/openseadragon.min.js"></script>
+<script>
+/*
+ * Page de contrôle servie par controler_tuiles.py (étape 7B du guide). Paramètres d'URL :
+ *   ?hdr=hdr/hdr.dzi                    une seule pyramide
+ *   ...&full=complet/complet.dzi        la pleine résolution posée sur le HDR (même cadre si ?box est absent)
+ *   ...&box=x,y,largeur                 cadre de la pleine résolution dans celui du HDR, en largeurs du HDR
+ *   ...&fondu=auto[&z0=0.8&z1=1.6]      la pleine résolution apparaît avec le zoom (sinon : curseur de fondu) ;
+ *                                       z0, z1 : zooms en pixels écran par pixel du HDR (opacité nulle sous z0, totale au-dessus de z1)
+ * Servie en HTTP : file:// bloque le chargement des tuiles.
+ */
+const q = new URLSearchParams(location.search);
+const erreur = document.getElementById('erreur');
+const infos = document.getElementById('infos');
+if (q.get('titre')) document.getElementById('titre').textContent = q.get('titre');
+
+const viewer = OpenSeadragon({
+  id: 'viewer',
+  prefixUrl: 'openseadragon/images/',
+  showNavigator: true,
+  navigatorPosition: 'BOTTOM_RIGHT',
+  maxZoomPixelRatio: 2,
+  visibilityRatio: 0.5,
+  constrainDuringPan: true,
+  immediateRender: false,
+  imageLoaderLimit: 6,
+  timeout: 60000,
+});
+viewer.addHandler('open-failed', e => { erreur.textContent = 'Échec du chargement : ' + e.message; });
+viewer.addHandler('add-item-failed', e => { erreur.textContent = 'Échec du chargement : ' + (e.message || e.source); });
+
+const hdr = q.get('hdr'), full = q.get('full');
+if (!hdr) {
+  erreur.textContent = 'Aucune source : ajouter ?hdr=…';
+} else if (!full) {
+  viewer.open(hdr);
+} else {
+  viewer.addTiledImage({ tileSource: hdr, index: 0 });
+  const box = (q.get('box') || '').split(',').map(Number);
+  const place = box.length === 3 && box.every(Number.isFinite) ? { x: box[0], y: box[1], width: box[2] } : {};
+  viewer.addTiledImage({ tileSource: full, index: 1, opacity: 1, ...place });
+  if (q.get('fondu') === 'auto') {
+    // L'opacité de la pleine résolution suit le zoom du HDR, linéairement en log du zoom entre z0 et z1.
+    const z0 = Number(q.get('z0')) || 0.8, z1 = Number(q.get('z1')) || 1.6;
+    const majFondu = () => {
+      const haut = viewer.world.getItemAt(1), bas = viewer.world.getItemAt(0);
+      if (!haut || !bas) return;
+      const z = bas.viewportToImageZoom(viewer.viewport.getZoom(true));
+      const t = Math.min(1, Math.max(0, (Math.log(z) - Math.log(z0)) / (Math.log(z1) - Math.log(z0))));
+      haut.setOpacity(t);
+      infos.dataset.fondu = 'fondu auto ' + Math.round(t * 100) + ' % · HDR ' + z.toFixed(2) + '×';
+      majInfos();
+    };
+    viewer.world.addHandler('add-item', majFondu);
+    viewer.addHandler('animation', majFondu);
+    viewer.addHandler('zoom', majFondu);
+  } else {
+    document.getElementById('bloc-fondu').hidden = false;
+    document.getElementById('fondu').addEventListener('input', e => {
+      const haut = viewer.world.getItemAt(1);
+      if (haut) haut.setOpacity(e.target.value / 100);
+    });
+  }
+}
+
+// Zoom de la source du dessus, en pixels image par pixel écran (1 = 100 %).
+function majInfos() {
+  const it = viewer.world.getItemAt(viewer.world.getItemCount() - 1);
+  if (!it) return;
+  const z = it.viewportToImageZoom(viewer.viewport.getZoom(true));
+  infos.textContent = (infos.dataset.fondu ? infos.dataset.fondu + ' · ' : '') + 'zoom ' + z.toFixed(3) + '× · '
+    + it.getContentSize().x + ' × ' + it.getContentSize().y + ' px';
+}
+viewer.addHandler('animation', majInfos);
+viewer.addHandler('open', majInfos);
+</script>
+</body>
+</html>
