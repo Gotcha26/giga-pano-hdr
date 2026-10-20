@@ -483,7 +483,7 @@ Le filtre **Objectif** écarte les autres séries de la même sortie. **Limite**
 
 **Contrôles avant d'exporter** : le compte doit être exact ; trié par heure, la liste filtrée au temps de pose central doit montrer une image toutes les N ; le filtre ne doit renvoyer **aucune** autre valeur (photo de test, marqueur).
 
-**Renommer un export d'après le RAW d'origine.** ***renommer_par_raw.py*** renomme n'importe quel export en `L_C_E` d'après le **fichier RAW d'origine** lu dans les métadonnées de chaque TIFF, en s'appuyant sur un référentiel : un export déjà renommé, ou une **table CSV** (colonnes `raw,lce`) qui survit à la suppression des exports. Il ne dépend ni de la numérotation, ni de l'ordre de tri, ni du nombre de fichiers : un échantillon de 12 images se renomme comme les autres. Pour le **premier** export (sans référentiel), ***renommer_pano.py*** fait le renommage initial, et la table s'écrit juste après ([**2F**](#2f--renommer)).
+**Renommer un export d'après le RAW d'origine.** ***renommer_par_raw.py*** renomme n'importe quel export en `L_C_E` d'après le **fichier RAW d'origine** lu dans les métadonnées de chaque TIFF, en s'appuyant sur un référentiel : un export déjà renommé, ou une **table CSV** (colonnes `raw,lce`) qui survit à la suppression des exports. Il ne dépend ni de la numérotation, ni de l'ordre de tri, ni du nombre de fichiers : un échantillon de 12 images se renomme comme les autres. Pour le **premier** export (sans référentiel), ***renommer_pano.py*** fait le renommage initial et écrit la table en même temps ([**2F**](#2f--renommer)).
 
 ```powershell
 python renommer_par_raw.py "$P\table_raw_LCE.csv" "$T\Export-TIFF-H"             # essai à blanc
@@ -533,27 +533,28 @@ Il contrôle aussi le **motif d'exposition** lu dans l'EXIF (***exiftool***), et
 - **vues centrées seules** : toutes les images portent la même compensation, quelle qu'elle soit (pas forcément 0 IL). Une image d'une autre exposition glissée dans le lot est signalée par son nom.
 
 ```powershell
-python renommer_pano.py "$T\Export-TIFF-L" --lignes <L> --colonnes <C> --expos <N>            # essai à blanc
-python renommer_pano.py "$T\Export-TIFF-L" --lignes <L> --colonnes <C> --expos <N> --apply    # renomme + correspondance.csv
-python renommer_pano.py "$T\Export-TIFF-L" --undo                                              # restaure
+python renommer_pano.py "$T\Export-TIFF-L" --lignes <L> --colonnes <C> --expos <N> --table "$P\table_raw_LCE.csv"            # essai à blanc
+python renommer_pano.py "$T\Export-TIFF-L" --lignes <L> --colonnes <C> --expos <N> --table "$P\table_raw_LCE.csv" --apply    # renomme + correspondance.csv
+python renommer_pano.py "$T\Export-TIFF-L" --undo                                                                              # restaure
 ```
 
 `--force` ignore un écart de nombre ou un trou de numérotation, en connaissance de cause.
 
-**Écrire aussitôt la table RAW → `L_C_E`.** Une fois l'export L **complet** renommé, et avant tout autre export, on fige la correspondance entre chaque RAW et sa place dans la grille :
+**La table RAW → `L_C_E`, écrite et relue par le renommage.** Avec `--table` (prérempli d'après le panorama courant), ***renommer_pano.py*** lit aussi, dans le même appel à ***exiftool***, le RAW d'origine de chaque TIFF, que Lightroom y inscrit (`XMP-crs:RawFileName`) :
 
-```powershell
-python renommer_par_raw.py "$T\Export-TIFF-L" "$P\table_raw_LCE.csv" --table
-```
+| Situation | Ce que fait le script |
+| --- | --- |
+| **Pas de table**, export **complet** en rafales (L × C × N, sans trou) | L'**écrit** avec le renommage : c'est le premier renommage de l'export L |
+| **Une table existe** | **Contrôle le plan contre elle** avant de renommer : chaque RAW doit recevoir le nom que la table lui donne. Au moindre écart (ordre d'export faux, image en trop ou manquante, RAW inconnu), il s'arrête sans rien renommer et nomme les fichiers en cause |
+| **Pas de table**, export partiel (vues centrées seules) ou image sans RAW d'origine | Renomme, sans écrire de table incomplète, et le dit |
 
 | | |
 | --- | --- |
-| **Contenu** | Une ligne par RAW (`raw,lce`), ex. `20260619-091335-0000765.CR2,L0_C00_E0.tif` : L × C × N lignes |
-| **D'où viennent les noms** | Lightroom inscrit dans chaque TIFF exporté le nom du RAW d'origine (`XMP-crs:RawFileName`) ; le script le lit avec ***exiftool*** et l'associe au nom `L_C_E` que le fichier vient de recevoir |
-| **À quoi elle sert** | Renommer **tout export ultérieur**, quel que soit son ordre ou son nombre de fichiers : export H, réexports, échantillons, copies virtuelles ([**2D**](#2d--exporter-l-et-h), [**6A.2**](#6a2--exporter)) ; contrôler la couverture des vues centrées ([**2E**](#2e--vérifier-lexport)) |
-| **Pourquoi l'écrire maintenant** | Elle se lit sur un export **renommé** : c'est le seul moment où il existe sans effort. Elle **survit** ensuite à la suppression des exports : c'est une **matrice** du panorama, à conserver avec le projet maître |
+| **Contenu** | Une ligne par RAW (`raw,lce`), ex. `20260619-091335-0000765.CR2,L0_C00_E0.tif` : L × C × N lignes, triées par nom `L_C_E` |
+| **À quoi elle sert** | Renommer **tout export ultérieur**, quel que soit son ordre ou son nombre de fichiers : export H, réexports, échantillons, copies virtuelles ([**2D**](#2d--exporter-l-et-h), [**6A.2**](#6a2--exporter)) ; contrôler la couverture des vues centrées ([**2E**](#2e--vérifier-lexport)) ; contrôler chaque renommage suivant par ***renommer_pano.py*** |
+| **Pourquoi elle compte** | Elle **survit** à la suppression des exports : c'est une **matrice** du panorama, à conserver avec le projet maître |
 
-**Contrôle** : la table compte L × C × N lignes (plus l'en-tête), et chaque nom `L_C_E` n'y figure qu'une fois.
+Pour un export déjà renommé autrement, `renommer_par_raw.py <export renommé> "$P\table_raw_LCE.csv" --table` écrit la même table.
 
 ---
 
@@ -1419,8 +1420,7 @@ cd $OUTILS
 # 2E. Après l'export Lightroom
 python verifier_ordre.py $IMG --grille <L> <C>
 # 2F. Renommer
-python renommer_pano.py $IMG --lignes <L> --colonnes <C> --expos <N>      # essai à blanc, puis --apply
-python renommer_par_raw.py $IMG "$P\table_raw_LCE.csv" --table             # table RAW -> L_C_E, pour les réexports
+python renommer_pano.py $IMG --lignes <L> --colonnes <C> --expos <N> --table "$P\table_raw_LCE.csv"   # essai à blanc, puis --apply : écrit la table RAW -> L_C_E
 # 3A. Projet de grille (vues centrées)
 python generer_pto.py $IMG "$GRILLE\pano_grille.pto"
 # 3B. HUGIN : ouvrir pano_grille.pto -> Photos -> CPFind (prealigned) -> Créer des points -> Enregistrer sous 3_grille\pano_grille_cp.pto

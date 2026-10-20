@@ -1,9 +1,10 @@
-"""Tests de renommer_pano.py : nombre de fichiers, vues centrées seules, motif d'exposition (sous-processus).
+"""Tests de renommer_pano.py : nombre de fichiers, vues centrées seules, motif d'exposition, table RAW -> L_C_E.
 
-Les images sont de vrais TIFF minuscules (Pillow) dont exiftool écrit la compensation d'exposition ; sans exiftool
-dans le PATH, les tests sont sautés.
+Les images sont de vrais TIFF minuscules, écrits à la main, dont exiftool écrit la compensation d'exposition et le RAW
+d'origine (XMP-crs:RawFileName) ; sans exiftool dans le PATH, les tests sont sautés. Lancés en sous-processus.
 """
 
+import csv
 import os
 import shutil
 import struct
@@ -33,15 +34,32 @@ def lancer(dossier, *args):
                           capture_output=True, text=True, encoding="utf-8", env=env, stdin=subprocess.DEVNULL)
 
 
-def export(dossier, compensations, prefixe="Pano-", debut=1):
-    """<prefixe>1.tif … <prefixe>N.tif, l'image i portant la compensation compensations[i - 1]."""
-    par_valeur = {}
-    for i, v in enumerate(compensations, debut):
-        chemin = Path(dossier) / f"{prefixe}{i:02d}.tif"
+def export(dossier, compensations, prefixe="Pano-", debut=1, raws=None):
+    """<prefixe>1.tif … <prefixe>N.tif, l'image i portant la compensation compensations[i - 1] et, si raws est donné,
+    le RAW d'origine raws[i - 1] (None : aucun). Un seul exiftool, une commande par image (-execute)."""
+    lignes = []
+    for k, v in enumerate(compensations):
+        chemin = Path(dossier) / f"{prefixe}{k + debut:02d}.tif"
         chemin.write_bytes(TIFF_1PX)
-        par_valeur.setdefault(v, []).append(str(chemin))
-    for v, chemins in par_valeur.items():
-        subprocess.run(["exiftool", "-q", "-overwrite_original", f"-ExposureCompensation={v}", *chemins], check=True)
+        lignes += ["-q", "-overwrite_original", f"-ExposureCompensation={v}"]
+        if raws and raws[k]:
+            lignes.append(f"-XMP-crs:RawFileName={raws[k]}")
+        lignes += [str(chemin), "-execute"]
+    arguments = Path(dossier) / "_exiftool_args.txt"
+    arguments.write_text("\n".join(lignes) + "\n", encoding="utf-8")
+    subprocess.run(["exiftool", "-charset", "filename=utf8", "-@", str(arguments)], check=True, capture_output=True)
+    arguments.unlink()
+
+
+def rafales_avec_raws(n_positions=6):
+    """Compensations et RAW d'un export complet en rafales de 3 : le RAW n° k pour la k-ième image."""
+    comp = HDR * n_positions
+    return comp, [f"IMG_{k:04d}.CR2" for k in range(1, len(comp) + 1)]
+
+
+def lire_table(chemin):
+    with open(chemin, newline="", encoding="utf-8") as f:
+        return [(r["raw"], r["lce"]) for r in csv.DictReader(f)]
 
 
 def noms(dossier):
@@ -57,7 +75,7 @@ class TestRenommerPano(unittest.TestCase):
             self.assertEqual(r.returncode, 0, r.stderr)
             self.assertIn("vues centrées seules", r.stdout)
             self.assertIn("Exposition identique sur les 6 vues", r.stdout)
-            self.assertNotIn("table RAW", r.stdout)      # un export de vues centrées ne fait pas la table
+            self.assertNotIn("Table RAW -> L_C_E écrite", r.stdout)
             self.assertEqual(noms(d), sorted(f"L{l}_C{c:02d}_E0.tif" for l in range(2) for c in range(3)))
 
     def test_rafales_completes(self):
@@ -67,7 +85,74 @@ class TestRenommerPano(unittest.TestCase):
             self.assertEqual(r.returncode, 0, r.stderr)
             self.assertIn("identique sur les 6 rafales", r.stdout)
             self.assertTrue((Path(d) / "L1_C02_E2.tif").exists())
-            self.assertIn("table RAW -> L_C_E", r.stdout)       # rappel de l'étape suivante (2F)
+            self.assertIn("Sans --table", r.stdout)
+
+    def test_export_complet_ecrit_la_table(self):
+        with tempfile.TemporaryDirectory() as d:
+            comp, raws = rafales_avec_raws()
+            export(d, comp, prefixe="Pano_HDR-", raws=raws)
+            table = Path(d) / "P" / "table_raw_LCE.csv"
+            essai = lancer(d, "--expos", "3", "--table", str(table))
+            self.assertIn("sera écrite", essai.stdout)
+            self.assertFalse(table.exists())                       # essai à blanc : rien d'écrit
+            r = lancer(d, "--expos", "3", "--apply", "--table", str(table))
+            self.assertEqual(r.returncode, 0, r.stderr)
+            t = lire_table(table)
+            self.assertEqual(len(t), 18)
+            self.assertEqual(t[0], ("IMG_0001.CR2", "L0_C00_E0.tif"))
+            self.assertIn(("IMG_0018.CR2", "L1_C02_E2.tif"), t)
+            self.assertEqual([lce for _, lce in t], sorted(lce for _, lce in t))   # trié comme renommer_par_raw.py
+
+    def test_export_suivant_controle_par_la_table(self):
+        with tempfile.TemporaryDirectory() as d:
+            comp, raws = rafales_avec_raws()
+            table = Path(d) / "table_raw_LCE.csv"
+            (Path(d) / "L").mkdir()
+            export(Path(d) / "L", comp, prefixe="Pano_HDR-", raws=raws)
+            self.assertEqual(lancer(Path(d) / "L", "--expos", "3", "--apply", "--table", str(table)).returncode, 0)
+            # export H : les vues centrées (1 RAW sur 3), dans l'ordre de prise
+            (Path(d) / "H").mkdir()
+            export(Path(d) / "H", [0] * 6, prefixe="Pano_E0-", raws=raws[::3])
+            r = lancer(Path(d) / "H", "--expos", "3", "--apply", "--table", str(table))
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("Plan conforme à la table", r.stdout)
+            self.assertTrue((Path(d) / "H" / "L1_C02_E0.tif").exists())
+
+    def test_ordre_faux_detecte_par_la_table_sans_rien_modifier(self):
+        with tempfile.TemporaryDirectory() as d:
+            comp, raws = rafales_avec_raws()
+            table = Path(d) / "table_raw_LCE.csv"
+            (Path(d) / "L").mkdir()
+            export(Path(d) / "L", comp, prefixe="Pano_HDR-", raws=raws)
+            lancer(Path(d) / "L", "--expos", "3", "--apply", "--table", str(table))
+            (Path(d) / "H").mkdir()
+            centrees = raws[::3]
+            centrees[1], centrees[2] = centrees[2], centrees[1]    # deux positions exportées dans le mauvais ordre
+            export(Path(d) / "H", [0] * 6, prefixe="Pano_E0-", raws=centrees)
+            avant = noms(Path(d) / "H")
+            r = lancer(Path(d) / "H", "--expos", "3", "--apply", "--table", str(table))
+            self.assertNotEqual(r.returncode, 0)
+            self.assertIn("2 écart(s) avec la table", r.stderr)
+            self.assertIn("la table dit L0_C02_E0.tif", r.stdout)
+            self.assertEqual(noms(Path(d) / "H"), avant)
+
+    def test_pas_de_table_pour_un_export_partiel_ou_sans_raw(self):
+        with tempfile.TemporaryDirectory() as d:
+            table = Path(d) / "table_raw_LCE.csv"
+            (Path(d) / "H").mkdir()
+            export(Path(d) / "H", [0] * 6, prefixe="Pano_E0-", raws=[f"R{k}.CR2" for k in range(6)])
+            r = lancer(Path(d) / "H", "--expos", "3", "--apply", "--table", str(table))
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("un export partiel ne l'écrit pas", r.stdout)
+            self.assertFalse(table.exists())
+            (Path(d) / "L").mkdir()
+            comp, raws = rafales_avec_raws()
+            raws[4] = None
+            export(Path(d) / "L", comp, prefixe="Pano_HDR-", raws=raws)
+            r = lancer(Path(d) / "L", "--expos", "3", "--apply", "--table", str(table))
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("1 fichier(s) sans RAW d'origine", r.stdout)
+            self.assertFalse(table.exists())
 
     def test_nombre_faux_bloque(self):
         with tempfile.TemporaryDirectory() as d:
