@@ -26,6 +26,13 @@ MODE OPÉRATOIRE
       décalées, puisqu'elle sera nommée _E0 ;
     - vues centrées seules : toutes les images ont la même compensation (pas forcément 0 IL).
     À la moindre anomalie, le script s'arrête sans rien renommer ; --force ne lève pas ce contrôle.
+
+    Avec --table, la **table RAW -> L_C_E** (le RAW d'origine de chaque TIFF, inscrit par Lightroom dans
+    XMP-crs:RawFileName, lu dans le même appel à exiftool) :
+    - si elle existe, le plan doit lui être conforme : chaque RAW reçoit le nom que la table lui donne ; au moindre
+      écart (ordre d'export faux, image en trop ou manquante, RAW inconnu), rien n'est renommé ;
+    - sinon, un export complet en rafales (L x C x N, sans trou) l'écrit avec le renommage (format de
+      renommer_par_raw.py --table) ; un export partiel, ou une image sans RAW d'origine, ne l'écrit pas.
     Pour un contrôle plus complet (pas régulier, heures, ouverture, ISO) : python verifier_ordre.py DOSSIER --grille L C
     Alternative qui ne dépend pas de l'ordre de tri : renommer_par_raw.py.
 
@@ -35,19 +42,22 @@ ENTRÉES
     --undo                 restaure les noms d'origine depuis correspondance.csv
     --lignes --colonnes --expos   dimensions de la grille (défauts : 6, 37, 7)
     --force                ignore un écart de nombre de fichiers ou un trou de numérotation (pas le motif d'exposition)
+    --table FICHIER        table RAW -> L_C_E, ex. $P\\table_raw_LCE.csv (préremplie d'après le panorama courant)
 
 Dépendance : exiftool dans le PATH.
 
 SORTIES
     Avec --apply : fichiers renommés en L{ligne}_C{colonne}_E{expo}.tif et `correspondance.csv` (ancien, nouveau)
-    écrit dans DOSSIER. Sans option : rien n'est modifié.
+    écrit dans DOSSIER ; avec --table, la table si elle n'existait pas et que l'export est complet.
+    Sans option : rien n'est modifié.
 
 EXEMPLE
     python renommer_pano.py DOSSIER                      # essai à blanc
     python renommer_pano.py DOSSIER --apply              # renomme + écrit correspondance.csv
     python renommer_pano.py DOSSIER --undo               # restaure depuis correspondance.csv
+    python renommer_pano.py DOSSIER --apply --table "$P\\table_raw_LCE.csv"   # contrôle contre la table, ou l'écrit
 
-Usage : python renommer_pano.py DOSSIER [--apply | --undo] [--lignes 6 --colonnes 37 --expos 7] [--force]
+Usage : python renommer_pano.py DOSSIER [--apply | --undo] [--lignes 6 --colonnes 37 --expos 7] [--force] [--table CSV]
 """
 import argparse
 import csv
@@ -67,8 +77,11 @@ ARGUMENTS = [
     Arg("--colonnes", "Colonnes de la grille", type="entier", config="colonnes"),
     Arg("--expos", "Expositions par position", type="entier", config="expos"),
     Arg("--force", "Ignore un écart de nombre ou un trou de numérotation", type="drapeau"),
+    Arg("--table", "Table RAW -> L_C_E : contrôle le plan si elle existe, sinon l'écrit (export complet)", type="chemin",
+        config="table"),
 ]
-piloter(__doc__, ARGUMENTS, ecrit='les noms de fichiers du dossier (essai à blanc sans --apply)', globals_=globals())
+piloter(__doc__, ARGUMENTS, ecrit='les noms de fichiers du dossier, et la table RAW -> L_C_E si elle manque (essai à blanc sans --apply)',
+        globals_=globals())
 
 ap = argparse.ArgumentParser()
 ap.add_argument("dossier")
@@ -78,6 +91,7 @@ ap.add_argument("--lignes", type=int, default=6)
 ap.add_argument("--colonnes", type=int, default=37)
 ap.add_argument("--expos", type=int, default=7)
 ap.add_argument("--force", action="store_true")
+ap.add_argument("--table")
 args = ap.parse_args()
 
 dossier = Path(args.dossier)
@@ -143,12 +157,14 @@ def il(v):
 
 
 try:
-    sortie = subprocess.run(["exiftool", "-csv", "-n", "-FileName", "-ExposureCompensation",
+    sortie = subprocess.run(["exiftool", "-csv", "-n", "-FileName", "-ExposureCompensation", "-XMP-crs:RawFileName",
                              "-ext", "tif", "-ext", "tiff", str(dossier)],
                             capture_output=True, text=True, encoding="utf-8").stdout
 except FileNotFoundError:
     sys.exit("exiftool introuvable : le motif d'exposition ne peut pas être contrôlé, aucun fichier modifié")
-lues = {l["FileName"]: l.get("ExposureCompensation", "") for l in csv.DictReader(sortie.splitlines())}
+exif = list(csv.DictReader(sortie.splitlines()))
+lues = {l["FileName"]: l.get("ExposureCompensation", "") for l in exif}
+raws = {l["FileName"]: l.get("RawFileName", "") for l in exif}     # RAW d'origine, inscrit par Lightroom
 absents = [nom for _, nom in candidats if lues.get(nom, "") == ""]
 if absents:
     sys.exit(f"compensation d'exposition absente de l'EXIF : {absents[0]}"
@@ -182,6 +198,43 @@ plan = [(nom, nouveau_nom(i + 1)) for i, (_, nom) in enumerate(candidats)]
 if any((dossier / n).exists() for _, n in plan):
     sys.exit("un nom cible existe déjà, abandon")
 
+# --- table RAW -> L_C_E : si elle existe, le plan doit lui être conforme ; sinon, un export complet en rafales l'écrit
+table = Path(args.table) if args.table else None
+sans_raw = [a for a, _ in plan if not raws.get(a)]
+a_ecrire = False
+if table and table.is_file():
+    with open(table, newline="", encoding="utf-8") as f:
+        par_raw = {r["raw"]: r["lce"] for r in csv.DictReader(f)}
+    ecarts = []
+    for a, n in plan:
+        raw = raws.get(a)
+        if not raw:
+            ecarts.append(f"{a} : aucun RAW d'origine dans ses métadonnées")
+        elif raw not in par_raw:
+            ecarts.append(f"{a} : RAW {raw} absent de la table")
+        elif par_raw[raw] != n:
+            ecarts.append(f"{a} : serait {n}, la table dit {par_raw[raw]} (RAW {raw})")
+    if ecarts:
+        print(f"Plan comparé à la table {table} :")
+        for e in ecarts[:10]:
+            print(f"  {e}")
+        if len(ecarts) > 10:
+            print(f"  ... et {len(ecarts) - 10} autre(s)")
+        sys.exit(f"{len(ecarts)} écart(s) avec la table RAW -> L_C_E (ordre d'export faux, image en trop ou manquante) :"
+                 " aucun fichier modifié")
+    print(f"Plan conforme à la table RAW -> L_C_E : {len(plan)} fichiers sur {len(plan)}")
+elif table:
+    complet = args.expos > 1 and len(candidats) == attendu and not trous
+    if not complet:
+        print(f"Pas de table {table} : un export partiel ne l'écrit pas (il faut l'export complet en rafales)")
+    elif sans_raw:
+        print(f"Pas de table écrite : {len(sans_raw)} fichier(s) sans RAW d'origine dans leurs métadonnées ({sans_raw[0]}...)")
+    else:
+        a_ecrire = True
+        print(f"La table RAW -> L_C_E sera écrite avec le renommage : {table}")
+else:
+    print("Sans --table : ni contrôle contre la table RAW -> L_C_E, ni écriture")
+
 for a, n in plan[:5] + plan[-3:]:
     print(f"{a}  ->  {n}")
 
@@ -193,8 +246,12 @@ if args.apply:
         w.writerow(["ancien", "nouveau"])
         w.writerows(plan)
     print(f"Fait. Correspondance écrite dans {mapfile}")
-    if args.expos > 1:      # export complet en rafales : le seul moment où la table RAW -> L_C_E s'écrit sans effort
-        print("Étape suivante (2F) : écrire la table RAW -> L_C_E, matrice à conserver :\n"
-              f'  python renommer_par_raw.py "{dossier}" "<$P>\\table_raw_LCE.csv" --table')
+    if a_ecrire:            # même format que renommer_par_raw.py --table : raw,lce, trié par nom L_C_E
+        table.parent.mkdir(parents=True, exist_ok=True)
+        with open(table, "w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow(["raw", "lce"])
+            w.writerows(sorted(((raws[a], n) for a, n in plan), key=lambda rn: rn[1]))
+        print(f"Table RAW -> L_C_E écrite : {table} ({len(plan)} RAW), matrice du panorama à conserver")
 else:
     print("Essai à blanc : rien n'a été modifié (--apply pour appliquer)")
