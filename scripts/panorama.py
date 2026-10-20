@@ -67,13 +67,13 @@ def _sous_menu(titre, constructeur):
 
 def _py(script, arguments=None, ecrit=None):
     """Action : menu de pilotage puis exécution d'un script Python (déclaration lue dans le script)."""
-    return lambda ctx: lancer.python(ctx, script, arguments, ecrit)
+    return menu.sans_pause(lambda ctx: lancer.python(ctx, script, arguments, ecrit))
 
 
 def _ps(script):
     """Action : menu de pilotage puis exécution d'un script PowerShell (déclaration de declarations_ps)."""
     args, ecrit = declarations_ps.PS[script]
-    return lambda ctx: lancer.powershell(ctx, script, args, ecrit)
+    return menu.sans_pause(lambda ctx: lancer.powershell(ctx, script, args, ecrit))
 
 
 def _requiert(*cles):

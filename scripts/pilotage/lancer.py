@@ -87,7 +87,8 @@ def _piloter(ctx, doc, arguments, ecrit, commande, script, constantes=None, cons
         if argv is None:
             return code
         code = _executer(ctx, commande(argv), script)
-        if code == 130:
+        if code == 130:                 # Ctrl+C : laisser lire le message d'interruption avant le lanceur
+            pause(ctx.c, ctx.lire)
             return code
         ctx.ecrire("")
         if code:
