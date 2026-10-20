@@ -13,7 +13,7 @@ PILOTES = [
     "renommer_par_raw.py", "tiffinfo.py", "generer_pto.py", "generer_pto_hdr.py", "diagnostic_cp.py",
     "diagnostic_pas_v.py", "corriger_pas_v.py", "filtrer_cp.py", "preparer_optimisation.py", "detecter_trous.py",
     "placer_isoles.py", "affiner_images_faibles.py", "propager_geometrie.py", "extraire_sous_projet.py",
-    "redimensionner_projet.py", "deplacer_projet.py", "ranger_intermediaires.py", "cadrage_lightroom.py",
+    "redimensionner_projet.py", "deplacer_projet.py", "ranger_intermediaires.py", "cadrage_lightroom.py", "controler_tuiles.py", "empaqueter.py",
     # Tâche 6 : mesures et inspection
     "voir_positions.py", "lister_pires_cp.py", "detecter_aberrantes.py", "compter_cp_paire.py", "mesurer_ciel.py",
     "mesurer_gain_paires.py", "mesurer_bandes_ciel.py", "localiser_sauts_ciel.py", "comparer_rendus.py",
