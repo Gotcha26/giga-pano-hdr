@@ -161,7 +161,7 @@ flowchart TD
 | [***deplacer_projet.py***](deplacer_projet.py) | 🟢 | Copie un projet ailleurs en réécrivant les chemins d'images |
 | [***nona_images.ps1***](nona_images.ps1) | 🟢 | Rend avec *nona* une plage d'images, une par une, reprenable après interruption |
 | [***rendre_projet.ps1***](rendre_projet.ps1) | 🟢 | <ul><li>Rend un projet complet : *nona* puis *enblend* ou *multiblend*, durées et pics de RAM</li><li>`-Lisible` en tire une copie lisible</li></ul> |
-| [***rendre_lisible.ps1***](rendre_lisible.ps1) | 🟢 | <ul><li>Copie lisible d'un rendu de *multiblend* (BigTIFF sans profil) : TIFF classique 16 bits avec le profil des images, et JPEG sRGB</li><li>Jusqu'à ≈ 700 Mpx</li></ul> |
+| [***rendre_lisible.ps1***](rendre_lisible.ps1) | 🟢 | <ul><li>Copie lisible d'un rendu de *multiblend* (BigTIFF sans profil) : TIFF classique 16 bits avec le profil des images, et JPEG sRGB</li><li>Au-delà de ≈ 700 Mpx : copie réduite à 6 000 px de large</li></ul> |
 | [***fusionner_par_exposition.ps1***](fusionner_par_exposition.ps1) | 🟢 | Fusionne avec *enblend* ou *multiblend* les images reprojetées d'un HDR, un panorama par exposition |
 | [***enblend_vers_multiblend.cmd***](enblend_vers_multiblend.cmd) | 🟢 | <ul><li>Adaptateur à déclarer dans les préférences de *Hugin* à la place d'*enblend*</li><li>Traduit la ligne de commande et fait fusionner par *multiblend*</li><li>Lance `enblend_vers_multiblend.ps1`, à garder dans le même dossier</li></ul> |
 | [***surveiller_multiblend.ps1***](surveiller_multiblend.ps1) | 🟢 | Relève, pendant une fusion :<ul><li>RAM du processus</li><li>RAM libre</li><li>Taille de `TEMP`</li></ul> |
@@ -176,6 +176,8 @@ flowchart TD
 | Script | Portée | Rôle |
 | --- | :---: | --- |
 | [***tuiler.ps1***](tuiler.ps1) | 🟢 | Pyramide Deep Zoom (`.dzi` + `_files`) d'un TIFF géant avec *libvips* :<ul><li>Conversion sRGB 8 bits</li><li>Aplatissement de l'alpha</li><li>`dzsave` en WebP ou JPEG</li><li>Durée et RAM relevées</li></ul> |
+| [***controler_tuiles.py***](controler_tuiles.py) | 🟢 | <ul><li>Contrôle en local (7B) : sert la page `visionneuse\` (*OpenSeadragon* embarqué) et les deux pyramides sur `127.0.0.1`, ouvre le navigateur</li><li>HDR et pleine résolution superposés, fondu au zoom ou au curseur, `--box` pour des sources non recadrées</li><li>Rien n'est écrit</li></ul> |
+| [***empaqueter.py***](empaqueter.py) | 🟢 | <ul><li>Mise en ligne (7D) : copie les deux pyramides dans un dossier autonome avec `panorama.json` (format *GigaPanoramaViewer* v1), puis un ZIP sans compression</li><li>Refuse un nom déjà pris (cache des navigateurs)</li></ul> |
 | [***cadrage_lightroom.py***](cadrage_lightroom.py) | 🟢 | <ul><li>Relit le recadrage décidé dans *Lightroom* et l'applique au HDR et à la pleine résolution (commandes `vips extract_area`)</li><li>`--controle` mesure le vide par coin</li></ul> |
 
 ### Rédaction du guide
