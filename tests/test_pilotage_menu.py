@@ -95,6 +95,21 @@ class TestBoucle(unittest.TestCase):
         self.assertEqual(ctx, [])
 
 
+class TestProposer(unittest.TestCase):
+    def test_valider_remplacer_annuler(self):
+        self.assertEqual(m.proposer("Q", C, "37", lire=lambda i: "y"), "37")
+        self.assertEqual(m.proposer("Q", C, "37", lire=lambda i: "Y"), "37")
+        self.assertEqual(m.proposer("Q", C, "37", lire=lambda i: ""), "37")
+        self.assertEqual(m.proposer("Q", C, "37", lire=lambda i: "40"), "40")
+        self.assertIsNone(m.proposer("Q", C, "37", lire=lambda i: "x"))
+        self.assertEqual(m.proposer("Q", C, None, lire=lambda i: ""), "")       # sans proposition : saisie libre
+        self.assertEqual(m.proposer("Q", C, None, lire=lambda i: "y"), "")      # y valide le vide
+        self.assertEqual(m.proposer("Q", C, None, lire=lambda i: "12"), "12")
+        invites = []
+        m.proposer("Q", C, "37", lire=lambda i: invites.append(i) or "y")
+        self.assertIn("[37] (y pour valider", invites[0])
+
+
 class TestSaisies(unittest.TestCase):
     def test_demander(self):
         self.assertIsNone(m.demander("Chemin", C, lire=lambda _: "x"))

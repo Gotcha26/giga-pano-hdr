@@ -33,7 +33,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from pilotage import arguments, config, declarations_ps, lancer, menu, outils  # noqa: E402
 from pilotage.arguments import Arg  # noqa: E402
 from pilotage.couleurs import Couleurs, effacer_ecran, preparer_console  # noqa: E402
-from pilotage.menu import Entree, confirmer, demander  # noqa: E402
+from pilotage.menu import Entree, confirmer, demander, proposer  # noqa: E402
 
 
 # ---------------------------------------------------------------- en-tête
@@ -176,26 +176,69 @@ def _nombre(texte, entier=False):
         return None
 
 
+class _Annule(Exception):
+    pass
+
+
+# Valeurs du guide, proposées faute de mieux
+DEFAUTS_GUIDE = {"largeur_mm": 24, "largeur_hdr": 20000}
+QUESTIONS = [   # (clé, question, entier)
+    ("lignes", "Lignes de la grille", True),
+    ("colonnes", "Colonnes de la grille", True),
+    ("expos", "Expositions par position", True),
+    ("focale", "Focale (mm)", False),
+    ("largeur_mm", "Côté horizontal du capteur (mm : 24 en portrait plein format)", False),
+    ("pas_h", "Pas horizontal (°)", False),
+    ("pas_v", "Pas vertical (°)", False),
+    ("largeur_hdr", "Largeur du HDR (px)", True),
+    ("largeur_pleine", "Largeur de la pleine résolution (px)", True),
+]
+
+
+def _texte(v):
+    return "" if v is None else (f"{v:g}" if isinstance(v, float) else str(v))
+
+
 def nouveau_panorama(ctx):
+    """Chaque question propose une valeur : celle du panorama.json déjà présent dans $T, sinon celle du panorama
+    courant (même série d'objectif), sinon celle du guide. y ou ENTRÉE valide, autre saisie remplace, x annule tout."""
     c = ctx.c
     ctx.ecrire("")
     ctx.ecrire(c.titre("Nouveau panorama"))
-    T = demander("Dossier de travail $T (hors catalogue Lightroom)", c, lire=ctx.lire)
-    if not T:
+
+    def question(invite, defaut=None, entier=None):
+        while True:
+            reponse = proposer(invite, c, _texte(defaut), lire=ctx.lire)
+            if reponse is None:
+                raise _Annule
+            if entier is None or reponse == "":
+                return reponse
+            valeur = _nombre(reponse, entier=entier)
+            if valeur is not None:
+                return valeur
+            ctx.ecrire(c.erreur(f"« {reponse} » : {'nombre entier' if entier else 'nombre'} attendu"))
+
+    try:
+        courant = ctx.panorama
+        T = question("Dossier de travail $T (hors catalogue Lightroom)", courant.T if courant else None)
+        if not T:
+            ctx.ecrire(c.attention("Dossier de travail vide : rien n'a été écrit."))
+            return
+        existant = config.charger_panorama(T)
+        if existant:
+            ctx.ecrire(c.info(f"panorama.json trouvé dans {T} : ses valeurs sont proposées."))
+        source = existant or courant
+        H = question("Dossier HDR $H dans le dossier des RAW (facultatif)", existant.H if existant else None)
+        valeurs = {}
+        for cle, invite, entier in QUESTIONS:
+            defaut = getattr(source, cle, None) if source else None
+            valeurs[cle] = question(invite, defaut if defaut is not None else DEFAUTS_GUIDE.get(cle), entier) or None
+    except _Annule:
+        ctx.ecrire(c.attention("Annulé : rien n'a été écrit."))
         return
-    H = demander("Dossier HDR $H dans le dossier des RAW (facultatif)", c, lire=ctx.lire) or ""
-    lignes = _nombre(demander("Lignes de la grille", c, lire=ctx.lire), entier=True)
-    colonnes = _nombre(demander("Colonnes de la grille", c, lire=ctx.lire), entier=True)
-    expos = _nombre(demander("Expositions par position", c, lire=ctx.lire), entier=True)
-    focale = _nombre(demander("Focale (mm)", c, lire=ctx.lire))
-    largeur_mm = _nombre(demander("Côté horizontal du capteur (mm : 24 en portrait plein format)", c, lire=ctx.lire))
-    pas_h = _nombre(demander("Pas horizontal (°)", c, lire=ctx.lire))
-    pas_v = _nombre(demander("Pas vertical (°)", c, lire=ctx.lire))
-    largeur_hdr = _nombre(demander("Largeur du HDR (px)", c, lire=ctx.lire), entier=True)
-    largeur_pleine = _nombre(demander("Largeur de la pleine résolution (px)", c, lire=ctx.lire), entier=True)
-    p = config.Panorama(T=T, P=os.path.join(T, "Assemblage-Hugin"), H=H, lignes=lignes, colonnes=colonnes,
-                        expos=expos, focale=focale, largeur_mm=largeur_mm, pas_h=pas_h, pas_v=pas_v,
-                        largeur_hdr=largeur_hdr, largeur_pleine=largeur_pleine)
+    p = config.Panorama(T=T, P=os.path.join(T, "Assemblage-Hugin"), H=H or "", **valeurs)
+    if existant:            # ce que le lanceur ne demande pas (maître, noms d'export) est conservé
+        p.maitre, p.export_l, p.export_h = existant.maitre, existant.export_l, existant.export_h
     crees = config.creer_arborescence(p)
     config.enregistrer_panorama(p)
     if T not in ctx.poste.panoramas:

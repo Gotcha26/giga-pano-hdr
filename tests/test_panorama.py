@@ -165,6 +165,46 @@ class TestLanceur(unittest.TestCase):
             self.assertEqual(config.charger_poste(chemin_poste).courant, T)
             self.assertEqual(ctx.panorama.colonnes, 37)
 
+    def test_nouveau_panorama_propose_les_valeurs_du_panorama_courant(self):
+        import panorama
+        with tempfile.TemporaryDirectory() as d:
+            T = str(Path(d) / "nouveau")
+            ctx = contexte([T, "", "y", "y", "", "y", "y", "y", "6.2", "y", "y"])
+            ctx.panorama = config.Panorama(T=str(Path(d) / "ancien"), P="", H=r"D:\RAW\HDR", lignes=6, colonnes=37,
+                                           expos=7, focale=200.0, largeur_mm=24.0, pas_h=5.0, pas_v=5.8,
+                                           largeur_hdr=20000, largeur_pleine=90112)
+            with mock.patch.object(config, "chemin_poste", lambda: Path(d) / "config.json"):
+                panorama.nouveau_panorama(ctx)
+            p = config.charger_panorama(T)
+            self.assertEqual((p.lignes, p.colonnes, p.expos, p.focale, p.pas_v, p.largeur_pleine), (6, 37, 7, 200.0, 6.2, 90112))
+            self.assertEqual(p.H, "")             # le $H d'un autre panorama n'est jamais proposé
+
+    def test_nouveau_panorama_reprend_le_panorama_json_existant(self):
+        import panorama
+        with tempfile.TemporaryDirectory() as d:
+            T, H = str(Path(d) / "pano"), str(Path(d) / "RAW" / "HDR")    # $H est créé : jamais hors du dossier de test
+            config.enregistrer_panorama(config.Panorama(T=T, P="", H=H, lignes=4, colonnes=20, expos=5,
+                                                        maitre=r"3_optimisation\m.pto"))
+            ctx = contexte([T] + ["y"] * 10)
+            with mock.patch.object(config, "chemin_poste", lambda: Path(d) / "config.json"):
+                panorama.nouveau_panorama(ctx)
+            p = config.charger_panorama(T)
+            self.assertEqual((p.H, p.lignes, p.colonnes, p.expos, p.largeur_mm, p.largeur_hdr), (H, 4, 20, 5, 24.0, 20000))
+            self.assertTrue((Path(H) / "TIFF").is_dir())
+            self.assertEqual(p.maitre, r"3_optimisation\m.pto")   # conservé, bien que non demandé
+
+    def test_nouveau_panorama_x_annule_sans_rien_ecrire_et_nombre_invalide_redemande(self):
+        import panorama
+        with tempfile.TemporaryDirectory() as d:
+            T = Path(d) / "pano"
+            lignes = []
+            ctx = contexte([str(T), "", "six", "6", "x"], ecrire=lignes.append)
+            with mock.patch.object(config, "chemin_poste", lambda: Path(d) / "config.json"):
+                panorama.nouveau_panorama(ctx)
+            self.assertIn("nombre entier attendu", "\n".join(map(str, lignes)))
+            self.assertIn("rien n'a été écrit", "\n".join(map(str, lignes)))
+            self.assertFalse(T.exists())
+
     def test_versions_affiche_un_tableau(self):
         import panorama
         lignes = []
