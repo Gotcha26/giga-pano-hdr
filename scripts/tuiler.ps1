@@ -1,9 +1,11 @@
 # Tuile une image geante (TIFF) en pyramide Deep Zoom avec libvips.
 # Valide sur la vue centree a 45 056 px et sur le panorama complet a 88 658 x 20 312 px (62 s, voir T-10).
 #
-# Usage : .\tuiler.ps1 -Image "...\ligne_L3.tif" -Sortie ".\tuiles\ligne_L3" [-Vips "D:\Outils\libvips\vips-dev-8.18\bin\vips.exe"] [-ProfilEntree "...\AdobeRGB.icc"]
-# Le panorama fusionne par multiblend ne porte AUCUN profil : sans -ProfilEntree, la conversion vers sRGB n'a pas lieu
-# et la pleine resolution parait plus terne que le HDR (qui, lui, porte Adobe RGB).
+# Usage : .\tuiler.ps1 -Image "...\ligne_L3.tif" -Sortie ".\tuiles\ligne_L3" [-Vips "D:\Outils\libvips\vips-dev-8.18\bin\vips.exe"]
+#                      [-ProfilDepuis "...\Export-TIFF-H\L0_C00_E0.tif" | -ProfilEntree "...\AdobeRGB.icc"]
+# Le panorama fusionne par multiblend ne porte AUCUN profil : sans profil donne, la conversion vers sRGB n'a pas lieu
+# et la pleine resolution parait plus terne que le HDR (qui, lui, porte Adobe RGB). -ProfilDepuis prend le profil
+# dans une image source (exiftool, dans le PATH) : aucun fichier .icc a conserver a part. -ProfilEntree donne un .icc.
 #
 # Produit <Sortie>.dzi et le dossier <Sortie>_files\ (tuiles JPEG), en deux temps :
 # 1. vips icc_transform : Adobe RGB (profil integre au TIFF) -> sRGB, 16 -> 8 bits, dans un fichier
@@ -18,6 +20,7 @@ param(
     [Parameter(Mandatory = $true)][string]$Sortie,
     [string]$Vips = 'D:\Outils\libvips\vips-dev-8.18\bin\vips.exe',
     [string]$ProfilEntree = '',   # profil ICC a appliquer si le TIFF n'en porte pas (multiblend n'ecrit aucun profil : donner Adobe RGB)
+    [string]$ProfilDepuis = '',   # ou : une image source dont le profil est extrait (ex. une image de l'export H)
     [int]$Tuile = 512,
     [int]$Qualite = 85,
     [ValidateSet('jpg', 'webp')][string]$Format = 'webp'   # webp Q85 retenu (2 fois plus leger que jpg Q90) ; jpg : -Format jpg -Qualite 90. Le canal alpha est aplati sur noir dans les deux cas
@@ -43,6 +46,20 @@ function Lancer([string]$etape, [string[]]$arguments) {
     return $p.ExitCode
 }
 
+$profilExtrait = "${Sortie}_profil.icc"
+if ($ProfilDepuis) {
+    if ($ProfilEntree) { throw "-ProfilDepuis et -ProfilEntree s'excluent : n'en donner qu'un." }
+    if (-not (Test-Path -LiteralPath $ProfilDepuis)) { throw "image source du profil introuvable : $ProfilDepuis" }
+    # cmd et non une redirection PowerShell : Windows PowerShell 5.1 reencoderait les octets du profil
+    cmd /c "exiftool -b -icc_profile `"$ProfilDepuis`" > `"$profilExtrait`""
+    if (-not (Test-Path -LiteralPath $profilExtrait) -or (Get-Item -LiteralPath $profilExtrait).Length -eq 0) {
+        Remove-Item -LiteralPath $profilExtrait -ErrorAction SilentlyContinue
+        throw "aucun profil ICC dans $ProfilDepuis"
+    }
+    $ProfilEntree = $profilExtrait
+    "profil : extrait de $ProfilDepuis" | Out-File $log -Append -Encoding utf8
+}
+
 $argsIcc = @('icc_transform', "`"$Image`"", "`"$tmp`"", 'srgb', '--embedded', '--depth', 8)
 if ($ProfilEntree) { $argsIcc += @('--input-profile', "`"$ProfilEntree`"") }   # sert seulement si aucun profil n'est integre
 $code = Lancer 'icc_transform' $argsIcc
@@ -65,6 +82,7 @@ if ($code -eq 0) {
 }
 Remove-Item $tmp -ErrorAction SilentlyContinue
 Remove-Item "${Sortie}_plat.v" -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath $profilExtrait -ErrorAction SilentlyContinue
 
 $nb = (Get-ChildItem "${Sortie}_files" -Recurse -File -ErrorAction SilentlyContinue | Measure-Object).Count
 $mo = (Get-ChildItem "${Sortie}_files" -Recurse -File -ErrorAction SilentlyContinue | Measure-Object Length -Sum).Sum / 1MB

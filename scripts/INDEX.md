@@ -175,7 +175,7 @@ flowchart TD
 
 | Script | Portée | Rôle |
 | --- | :---: | --- |
-| [***tuiler.ps1***](tuiler.ps1) | 🟢 | Pyramide Deep Zoom (`.dzi` + `_files`) d'un TIFF géant avec *libvips* :<ul><li>Conversion sRGB 8 bits</li><li>Aplatissement de l'alpha</li><li>`dzsave` en WebP ou JPEG</li><li>Durée et RAM relevées</li></ul> |
+| [***tuiler.ps1***](tuiler.ps1) | 🟢 | Pyramide Deep Zoom (`.dzi` + `_files`) d'un TIFF géant avec *libvips* :<ul><li>Conversion sRGB 8 bits, profil pris dans une image source (`-ProfilDepuis`) : multiblend n'en écrit pas</li><li>Aplatissement de l'alpha</li><li>`dzsave` en WebP ou JPEG</li><li>Durée et RAM relevées</li></ul> |
 | [***controler_tuiles.py***](controler_tuiles.py) | 🟢 | <ul><li>Contrôle en local (7B) : sert la page `visionneuse\` (*OpenSeadragon* embarqué) et les deux pyramides sur `127.0.0.1`, ouvre le navigateur</li><li>HDR et pleine résolution superposés, fondu au zoom ou au curseur, `--box` pour des sources non recadrées</li><li>Rien n'est écrit</li></ul> |
 | [***empaqueter.py***](empaqueter.py) | 🟢 | <ul><li>Mise en ligne (7D) : copie les deux pyramides dans un dossier autonome avec `panorama.json` (format *GigaPanoramaViewer* v1), puis un ZIP sans compression</li><li>Refuse un nom déjà pris (cache des navigateurs)</li></ul> |
 | [***cadrage_lightroom.py***](cadrage_lightroom.py) | 🟢 | <ul><li>Relit le recadrage décidé dans *Lightroom* et l'applique au HDR et à la pleine résolution (commandes `vips extract_area`)</li><li>`--controle` mesure le vide par coin</li></ul> |
@@ -194,7 +194,7 @@ flowchart TD
 | --- | --- |
 | ***Python*** 3 (bibliothèque standard) | Tous les scripts de géométrie |
 | ***Pillow*** | Les scripts qui lisent des pixels : <ul><li>***mesurer_ciel***</li><li>***mesurer_gain_paires***</li><li>***mesurer_bandes_ciel***</li><li>***localiser_sauts_ciel***</li><li>***comparer_rendus***</li><li>***comparer_couleur***</li><li>***rehausser_ciel***</li><li>Et `--controle` de ***cadrage_lightroom***</li></ul> |
-| ***exiftool*** (dans le `PATH`) | <ul><li>***verifier_ordre***</li><li>***controle_reglages_export***</li><li>***renommer_par_raw***</li><li>***cadrage_lightroom*** (option `--dng`)</li></ul> |
+| ***exiftool*** (dans le `PATH`) | <ul><li>***verifier_ordre***</li><li>***controle_reglages_export***</li><li>***renommer_pano*** (motif d'exposition)</li><li>***renommer_par_raw***</li><li>***rendre_lisible.ps1*** (profil)</li><li>***tuiler.ps1*** (option `-ProfilDepuis`)</li><li>***cadrage_lightroom*** (option `--dng`)</li></ul> |
 | ***Hugin*** (*nona*, *enblend*) | <ul><li>***rendre_projet.ps1***</li><li>***nona_images.ps1***</li><li>***fusionner_par_exposition.ps1***</li></ul> |
 | ***multiblend*** | <ul><li>***rendre_projet.ps1***</li><li>***fusionner_par_exposition.ps1***</li><li>***enblend_vers_multiblend***</li></ul> |
 | ***libvips*** | <ul><li>***ecart_paires*** (`vips` dans le `PATH`, ou variable d'environnement `VIPS`)</li><li>***tuiler.ps1*** (`-Vips`)</li><li>***rendre_lisible.ps1***</li><li>***profil_jonction.ps1***</li><li>Commandes imprimées par ***cadrage_lightroom***</li></ul> |
