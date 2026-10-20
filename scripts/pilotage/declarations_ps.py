@@ -49,8 +49,9 @@ PS = {
         Arg("-Panorama", "Le TIFF rendu par multiblend (BigTIFF sans profil)", type="chemin", obligatoire=True),
         Arg("-ProfilDepuis", "Image source dont copier le profil de couleur", type="chemin", obligatoire=False),
         Arg("-Projet", "À défaut : le projet .pto, dont la première image sert de source du profil", type="pto", obligatoire=False),
+        Arg("-LargeurApercu", "Largeur de la copie réduite au-delà de ≈ 700 Mpx", type="entier", defaut=6000),
         VIPS,
-    ], "<nom>_lisible.tif et <nom>_sRGB.jpg à côté du panorama"),
+    ], "<nom>_lisible.tif et <nom>_sRGB.jpg à côté du panorama (réduits au-delà de ≈ 700 Mpx)"),
     "surveiller_multiblend.ps1": ([
         Arg("-Sortie", "Fichier CSV des relevés (toutes les 20 s)", type="chemin", obligatoire=True),
     ], "le fichier de relevés"),
