@@ -112,6 +112,21 @@ def demander(invite, c, defaut=None, lire=input):
     return defaut if saisie == "" else saisie
 
 
+def proposer(invite, c, defaut=None, lire=input):
+    """Saisie avec une valeur proposée : y ou ENTRÉE la valide, toute autre saisie la remplace, x annule (None).
+    Sans proposition, la saisie est libre ; y ou ENTRÉE la laissent vide."""
+    if defaut in (None, ""):
+        suffixe = " (x pour annuler)"
+    else:
+        suffixe = f" [{defaut}] (y pour valider, autre saisie pour remplacer, x pour annuler)"
+    saisie = lire(c.prompt(f"{invite}{suffixe} : ")).strip()
+    if saisie.lower() == "x":
+        return None
+    if saisie.lower() in ("y", ""):
+        return "" if defaut in (None, "") else str(defaut)
+    return saisie
+
+
 def confirmer(question, c, defaut_oui, lire=input):
     choix = "[O/n]" if defaut_oui else "[o/N]"
     saisie = lire(c.prompt(f"{question} {choix} : ")).strip().lower()
