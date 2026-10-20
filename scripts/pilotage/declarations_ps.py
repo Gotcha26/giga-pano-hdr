@@ -76,7 +76,8 @@ PS = {
     "tuiler.ps1": ([
         Arg("-Image", "TIFF géant à tuiler", type="chemin", obligatoire=True),
         Arg("-Sortie", "Préfixe de sortie : <Sortie>.dzi et <Sortie>_files", type="chemin", obligatoire=True),
-        Arg("-ProfilEntree", "Profil ICC si le TIFF n'en porte pas (multiblend : donner Adobe RGB)", type="chemin"),
+        Arg("-ProfilDepuis", "Image source dont prendre le profil (multiblend n'en écrit pas : une image de l'export H)", type="chemin"),
+        Arg("-ProfilEntree", "Ou : un fichier .icc (à défaut de -ProfilDepuis)", type="chemin"),
         Arg("-Format", "webp ou jpg", defaut="webp"),
         Arg("-Qualite", "Qualité des tuiles", type="entier", defaut=85),
         Arg("-Tuile", "Taille des tuiles, en pixels", type="entier", defaut=512),

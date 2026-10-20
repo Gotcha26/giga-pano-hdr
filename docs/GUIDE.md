@@ -1242,10 +1242,10 @@ flowchart LR
 
 ***libvips*** (`vips dzsave`) fabrique une pyramide à partir d'une image géante **sans la charger en entier en mémoire** (***ImageMagick*** charge l'image en RAM et convient mal à 2 Gpx). ***tuiler.ps1*** enchaîne trois temps : conversion Adobe RGB → sRGB en 8 bits (`vips icc_transform`), aplatissement du canal alpha sur noir, puis `vips dzsave`. **Format retenu : tuiles de 512 px en WebP, qualité 85**, environ **deux fois plus légères** que du JPEG de qualité 90 (`-Format jpg -Qualite 90` reste possible).
 
-⚠️ ***multiblend* n'écrit aucun profil de couleur**, alors que l'export *Lightroom* (le HDR) porte le sien. Sans profil, la conversion vers sRGB n'a pas lieu et la pleine résolution paraît plus terne que le HDR. On donne donc le profil au tuilage, extrait d'un export *Lightroom* (`exiftool -icc_profile -b -w icc export.tif`) :
+⚠️ ***multiblend* n'écrit aucun profil de couleur**, alors que l'export *Lightroom* (le HDR) porte le sien. Sans profil, la conversion vers sRGB n'a pas lieu et la pleine résolution paraît plus terne que le HDR. On donne donc au tuilage le profil des images sources : `-ProfilDepuis` le prend dans **une image de l'export H** (***exiftool***), sans fichier `.icc` à conserver à part (`-ProfilEntree fichier.icc` reste possible) :
 
 ```powershell
-.\tuiler.ps1 -Image "$P\6_pleine_res\complet\rendu\complet_multiblend.tif" -Sortie "$P\7_tuiles\complet_webp\complet" -ProfilEntree "$P\7_tuiles\profils\AdobeRGB.icc" -Vips 'D:\Outils\libvips\vips-dev-8.18\bin\vips.exe'
+.\tuiler.ps1 -Image "$P\6_pleine_res\complet\rendu\complet_multiblend.tif" -Sortie "$P\7_tuiles\complet_webp\complet" -ProfilDepuis "$T\Export-TIFF-H\L0_C00_E0.tif" -Vips 'D:\Outils\libvips\vips-dev-8.18\bin\vips.exe'
 .\tuiler.ps1 -Image "$H\TIFF\pano_HDR_non_recadre.tif" -Sortie "$P\7_tuiles\hdr_webp\hdr" -Vips 'D:\Outils\libvips\vips-dev-8.18\bin\vips.exe'
 ```
 
@@ -1300,7 +1300,7 @@ Le contrôle ne modifie rien : il décide de la suite : **panorama bon** (mise e
    ⚠️ **`[tile]` est indispensable.** Avec `[bigtiff]` seul, ***libvips*** écrit des bandes de 128 lignes, énormes sur une image très large : le fichier se crée sans erreur mais **ne se relit plus** (`Cumulated memory allocation … beyond the … limit`). Contrôler la relecture : `& $V thumbnail "$C\complet_cadre.tif" "$C\apercu.jpg" 1600`.
 
    **Contrôle facultatif du vide** : `python cadrage_lightroom.py --controle "$C\complet_cadre.tif"` donne, **par coin**, la largeur et la hauteur du vide dans le canal alpha. Il ne juge pas : laisser un peu de noir dans les coins est un choix de composition légitime.
-5. **Tuiler** les deux TIFF cadrés (**7A**, `-ProfilEntree` toujours donné à la pleine résolution), puis **recontrôler** (**7B**). Les deux sources ayant **le même cadre**, aucun décalage n'est à corriger entre elles.
+5. **Tuiler** les deux TIFF cadrés (**7A**, `-ProfilDepuis` toujours donné à la pleine résolution), puis **recontrôler** (**7B**). Les deux sources ayant **le même cadre**, aucun décalage n'est à corriger entre elles.
 6. **Supprimer** `$C` une fois les tuiles contrôlées.
 
 ### 7D — Empaqueter pour la mise en ligne
@@ -1452,7 +1452,7 @@ python deplacer_projet.py       "$D6\complet.pto" "$D6\complet.pto" --images "$T
 .\rendre_projet.ps1 -Projet "$D6\complet.pto" -Sortie "$D6\rendu" -Nom complet_multiblend -BigTiff -CompressionEnblend lzw -Fusionneur multiblend -OptionsMultiblend '--cache-threshold=4G' -SansNona
 # 7A. Tuiler les sources non recadrées, puis 7B. les contrôler en local
 $V = 'D:\Outils\libvips\vips-dev-8.18\bin\vips.exe'
-.\tuiler.ps1 -Image "$D6\rendu\complet_multiblend.tif" -Sortie "$P\7_tuiles\complet_webp\complet" -ProfilEntree "$P\7_tuiles\profils\AdobeRGB.icc" -Vips $V
+.\tuiler.ps1 -Image "$D6\rendu\complet_multiblend.tif" -Sortie "$P\7_tuiles\complet_webp\complet" -ProfilDepuis "$T\Export-TIFF-H\L0_C00_E0.tif" -Vips $V
 .\tuiler.ps1 -Image "$H\TIFF\pano_HDR_non_recadre.tif" -Sortie "$P\7_tuiles\hdr_webp\hdr" -Vips $V
 python controler_tuiles.py "$P\7_tuiles\hdr_webp\hdr.dzi" "$P\7_tuiles\complet_webp\complet.dzi" --box <x>,<y>,<largeur>   # Entrée pour arrêter
 # 7C. Cadrer les deux sources (facultatif), puis retuiler (7A) et recontrôler (7B)

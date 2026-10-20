@@ -307,7 +307,7 @@ def main():
     print(f'& $V extract_area "$P\\6_pleine_res\\complet\\rendu\\complet_multiblend.tif" '
           f'"$C\\complet_cadre.tif[bigtiff,tile]" {fx} {fy} {fw} {fh}')
     print("\nTuiler ensuite hdr_cadre.tif et complet_cadre.tif (tuiler.ps1, mêmes options qu'avant : "
-          "-ProfilEntree sur la pleine résolution).")
+          "-ProfilDepuis une image de l'export H sur la pleine résolution).")
     print("Les deux sources étant au même cadre : &box=" + ",".join(f"{v:.6f}".replace("-0.000000", "0.000000")
                                                                     for v in (ecart_x, ecart_y, largeur_box)))
 
