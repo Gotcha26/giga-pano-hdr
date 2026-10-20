@@ -200,15 +200,24 @@ L'export Lightroom (`$T\Export-TIFF-L\`) est l'**entrée**, jamais modifiée apr
 > - **Pas de « Ajouter à ce catalogue »** à l'export : ces TIFF sont des copies des RAW, les réimporter créerait des doublons. Seuls les N calques HDR et le DNG HDR qui en résulte entrent dans Lightroom, par `$H` (Phase 5).
 > - **Déplacer `$T` après coup** : déplacer les dossiers **ensemble** (`Export-TIFF-L`, `Export-TIFF-H`, `Assemblage-Hugin`) conserve les chemins relatifs des projets `.pto`.
 
-**À chaque séance de travail**, ouvrir PowerShell et définir ces emplacements : toutes les commandes du guide les utilisent et se lancent **depuis le dossier des outils**.
+**Créer tous les dossiers dès maintenant, avant le premier export** : les exports Lightroom de la Phase 2 ont besoin de leur dossier, et chaque phase écrit dans le sien. Le lanceur le fait en une fois : **Préparer → Nouveau panorama** (`python panorama.py`) demande `$T`, `$H`, la grille et les pas, crée l'arborescence ci-dessous, écrit `$T\panorama.json` et fait de ce panorama le **panorama courant**, qui préremplit ensuite tous les menus de pilotage.
+
+```
+$T\Export-TIFF-L\   $T\Export-TIFF-H\                      ← exports Lightroom (Phase 2, 6A)
+$T\Assemblage-Hugin\   ($P)
+    3_grille\  3_optimisation\  4_vue_centree\  5_hdr\  6_pleine_res\  7_tuiles\  7_galerie\  _a_supprimer\
+$H\   $H\TIFF\                                             ← calques et DNG HDR (Phase 5) ; export du HDR (5C)
+```
+
+**À chaque séance de travail**, ouvrir PowerShell et définir ces emplacements : toutes les commandes du guide les utilisent et se lancent **depuis le dossier des outils**. Sans le lanceur, la dernière ligne crée les mêmes dossiers (sans effet s'ils existent) :
 
 ```powershell
 $OUTILS = 'D:\Depots\giga-pano-hdr\scripts'          # à adapter à votre poste
 $T      = 'D:\Panoramas\2026-06-19\200mm'             # à adapter à chaque panorama
 $P      = "$T\Assemblage-Hugin"
 $H      = '<dossier des RAW du panorama>\HDR'          # dans le catalogue Lightroom
-New-Item -ItemType Directory -Force "$P\3_grille", "$P\3_optimisation" | Out-Null
 cd $OUTILS
+New-Item -ItemType Directory -Force -Path (@("$T\Export-TIFF-L", "$T\Export-TIFF-H", "$H\TIFF") + ('3_grille', '3_optimisation', '4_vue_centree', '5_hdr', '6_pleine_res', '7_tuiles', '7_galerie', '_a_supprimer' | ForEach-Object { "$P\$_" })) | Out-Null
 ```
 
 **Place libre** : prévoir, pour la Phase 6, de l'ordre de **100 Go sur le disque de données** et **40 Go sur le disque système** (cache de ***multiblend***, dossier `TEMP`) pour un panorama de 2 Gpx ; le détail est dans l'étude de cas.
@@ -1368,14 +1377,16 @@ $P = $T\Assemblage-Hugin\
 ├── 5_hdr\
 │   └── pano_HDR.pto                     ← Phase 5 : dérivé du maître (les calques partent dans $H)
 ├── 6_pleine_res\                        ← 6B : fenêtre ; 6C : complet\ et apercu\
-└── 7_tuiles\                            ← 7A : pyramides ; 7C : cadrage\ (intermédiaires)
+├── 7_tuiles\                            ← 7A : pyramides ; 7C : cadrage\ (intermédiaires)
+└── 7_galerie\                           ← 7D : <Nom>\ et <Nom>.zip, à mettre en ligne
 
 $H = <dossier des RAW>\HDR\              ← dans le catalogue Lightroom
 ├── pano_HDR_E0…E{N-1}.tif               ← Phase 5 : les N calques
-├── pano_HDR.dng                         ← le HDR fusionné par Lightroom
-├── TIFF\pano_HDR.tif                    ← le HDR exporté (recadré par Lightroom), entrée du tuilage si l'on ne cadre pas
-└── TIFF\pano_HDR_non_recadre.tif        ← copie virtuelle sans recadrage : entrée du cadrage (7C)
+├── pano_HDR.dng                         ← le HDR fusionné par Lightroom : il porte le recadrage décidé en 5D
+└── TIFF\pano_HDR_non_recadre.tif        ← export d'une copie virtuelle au recadrage réinitialisé (5C) : entrée du tuilage et du cadrage (7A, 7C)
 ```
+
+Tous ces dossiers sont créés en **Phase 0** ([**0D**](#0d--préparer-les-disques-et-les-emplacements)), avant le premier export.
 
 **Convention de nom** : `L{ligne}_C{colonne}_E{exposition}.tif`, ligne 0 = haut, colonne 0 = côté où chaque ligne commence, exposition 0 = vue centrée. Un tri alphabétique donne l'ordre de prise de vue.
 
