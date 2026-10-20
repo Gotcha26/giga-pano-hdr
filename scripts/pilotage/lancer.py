@@ -1,8 +1,8 @@
 """Exécution des scripts depuis le lanceur : menu de pilotage, puis sous-processus dans la même console.
 
 Python : la déclaration ARGUMENTS du script est lue sans l'exécuter. PowerShell : la déclaration est portée par
-le lanceur (declarations_ps.py) ; la ligne de commande est construite en paramètres nommés. Ctrl+C interrompt
-l'enfant et revient au lanceur.
+le lanceur (declarations_ps.py) ; la ligne de commande est construite en paramètres nommés. Après l'exécution,
+réussie ou non, le menu de pilotage revient avec les mêmes réglages ; Ctrl+C interrompt l'enfant et revient au lanceur.
 """
 
 import os
@@ -16,6 +16,7 @@ from typing import Any, Callable, Optional
 
 from . import arguments as args_mod
 from .couleurs import Couleurs
+from .menu import pause
 
 RE_CONSTANTE = re.compile(r"^(COLS|ROWS|FOCALE|LARGEUR_MM|PAS_H|PAS_V|EXPOS|FOV_H|FOV_V)\s*=\s*([\d.]+)", re.MULTILINE)
 RE_CONSTANTES_DOUBLE = re.compile(r"^(COLS|ROWS), (COLS|ROWS)\s*=\s*([\d.]+),\s*([\d.]+)", re.MULTILINE)
@@ -72,9 +73,28 @@ def _prerempli_outils(ctx, arguments):
     return resultat
 
 
-def _menu(ctx, doc, arguments, ecrit, constantes=None):
-    return args_mod.menu(doc, _prerempli_outils(ctx, arguments), ecrit, constantes=constantes,
-                         panorama=ctx.panorama, c=ctx.c, lire=ctx.lire, ecrire=ctx.ecrire)
+def _piloter(ctx, doc, arguments, ecrit, commande, script, constantes=None, construire=args_mod.construire_argv):
+    """Menu de pilotage puis exécution ; après chaque exécution, revient au menu avec les mêmes réglages
+    (un essai à blanc se relance avec --apply, un échec se corrige sans tout ressaisir) ; 0 revient au lanceur.
+
+    Retourne None si annulé avant toute exécution, sinon le code de la dernière exécution. Une interruption
+    (Ctrl+C) revient directement au lanceur."""
+    valeurs, code = {}, None
+    while True:
+        argv = args_mod.menu(doc, arguments, ecrit, constantes=constantes, panorama=ctx.panorama, c=ctx.c,
+                             lire=ctx.lire, ecrire=ctx.ecrire, construire=construire, valeurs=valeurs,
+                             chemins_absolus=True)
+        if argv is None:
+            return code
+        code = _executer(ctx, commande(argv), script)
+        if code == 130:
+            return code
+        ctx.ecrire("")
+        if code:
+            ctx.ecrire(ctx.c.attention(f"Échec (code {code}). Retour au menu de pilotage, réglages conservés."))
+        else:
+            ctx.ecrire(ctx.c.info("Terminé. Retour au menu de pilotage, réglages conservés (0 pour revenir au lanceur)."))
+        pause(ctx.c, ctx.lire)
 
 
 def _executer(ctx, commande, script=""):
@@ -98,10 +118,8 @@ def python(ctx, script, arguments=None, ecrit=None):
         arguments, ecrit, doc = args_mod.lire_declaration(chemin)
     else:
         doc = args_mod.lire_declaration(chemin)[2]
-    argv = _menu(ctx, doc, arguments, ecrit, constantes=constantes_du_fichier(chemin))
-    if argv is None:
-        return None
-    return _executer(ctx, [sys.executable, str(chemin), *argv], script)
+    return _piloter(ctx, doc, _prerempli_outils(ctx, arguments), ecrit,
+                    lambda argv: [sys.executable, str(chemin), *argv], script, constantes=constantes_du_fichier(chemin))
 
 
 def construire_ps(arguments, valeurs):
@@ -147,13 +165,8 @@ def powershell(ctx, script, arguments, ecrit, doc=None):
     arguments = _prerempli_outils(ctx, arguments)
     if doc is None:
         doc = _titre_ps(ctx.scripts / script) or script
-    valeurs_menu = args_mod.menu(doc, arguments, ecrit, panorama=ctx.panorama, c=ctx.c,
-                                 lire=ctx.lire, ecrire=ctx.ecrire, construire=lambda a, v: construire_ps(a, v))
-    if valeurs_menu is None:
-        return None
-    commande = [_executable_powershell(ctx), "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
-                str(ctx.scripts / script), *valeurs_menu]
-    return _executer(ctx, commande, script)
+    entete = [_executable_powershell(ctx), "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ctx.scripts / script)]
+    return _piloter(ctx, doc, arguments, ecrit, lambda argv: [*entete, *argv], script, construire=construire_ps)
 
 
 def outil(ctx, cle, args):

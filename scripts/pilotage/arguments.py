@@ -106,6 +106,24 @@ def _positionnels_apres_un_vide(arguments, valeurs):
     return [(premier_vide.nom, a.nom) for a in apres if valeurs.get(a.nom) not in ("", None)]
 
 
+TYPES_CHEMIN = ("chemin", "dossier", "pto")
+
+
+def _chemins_invalides(arguments, valeurs, absolus):
+    """(nom, raison) pour chaque chemin renseigné qui contient « … » (abréviation recopiée telle quelle) ou, si
+    `absolus`, qui est relatif : le lanceur exécute les scripts depuis scripts\\, où un chemin relatif se résout."""
+    resultat = []
+    for a in arguments:
+        v = str(valeurs.get(a.nom) or "")
+        if a.type not in TYPES_CHEMIN or not v:
+            continue
+        if "…" in v or "..." in v.replace("\\", "/").split("/"):
+            resultat.append((a.nom, "contient « … »"))
+        elif absolus and not os.path.isabs(v):
+            resultat.append((a.nom, "chemin relatif"))
+    return resultat
+
+
 def constantes_du_script(globals_):
     return {k: globals_[k] for k in CONSTANTES if k in globals_}
 
@@ -193,11 +211,18 @@ def _afficher(doc, arguments, valeurs, ecrit, constantes, panorama, c, ecrire):
 
 
 def menu(doc, arguments, ecrit, constantes=None, panorama=None, c=None, lire=input, ecrire=print, effacer=None,
-         construire=construire_argv):
-    """Affiche le menu de pilotage ; retourne la liste d'arguments (construite par `construire`), ou None si annulé."""
+         construire=construire_argv, valeurs=None, chemins_absolus=False):
+    """Affiche le menu de pilotage ; retourne la liste d'arguments (construite par `construire`), ou None si annulé.
+
+    `valeurs` : dictionnaire tenu par l'appelant, rempli au premier appel puis modifié sur place ; un nouvel appel
+    avec le même dictionnaire reprend les réglages (relance après un échec).
+    `chemins_absolus` : refuse au lancement un chemin relatif (le lanceur, dont le dossier courant est scripts\\)."""
     c = c or Couleurs()
     effacer = effacer if effacer is not None else effacer_ecran
-    valeurs = _valeurs_initiales(arguments, panorama)
+    if valeurs is None:
+        valeurs = {}
+    if not valeurs:
+        valeurs.update(_valeurs_initiales(arguments, panorama))
     try:
         while True:
             effacer()
@@ -209,6 +234,12 @@ def menu(doc, arguments, ecrit, constantes=None, panorama=None, c=None, lire=inp
                 manquants = [a.nom for a in arguments if a.obligatoire and valeurs[a.nom] in ("", None)]
                 if manquants:
                     ecrire(c.erreur(f"Argument obligatoire non renseigné : {', '.join(manquants)}"))
+                    pause(c, lire)
+                    continue
+                invalides = _chemins_invalides(arguments, valeurs, chemins_absolus)
+                if invalides:
+                    ecrire(c.erreur("Chemin à saisir en entier (ex. D:\\Panoramas\\…) : " +
+                                    " ; ".join(f"{nom} : {raison}" for nom, raison in invalides)))
                     pause(c, lire)
                     continue
                 orphelins = _positionnels_apres_un_vide(arguments, valeurs)
@@ -253,9 +284,9 @@ def lire_declaration(chemin):
                 positionnels = [ast.literal_eval(a) for a in appel.args]
                 nommes = {k.arg: ast.literal_eval(k.value) for k in appel.keywords}
                 arguments.append(Arg(*positionnels, **nommes))
-        elif isinstance(noeud, ast.Expr) and isinstance(noeud.value, ast.Call) \
-                and getattr(noeud.value.func, "id", "") == "piloter":
-            for k in noeud.value.keywords:
+    for noeud in ast.walk(arbre):       # piloter() au premier niveau, ou dans main()
+        if isinstance(noeud, ast.Call) and getattr(noeud.func, "id", "") == "piloter":
+            for k in noeud.keywords:
                 if k.arg == "ecrit":
                     ecrit = ast.literal_eval(k.value)
     return arguments, ecrit, ast.get_docstring(arbre) or ""

@@ -15,6 +15,7 @@ from pilotage.arguments import Arg  # noqa: E402
 from pilotage.couleurs import Couleurs  # noqa: E402
 
 C = Couleurs(forcer=False)
+IMAGE, PROJET = r"D:\x.tif", r"D:\a.pto"     # le lanceur exige des chemins absolus
 
 
 def saisies(*valeurs):
@@ -32,9 +33,9 @@ class TestConstruirePs(unittest.TestCase):
     def test_switch_et_valeurs(self):
         args = [Arg("-Projet", "p", type="pto"), Arg("-BigTiff", "b", type="drapeau"), Arg("-De", "d", type="entier"),
                 Arg("-OptionsMultiblend", "o")]
-        v = {"-Projet": "a.pto", "-BigTiff": True, "-De": "0", "-OptionsMultiblend": "--cache-threshold=4G"}
+        v = {"-Projet": PROJET, "-BigTiff": True, "-De": "0", "-OptionsMultiblend": "--cache-threshold=4G"}
         self.assertEqual(lancer.construire_ps(args, v),
-                         ["-Projet", "a.pto", "-BigTiff", "-De", "0", "-OptionsMultiblend", "--cache-threshold=4G"])
+                         ["-Projet", PROJET, "-BigTiff", "-De", "0", "-OptionsMultiblend", "--cache-threshold=4G"])
         with self.assertRaises(ValueError):
             lancer.construire_ps([Arg("sans_tiret", "x")], {"sans_tiret": "1"})
 
@@ -50,14 +51,52 @@ class TestExecution(unittest.TestCase):
         def executer(cmd, **k):
             vu["cmd"] = cmd
             return SimpleNamespace(returncode=0)
-        ctx = contexte(["1", "x.tif", "L"], executer)
+        ctx = contexte(["1", IMAGE, "L"], executer)
         self.assertEqual(lancer.python(ctx, "tiffinfo.py", [Arg("image.tif", "i", type="chemin")], None), 0)
-        self.assertEqual(vu["cmd"][1:], [str(SCRIPTS / "tiffinfo.py"), "x.tif"])
+        self.assertEqual(vu["cmd"][1:], [str(SCRIPTS / "tiffinfo.py"), IMAGE])
 
         def interrompre(cmd, **k):
             raise KeyboardInterrupt
-        ctx2 = contexte(["1", "x.tif", "L"], interrompre)
+        ctx2 = contexte(["1", IMAGE, "L"], interrompre)
         self.assertEqual(lancer.python(ctx2, "tiffinfo.py", [Arg("image.tif", "i", type="chemin")], None), 130)
+
+    def test_echec_revient_au_menu_avec_les_reglages(self):
+        vu = []
+
+        def executer(cmd, **k):
+            vu.append(cmd)
+            return SimpleNamespace(returncode=1 if len(vu) == 1 else 0)
+        lignes = []
+        # saisie, lancement (échec), Entrée de la pause, relance sans rien ressaisir
+        ctx = contexte(["1", IMAGE, "L", "", "L"], executer, ecrire=lignes.append)
+        self.assertEqual(lancer.python(ctx, "tiffinfo.py", [Arg("image.tif", "i", type="chemin")], None), 0)
+        self.assertEqual([cmd[-1] for cmd in vu], [IMAGE, IMAGE])
+        self.assertTrue(any("réglages conservés" in str(l) for l in lignes))
+
+    def test_essai_a_blanc_puis_apply_sans_ressaisir(self):
+        vu = []
+
+        def executer(cmd, **k):
+            vu.append(cmd)
+            return SimpleNamespace(returncode=0)
+        args = [Arg("DOSSIER", "d", type="dossier"), Arg("--apply", "a", type="drapeau")]
+        # saisie, essai à blanc, Entrée de la pause, bascule --apply, relance, Entrée, retour au lanceur
+        ctx = contexte(["1", r"D:\X", "L", "", "2", "L", "", "0"], executer)
+        self.assertEqual(lancer.python(ctx, "renommer_pano.py", args, None), 0)
+        self.assertEqual([cmd[2:] for cmd in vu], [[r"D:\X"], [r"D:\X", "--apply"]])
+
+    def test_chemin_relatif_ou_abrege_refuse_avant_lancement(self):
+        for saisie in [r"…\6_pleine_res\apercu\rendu", "rendu", r"D:\T\...\rendu"]:
+            with self.subTest(saisie):
+                lignes = []
+                ctx = contexte(["1", saisie, "L", "", "0"], lambda *a, **k: self.fail("ne doit pas exécuter"),
+                               ecrire=lignes.append)
+                self.assertIsNone(lancer.python(ctx, "tiffinfo.py", [Arg("DOSSIER", "d", type="dossier")], None))
+                self.assertTrue(any("Chemin à saisir en entier" in str(l) for l in lignes))
+
+    def test_echec_puis_annulation_rend_le_code(self):
+        ctx = contexte(["1", IMAGE, "L", "", "0"], lambda *a, **k: SimpleNamespace(returncode=2))
+        self.assertEqual(lancer.python(ctx, "tiffinfo.py", [Arg("image.tif", "i", type="chemin")], None), 2)
 
     def test_python_lit_la_declaration_du_script(self):
         vu = {}
@@ -65,9 +104,9 @@ class TestExecution(unittest.TestCase):
         def executer(cmd, **k):
             vu["cmd"] = cmd
             return SimpleNamespace(returncode=0)
-        ctx = contexte(["1", "x.tif", "L"], executer)
+        ctx = contexte(["1", IMAGE, "L"], executer)
         self.assertEqual(lancer.python(ctx, "tiffinfo.py"), 0)
-        self.assertEqual(vu["cmd"][-1], "x.tif")
+        self.assertEqual(vu["cmd"][-1], IMAGE)
 
     def test_powershell_commande(self):
         vu = {}
@@ -76,10 +115,10 @@ class TestExecution(unittest.TestCase):
             vu["cmd"] = cmd
             return SimpleNamespace(returncode=0)
         pwsh = next(o for o in outils.OUTILS if o.cle == "pwsh")
-        ctx = contexte(["1", "a.pto", "L"], executer, etats=[outils.Etat(pwsh, r"C:\pwsh.exe", "7.6")])
+        ctx = contexte(["1", PROJET, "L"], executer, etats=[outils.Etat(pwsh, r"C:\pwsh.exe", "7.6")])
         lancer.powershell(ctx, "nona_images.ps1", [Arg("-Projet", "p", type="pto")], "le dossier de rendu")
         self.assertEqual(vu["cmd"][:5], [r"C:\pwsh.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File"])
-        self.assertEqual(vu["cmd"][6:], ["-Projet", "a.pto"])
+        self.assertEqual(vu["cmd"][6:], ["-Projet", PROJET])
 
     def test_powershell_prerempli_depuis_les_outils_du_poste(self):
         vu = {}
