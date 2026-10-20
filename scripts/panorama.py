@@ -24,6 +24,7 @@ EXEMPLE
     python panorama.py
 """
 
+import datetime
 import os
 import sys
 from pathlib import Path
@@ -182,11 +183,11 @@ class _Annule(Exception):
 
 # Valeurs du guide, proposées faute de mieux
 DEFAUTS_GUIDE = {"largeur_mm": 24, "largeur_hdr": 20000}
-QUESTIONS = [   # (clé, question, entier)
+RACINE_GUIDE = r"D:\Panoramas"      # 0D : $T = <racine>\<date>\<focale>, $H = <dossier des RAW>\HDR
+QUESTIONS = [   # (clé, question, entier) ; la focale est demandée avant $T, qu'elle sert à nommer
     ("lignes", "Lignes de la grille", True),
     ("colonnes", "Colonnes de la grille", True),
     ("expos", "Expositions par position", True),
-    ("focale", "Focale (mm)", False),
     ("largeur_mm", "Côté horizontal du capteur (mm : 24 en portrait plein format)", False),
     ("pas_h", "Pas horizontal (°)", False),
     ("pas_v", "Pas vertical (°)", False),
@@ -201,7 +202,9 @@ def _texte(v):
 
 def nouveau_panorama(ctx):
     """Chaque question propose une valeur : celle du panorama.json déjà présent dans $T, sinon celle du panorama
-    courant (même série d'objectif), sinon celle du guide. y ou ENTRÉE valide, autre saisie remplace, x annule tout."""
+    courant (même série d'objectif), sinon celle du guide. y ou ENTRÉE valide, autre saisie remplace, x annule tout.
+    Les chemins suivent le guide (0D) : $T = <racine>\\<date>\\<focale>mm (racine du panorama courant, sinon
+    D:\\Panoramas), $H = <dossier des RAW>\\HDR."""
     c = ctx.c
     ctx.ecrire("")
     ctx.ecrire(c.titre("Nouveau panorama"))
@@ -220,7 +223,11 @@ def nouveau_panorama(ctx):
 
     try:
         courant = ctx.panorama
-        T = question("Dossier de travail $T (hors catalogue Lightroom)", courant.T if courant else None)
+        date = question("Date de la prise de vue (AAAA-MM-JJ)", datetime.date.today().isoformat())
+        focale = question("Focale (mm)", courant.focale if courant else None, entier=False) or None
+        racine = str(Path(courant.T).parent.parent) if courant and courant.T else RACINE_GUIDE
+        T = question("Dossier de travail $T (hors catalogue Lightroom)",
+                     str(Path(racine, date, f"{focale:g}mm" if focale else "")))
         if not T:
             ctx.ecrire(c.attention("Dossier de travail vide : rien n'a été écrit."))
             return
@@ -228,8 +235,11 @@ def nouveau_panorama(ctx):
         if existant:
             ctx.ecrire(c.info(f"panorama.json trouvé dans {T} : ses valeurs sont proposées."))
         source = existant or courant
-        H = question("Dossier HDR $H dans le dossier des RAW (facultatif)", existant.H if existant else None)
-        valeurs = {}
+        raws = question("Dossier des RAW de ce panorama, dans le catalogue Lightroom (facultatif)",
+                        str(Path(existant.H).parent) if existant and existant.H else None)
+        H = question("Dossier HDR $H (calques et DNG HDR)",
+                     existant.H if existant and existant.H else (str(Path(raws, "HDR")) if raws else None))
+        valeurs = {"focale": focale}
         for cle, invite, entier in QUESTIONS:
             defaut = getattr(source, cle, None) if source else None
             valeurs[cle] = question(invite, defaut if defaut is not None else DEFAUTS_GUIDE.get(cle), entier) or None

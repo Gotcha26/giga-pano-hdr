@@ -157,7 +157,8 @@ class TestLanceur(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             T = str(Path(d) / "pano")
             chemin_poste = Path(d) / "config.json"
-            ctx = contexte([T, "", "6", "37", "7", "200", "24", "5", "5.8", "20000", "90112"])
+            # date, focale, $T, dossier des RAW, $H, puis la grille et les pas
+            ctx = contexte(["2026-06-19", "200", T, "", "", "6", "37", "7", "24", "5", "5.8", "20000", "90112"])
             with mock.patch.object(config, "chemin_poste", lambda: chemin_poste):
                 panorama.nouveau_panorama(ctx)
             self.assertTrue((Path(T) / "Assemblage-Hugin" / "3_grille").is_dir())
@@ -165,19 +166,28 @@ class TestLanceur(unittest.TestCase):
             self.assertEqual(config.charger_poste(chemin_poste).courant, T)
             self.assertEqual(ctx.panorama.colonnes, 37)
 
-    def test_nouveau_panorama_propose_les_valeurs_du_panorama_courant(self):
+    def test_nouveau_panorama_propose_les_valeurs_du_panorama_courant_et_les_chemins_du_guide(self):
         import panorama
         with tempfile.TemporaryDirectory() as d:
-            T = str(Path(d) / "nouveau")
-            ctx = contexte([T, "", "y", "y", "", "y", "y", "y", "6.2", "y", "y"])
-            ctx.panorama = config.Panorama(T=str(Path(d) / "ancien"), P="", H=r"D:\RAW\HDR", lignes=6, colonnes=37,
-                                           expos=7, focale=200.0, largeur_mm=24.0, pas_h=5.0, pas_v=5.8,
-                                           largeur_hdr=20000, largeur_pleine=90112)
+            racine, raws = Path(d) / "Panoramas", Path(d) / "RAW" / "2026-07-01"
+            invites = []
+            reponses = iter(["2026-07-01", "y", "y", str(raws), "y", "y", "y", "", "y", "y", "6.2", "y", "y"])
+
+            def lire(invite=""):
+                invites.append(invite)
+                return next(reponses)
+            ctx = lancer.Contexte(poste=config.Poste(), panorama=None, etats=[], c=C, lire=lire, ecrire=lambda *a: None)
+            ctx.panorama = config.Panorama(T=str(racine / "2026-06-19" / "200mm"), P="", H=str(Path(d) / "ancien" / "HDR"),
+                                           lignes=6, colonnes=37, expos=7, focale=200.0, largeur_mm=24.0, pas_h=5.0,
+                                           pas_v=5.8, largeur_hdr=20000, largeur_pleine=90112)
             with mock.patch.object(config, "chemin_poste", lambda: Path(d) / "config.json"):
                 panorama.nouveau_panorama(ctx)
+            T = str(racine / "2026-07-01" / "200mm")                 # 0D : <racine>\<date>\<focale>
+            self.assertIn(f"[{T}]", invites[2])
+            self.assertIn(f"[{raws / 'HDR'}]", invites[4])            # 0D : <dossier des RAW>\HDR, jamais l'ancien $H
             p = config.charger_panorama(T)
+            self.assertEqual(p.H, str(raws / "HDR"))
             self.assertEqual((p.lignes, p.colonnes, p.expos, p.focale, p.pas_v, p.largeur_pleine), (6, 37, 7, 200.0, 6.2, 90112))
-            self.assertEqual(p.H, "")             # le $H d'un autre panorama n'est jamais proposé
 
     def test_nouveau_panorama_reprend_le_panorama_json_existant(self):
         import panorama
@@ -185,7 +195,7 @@ class TestLanceur(unittest.TestCase):
             T, H = str(Path(d) / "pano"), str(Path(d) / "RAW" / "HDR")    # $H est créé : jamais hors du dossier de test
             config.enregistrer_panorama(config.Panorama(T=T, P="", H=H, lignes=4, colonnes=20, expos=5,
                                                         maitre=r"3_optimisation\m.pto"))
-            ctx = contexte([T] + ["y"] * 10)
+            ctx = contexte(["y", "", T, "y", "y"] + ["y"] * 8)    # date, focale, $T, RAW et $H repris, puis le reste
             with mock.patch.object(config, "chemin_poste", lambda: Path(d) / "config.json"):
                 panorama.nouveau_panorama(ctx)
             p = config.charger_panorama(T)
@@ -198,7 +208,7 @@ class TestLanceur(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             T = Path(d) / "pano"
             lignes = []
-            ctx = contexte([str(T), "", "six", "6", "x"], ecrire=lignes.append)
+            ctx = contexte(["y", "", str(T), "", "", "six", "6", "x"], ecrire=lignes.append)
             with mock.patch.object(config, "chemin_poste", lambda: Path(d) / "config.json"):
                 panorama.nouveau_panorama(ctx)
             self.assertIn("nombre entier attendu", "\n".join(map(str, lignes)))
