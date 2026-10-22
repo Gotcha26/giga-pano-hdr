@@ -149,5 +149,16 @@ class TestI6Pillow(unittest.TestCase):
         self.assertEqual(e.version, "12.2.0")
 
 
+class TestCompteDesScripts(unittest.TestCase):
+    """L'INDEX annonçait « 43 scripts » alors que le dossier en compte davantage : le nombre suit le dossier."""
+
+    def test_nombre_annonce_par_l_index(self):
+        lanceurs = {"panorama.py", "panorama_web.py"}
+        fichiers = [p for ext in ("*.py", "*.ps1", "*.cmd") for p in SCRIPTS.glob(ext) if p.name not in lanceurs]
+        index = (SCRIPTS / "INDEX.md").read_text(encoding="utf-8")
+        annonces = {int(n) for n in re.findall(r"[Ll]es (\d+) (?:scripts|fichiers)", index)}
+        self.assertEqual(annonces, {len(fichiers)})
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -27,9 +27,9 @@ GENRES_CHEMIN = ("fichier", "dossier", "pto")
 @dataclass
 class Champ:
     arg: args_mod.Arg
-    valeur: object                      # str, ou bool pour un interrupteur
+    valeur: str | bool                  # bool pour un interrupteur
     genre: str                          # "texte", "nombre", "interrupteur", "fichier", "dossier", "pto"
-    choix: list = field(default_factory=list)   # pto : valeur préremplie, .pto de la phase triés, puis AUTRE
+    choix: list[str] = field(default_factory=list)   # pto : valeur préremplie, .pto de la phase triés, puis AUTRE
     depart: str = ""                    # dossier où s'ouvre Parcourir
     obligatoire: bool = False
     aide: str = ""
@@ -42,14 +42,8 @@ class Champ:
             return False
         if not os.path.isabs(self.valeur):
             return False
-        complet = config._normaliser(self.valeur)
-        for racine in (getattr(self.panorama, cle, "") for cle in ("T", "P", "H")):
-            if not racine:
-                continue
-            racine = config._normaliser(racine).rstrip(os.sep)
-            if complet == racine or complet.startswith(racine + os.sep):
-                return False
-        return True
+        return not any(config.sous(getattr(self.panorama, cle, ""), self.valeur, inclus=True)
+                       for cle in ("T", "P", "H"))
 
 
 def arguments_de(tache, ctx):

@@ -19,7 +19,8 @@ from .couleurs import Couleurs
 from .menu import pause
 
 RE_CONSTANTE = re.compile(r"^(COLS|ROWS|FOCALE|LARGEUR_MM|PAS_H|PAS_V|EXPOS|FOV_H|FOV_V)\s*=\s*([\d.]+)", re.MULTILINE)
-RE_CONSTANTES_DOUBLE = re.compile(r"^(COLS|ROWS), (COLS|ROWS)\s*=\s*([\d.]+),\s*([\d.]+)", re.MULTILINE)
+RE_DIESE = re.compile(r"^# ?")          # début d'une ligne de commentaire PowerShell : « # » puis un espace facultatif
+RE_CONSTANTES_DOUBLE =re.compile(r"^(COLS|ROWS), (COLS|ROWS)\s*=\s*([\d.]+),\s*([\d.]+)", re.MULTILINE)
 
 MESSAGES_INTERRUPTION = {
     "nona_images.ps1": "La même commande reprend là où elle s'est arrêtée (les images déjà rendues sont sautées).",
@@ -158,13 +159,13 @@ def construire_ps(arguments, valeurs):
 
 
 def commentaire_ps(chemin):
-    """Bloc de commentaires d'en-tête d'un script PowerShell (lignes # consécutives), sans « # »."""
+    """Bloc de commentaires d'en-tête d'un script PowerShell (lignes # consécutives), sans « # » ni l'espace qui
+    le suit (un seul : l'indentation au-delà est gardée)."""
     bloc = []
     try:
         for ligne in Path(chemin).read_text(encoding="utf-8").splitlines():
             if ligne.startswith("#"):
-                texte = ligne[1:]
-                bloc.append(texte[1:] if texte.startswith(" ") else texte)
+                bloc.append(RE_DIESE.sub("", ligne, count=1))
             elif bloc or ligne.strip():
                 break
     except OSError:

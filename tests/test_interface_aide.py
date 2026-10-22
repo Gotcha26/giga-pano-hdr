@@ -63,6 +63,31 @@ class TestAide(unittest.TestCase):
             self.assertEqual(lancer.commentaire_ps(ps), "Titre\n\nSuite")
             self.assertEqual(lancer._titre_ps(ps), "Titre")
 
+    def test_commentaire_ps_retire_diese_et_un_seul_espace(self):
+        with tempfile.TemporaryDirectory() as t:
+            ps = Path(t) / "x.ps1"
+            ps.write_text("#Titre\n#   indenté\n# # double\n", encoding="utf-8")
+            self.assertEqual(lancer.commentaire_ps(ps), "Titre\n  indenté\n# double")
+
+    def test_titres_des_ps1_du_depot(self):
+        ps1 = sorted(SCRIPTS.glob("*.ps1"))
+        self.assertEqual(len(ps1), 9)
+        for p in ps1:
+            with self.subTest(p.name):
+                titre = lancer._titre_ps(p)
+                self.assertTrue(titre)
+                self.assertFalse(titre.startswith(("#", " ")))
+
+    def test_titres_hors_blocs_de_code_tilde_et_backtick(self):
+        with tempfile.TemporaryDirectory() as t:
+            guide = Path(t) / "G.md"
+            guide.write_text("~~~\n### 1A — Faux\n```\n### 1B — Faux aussi\n~~~\n### 2A — Vrai\n```\n### 2B — Faux\n```\n",
+                             encoding="utf-8")
+            lignes, titres = aide._titres(guide)
+            self.assertEqual([t for _, _, t in titres], ["2A — Vrai"])
+            self.assertEqual(lignes[titres[0][0]], "### 2A — Vrai")
+            self.assertIsNone(aide._titres(Path(t) / "absent.md"))
+
 
 if __name__ == "__main__":
     unittest.main()

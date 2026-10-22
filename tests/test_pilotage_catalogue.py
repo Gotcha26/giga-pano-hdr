@@ -76,7 +76,8 @@ class TestCatalogue(unittest.TestCase):
         self.assertEqual([t.groupe_console for t in rp].count("rendus"), 1)
 
     def test_geste_3g_reporte_le_maitre(self):
-        t = next(t for t in self.catalogue.TACHES if t.attendu)
+        t = next(t for t in self.catalogue.TACHES if t.identifiant == "3G/geste")
+        self.assertTrue(t.est_geste)
         self.assertEqual(t.attendu, r"3_optimisation\pano_grille_opt.pto")
         self.assertEqual(t.reporte, {"maitre": "attendu"})
 

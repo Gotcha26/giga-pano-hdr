@@ -17,20 +17,18 @@ RE_TITRE = re.compile(r"^(#{1,6})\s+(.*?)\s*$")
 
 
 def _titres(guide):
-    """(index de ligne, niveau, texte du titre) de chaque titre hors blocs de code, ou None si illisible."""
+    """(lignes du guide, [(index de ligne, niveau, texte du titre)]) des titres hors blocs de code, ou None si le
+    guide est illisible. Les blocs de code (``` ou ~~~) suivent les règles de verifier_renvois._lignes."""
     try:
-        lignes = Path(guide).read_text(encoding="utf-8").splitlines()
+        texte = Path(guide).read_text(encoding="utf-8")
     except OSError:
-        return None, None
-    titres, dans_code = [], False
-    for i, ligne in enumerate(lignes):
-        if ligne.lstrip().startswith("```"):
-            dans_code = not dans_code
-        elif not dans_code:
-            m = RE_TITRE.match(ligne)
-            if m:
-                titres.append((i, len(m.group(1)), m.group(2)))
-    return lignes, titres
+        return None
+    titres = []
+    for n, ligne, dans_code in verifier_renvois._lignes(texte):
+        m = None if dans_code else RE_TITRE.match(ligne)
+        if m:
+            titres.append((n - 1, len(m.group(1)), m.group(2)))
+    return texte.splitlines(), titres
 
 
 def _correspond(texte, repere):
@@ -40,9 +38,10 @@ def _correspond(texte, repere):
 
 def _trouver(repere, guide):
     """(lignes, titres, position du titre du repère dans titres) ou None."""
-    lignes, titres = _titres(guide)
-    if titres is None:
+    lus = _titres(guide)
+    if lus is None:
         return None
+    lignes, titres = lus
     for k, (_, niveau, texte) in enumerate(titres):
         if niveau in (3, 4) and _correspond(texte, repere):
             return lignes, titres, k

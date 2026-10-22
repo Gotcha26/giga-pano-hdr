@@ -64,7 +64,7 @@ giga-pano-hdr\
 ├── docs\
 │   ├── GUIDE.md                           ← la méthode générale (phases 0 à 7)
 │   └── NETTOYAGE-ancien-depot.md          ← à faire dans l'ancien dépôt, après la clôture de son issue #46
-├── scripts\                               ← 43 scripts .py / .ps1 / .cmd, un dossier (ils s'appellent entre eux)
+├── scripts\                               ← 46 scripts .py / .ps1 / .cmd et les lanceurs, un dossier (ils s'appellent entre eux)
 │   ├── panorama.py                        ← le lanceur : menus par phase, Phase 0 outillée
 │   ├── pilotage\                          ← kit partagé : couleurs, menus, configuration, outils, arguments
 │   └── INDEX.md                           ← quel script pour quoi, portée de chacun

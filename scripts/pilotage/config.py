@@ -163,14 +163,20 @@ def _normaliser(chemin):
     return os.path.normcase(os.path.abspath(chemin))
 
 
+def sous(racine, chemin, inclus=False):
+    """Vrai si `chemin` est strictement sous `racine` (casse et séparateurs ignorés ; « D:\\T-voisin » n'est pas
+    sous « D:\\T ») ; `inclus` : la racine elle-même compte aussi. Faux si l'un des deux est vide."""
+    if not racine or not chemin:
+        return False
+    r = _normaliser(racine).rstrip(os.sep)
+    c = _normaliser(chemin)
+    return (inclus and c == r) or c.startswith(r + os.sep)
+
+
 def ranger_chemin(p, chemin):
     """Chemin à stocker dans panorama.json : relatif à $P s'il est dessous (casse ignorée), sinon inchangé
     (inchangé aussi si $P est vide : le dossier courant n'est pas une racine de panorama)."""
-    if not chemin or not p.P:
-        return chemin
-    racine = _normaliser(p.P)
-    complet = _normaliser(chemin)
-    if complet == racine or not complet.startswith(racine.rstrip(os.sep) + os.sep):
+    if not sous(p.P, chemin):
         return chemin
     return os.path.relpath(chemin, p.P)
 

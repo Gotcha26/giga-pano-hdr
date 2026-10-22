@@ -1,6 +1,6 @@
 # Index des scripts d'assemblage
 
-Les 43 scripts de ce dossier forment la chaîne qui mène des images exportées de *Lightroom* à un giga-panorama tuilé : renommage, géométrie dans *Hugin*, rendu, mesures de qualité, cadrage, tuilage. Chacun porte, **en tête de fichier**, son propre mode d'emploi.
+Les 46 scripts de ce dossier (36 Python, 9 PowerShell, 1 .cmd ; hors les deux lanceurs `panorama.py` et `panorama_web.py` et les paquets `pilotage/` et `interface/`) forment la chaîne qui mène des images exportées de *Lightroom* à un giga-panorama tuilé : renommage, géométrie dans *Hugin*, rendu, mesures de qualité, cadrage, tuilage. Chacun porte, **en tête de fichier**, son propre mode d'emploi.
 
 ---
 
@@ -19,7 +19,7 @@ Les 43 scripts de ce dossier forment la chaîne qui mène des images exportées 
 
 ## 📋 Pour qui ?
 
-Pour qui veut savoir « quel script pour quoi ? » sans ouvrir les 43 fichiers : cet index les classe par phase, dans l'ordre où on s'en sert, avec l'identifiant de l'étape du [guide](../docs/GUIDE.md) qui les emploie (**3F**, **6C**…) et leur **portée**. Le détail des gestes dans *Hugin* et *Lightroom* est dans le guide (voir son aide-mémoire pour la séquence complète).
+Pour qui veut savoir « quel script pour quoi ? » sans ouvrir les 46 fichiers : cet index les classe par phase, dans l'ordre où on s'en sert, avec l'identifiant de l'étape du [guide](../docs/GUIDE.md) qui les emploie (**3F**, **6C**…) et leur **portée**. Le détail des gestes dans *Hugin* et *Lightroom* est dans le guide (voir son aide-mémoire pour la séquence complète).
 
 ---
 
@@ -31,7 +31,7 @@ Pour qui veut savoir « quel script pour quoi ? » sans ouvrir les 43 fichiers :
 | 🟡 **Paramétré par la grille** | Contient en tête des **constantes** écrites pour une prise de vue donnée :<ul><li>colonnes</li><li>lignes</li><li>focale</li><li>pas</li><li>champ</li></ul> | Les constantes en tête du script (voir les [conventions](#️-conventions-communes)) |
 | 🔵 **Rédaction** | Sert à tenir le guide, pas à assembler | Rien |
 
-Les 43 scripts sont des outils de **méthode** : aucun n'est propre à un seul panorama. Ce qui est propre à un panorama (table RAW → `L_C_E`, préréglages Lightroom, mesures) est dans son dossier `etudes-de-cas/`.
+Les 46 scripts sont des outils de **méthode** : aucun n'est propre à un seul panorama. Ce qui est propre à un panorama (table RAW → `L_C_E`, préréglages Lightroom, mesures) est dans son dossier `etudes-de-cas/`.
 
 ---
 

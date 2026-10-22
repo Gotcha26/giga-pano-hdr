@@ -109,6 +109,15 @@ class TestClesReportees(unittest.TestCase):
         self.assertEqual(config.ranger_chemin(p, r"E:\Rendus\complet"), r"E:\Rendus\complet")
         self.assertEqual(config.ranger_chemin(p, ""), "")
 
+    def test_sous(self):
+        self.assertTrue(config.sous(r"D:\T", r"d:\t\a\b.pto"))
+        self.assertTrue(config.sous("D:\\T\\", r"D:\T\a"))
+        self.assertFalse(config.sous(r"D:\T", r"D:\T"))
+        self.assertTrue(config.sous(r"D:\T", r"D:\t", inclus=True))
+        self.assertFalse(config.sous(r"D:\T", r"D:\T-voisin\a"))
+        self.assertFalse(config.sous("", r"D:\T\a"))
+        self.assertFalse(config.sous(r"D:\T", ""))
+
     def test_ranger_chemin_sans_P_inchange(self):
         sous_courant = os.path.join(os.getcwd(), "5_hdr", "a.pto")     # $P vide ne vaut pas le dossier courant
         self.assertEqual(config.ranger_chemin(config.Panorama(T=r"D:\x", P=""), sous_courant), sous_courant)

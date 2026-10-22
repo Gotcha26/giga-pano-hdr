@@ -21,14 +21,14 @@ PHASES = (0, 1, 2, 3, 4, 5, 6, 7, "mesures")
 @dataclass
 class Tache:
     tete: str
-    phase: object                           # 0..7 ou "mesures"
+    phase: int | str                        # 0..7 ou "mesures"
     repere: str = ""                        # repère du guide : "3C.2", "5B", ...
     script: str = ""                        # nom du script dans scripts/
     action: str = ""                        # fonction propre à la façade : "cpclean", "versions", ...
     sous_titre: str = ""                    # texte affiché après la tête dans la console
-    effet: object = None                    # None = lecture seule ; sinon la cible écrite
+    effet: str | None = None                # None = lecture seule ; sinon la cible écrite
     section: str = ""                       # section du menu console
-    arguments: object = None                # déclaration propre à la tâche (sinon : celle du script)
+    arguments: list | None = None           # déclaration propre à la tâche (sinon : celle du script)
     outils: tuple = ()                      # clés d'outils requis (outils.OUTILS)
     geste: str = ""                         # rappel d'un geste dans Hugin ou Lightroom (aucun script)
     attendu: str = ""                       # fichier que le geste doit produire, relatif à $P
