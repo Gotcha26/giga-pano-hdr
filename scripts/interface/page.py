@@ -30,7 +30,9 @@ PHASE0_MESSAGE = "Disponible dans la page Phase 0 (tâche suivante)."
 ACTION_MESSAGE = "Action propre au lanceur console : pas encore disponible dans la page (python panorama.py)."
 VIPS_ABSENT = "libvips absent : voir Configuration"
 LIMITE_IMAGES = 200
-DELAI_SORTIE_FORCEE = 10               # secondes entre « Quitter » et la sortie forcée du processus
+MESSAGE_PERIME = "Le panorama courant a changé dans un autre onglet : rien n'est lancé ni mémorisé, la page est rechargée."
+MESSAGE_CHANGE = "Le panorama courant a changé dans un autre onglet : page rechargée."
+DELAI_SORTIE_FORCEE = 10              # secondes entre « Quitter » et la sortie forcée du processus
 
 VERROU_PANORAMA = threading.Lock()     # report depuis le fil de lecture, mémorisation et changement de panorama
 
@@ -202,6 +204,12 @@ def changer_panorama(ctx, T, enregistrer=config.enregistrer_poste):
     return ctx.panorama
 
 
+def formulaire_perime(etat, ctx):
+    """Vrai si le panorama courant du poste n'est plus celui avec lequel l'onglet a rendu sa page : `ctx` est
+    partagé par tous les onglets, un autre a pu changer de panorama entre-temps."""
+    return etat.T_vu != ctx.poste.courant
+
+
 def options_panoramas(poste):
     """{$T: libellé} des panoramas connus du poste, le courant compris même s'il n'est pas dans la liste."""
     connus = list(poste.panoramas)
@@ -236,6 +244,7 @@ class Etat:
     compteur: int = -1
     dossier_apercus: Optional[str] = None   # dossier choisi à la main (sinon : celui du formulaire)
     ouvertes: set = field(default_factory=set)      # phases dépliées dans la colonne
+    T_vu: Optional[str] = None              # $T courant au dernier rendu de la zone centrale
     en_tete: object = None
     colonne: object = None
     centre: object = None
@@ -355,7 +364,17 @@ def construire(ctx):
     def valeurs_saisies():
         return formulaire.valeurs(etat.elements)
 
+    def refuser_si_perime():
+        """Vrai (et page rafraîchie) si un autre onglet a changé de panorama depuis l'affichage du formulaire."""
+        if not formulaire_perime(etat, ctx):
+            return False
+        ui.notify(MESSAGE_PERIME, type="warning", multi_line=True)
+        tout_rafraichir()
+        return True
+
     async def lancer_tache():
+        if refuser_si_perime():
+            return
         t, p = etat.tache, ctx.panorama
         ex = execution.derniere(t.identifiant)
         if ex is not None and ex.etat == "en cours":
@@ -373,6 +392,8 @@ def construire(ctx):
             if ecarts and not await _confirmer(
                     "Les constantes du script contredisent le panorama courant :", "Lancer quand même",
                     [f"{nom} = {vs} dans le script, {vp} dans le panorama" for nom, vs, vp in ecarts]):
+                return
+            if refuser_si_perime():         # le panorama a pu changer pendant la confirmation
                 return
         try:
             nouvelle = execution.demarrer(t.identifiant, formulaire.commande(t, ctx, valeurs), cwd=str(ctx.scripts),
@@ -392,6 +413,8 @@ def construire(ctx):
             await run.io_bound(execution.arreter, ex)
 
     def memoriser():
+        if refuser_si_perime():
+            return
         p = ctx.panorama
         if p is None:
             ui.notify("Aucun panorama courant : rien à mémoriser", type="warning")
@@ -440,6 +463,7 @@ def construire(ctx):
         try:
             arguments, ecrit, _ = formulaire.arguments_de(t, ctx)
             liste = formulaire.champs(t, arguments, p, ctx)
+            constantes = lancer.constantes_du_fichier(ctx.scripts / t.script) if t.script.endswith(".py") else {}
         except (OSError, KeyError, ValueError, SyntaxError) as e:
             ui.label(f"Formulaire impossible : {e}").classes("text-red-700")
             return
@@ -449,16 +473,15 @@ def construire(ctx):
         ecrit = ecrit or t.effet
         ui.label(f"✎ Écrit dans {ecrit}" if ecrit else "lecture seule").classes(
             "text-sm " + ("text-amber-800" if ecrit else "text-gray-600"))
-        if t.script.endswith(".py"):
-            ecarts = args_mod.ecarts(lancer.constantes_du_fichier(ctx.scripts / t.script), p)
-            for nom, vs, vp in ecarts:
-                ui.label(f"⚠ {nom} = {vs} dans le script, {vp} dans le panorama").classes("text-amber-700")
+        for nom, vs, vp in args_mod.ecarts(constantes, p):
+            ui.label(f"⚠ {nom} = {vs} dans le script, {vp} dans le panorama").classes("text-amber-700")
         boutons()
 
     @ui.refreshable
     def centre():
         t = etat.tache
         etat.elements, etat.champs, etat.arguments = {}, [], []
+        etat.T_vu = ctx.poste.courant
         if etat.vue == "phase0":
             ui.label(arbre[0][0]).classes("text-xl font-bold")
             ui.label(PHASE0_MESSAGE)
@@ -485,6 +508,7 @@ def construire(ctx):
         journal.move(target_index=-1)
         if t.script:
             apercus_zone()
+        etat.ex_vue, etat.lus, etat.etat_vu = None, 0, ""    # journal neuf : le rejouer en entier
         rafraichir_suivi()
 
     # ------------------------------------------------------------ fichiers produits
@@ -594,7 +618,7 @@ def construire(ctx):
             return
         section = aide.section_du_guide(t.repere) if t.repere else None
         if section:
-            ui.markdown(liens_absolus(section)).classes(
+            ui.markdown(liens_absolus(section), extras=["fenced-code-blocks", "tables", "code-friendly"]).classes(
                 "text-sm w-full [&_h3]:text-lg [&_h4]:text-base [&_pre]:whitespace-pre-wrap [&_pre]:break-all "
                 "[&_table]:block [&_table]:overflow-x-auto")
         else:
@@ -627,6 +651,9 @@ def construire(ctx):
             boutons.refresh()
 
     def tic():
+        if formulaire_perime(etat, ctx):
+            ui.notify(MESSAGE_CHANGE, multi_line=True)
+            tout_rafraichir()
         rafraichir_suivi()
         n = len(execution.en_cours())
         changement = n != etat.compteur

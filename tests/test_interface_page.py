@@ -110,6 +110,14 @@ class TestEnTete(unittest.TestCase):
         homonymes = config.Poste(panoramas=[r"D:\1\pano", r"E:\2\pano"])
         self.assertEqual(self.page.options_panoramas(homonymes), {r"D:\1\pano": r"D:\1\pano", r"E:\2\pano": r"E:\2\pano"})
 
+    def test_formulaire_perime_si_un_autre_onglet_change_de_panorama(self):
+        config.enregistrer_panorama(self.p)
+        ctx = _contexte(poste=config.Poste(panoramas=[r"D:\A", self.tmp.name], courant=r"D:\A"))
+        onglet_a = self.page.Etat(ctx=ctx, T_vu=r"D:\A")
+        self.assertFalse(self.page.formulaire_perime(onglet_a, ctx))
+        self.page.changer_panorama(ctx, self.tmp.name, enregistrer=lambda poste: None)   # depuis l'onglet B
+        self.assertTrue(self.page.formulaire_perime(onglet_a, ctx))
+
     def test_changer_panorama(self):
         config.enregistrer_panorama(self.p)
         poste = config.Poste(panoramas=[self.tmp.name])
