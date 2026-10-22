@@ -160,3 +160,61 @@ def valeur(p, cle):
         return getattr(p, cle) or None
     v = getattr(p, cle, None)
     return None if v in (None, "") else str(v)
+
+
+# Valeurs du guide, proposées faute de mieux
+DEFAUTS_GUIDE = {"largeur_mm": 24, "largeur_hdr": 20000}
+RACINE_GUIDE = r"D:\Panoramas"      # 0D : $T = <racine>\<date>\<focale>, $H = <dossier des RAW>\HDR
+QUESTIONS = [   # (clé, question, entier) ; la focale est demandée avant $T, qu'elle sert à nommer
+    ("lignes", "Lignes de la grille", True),
+    ("colonnes", "Colonnes de la grille", True),
+    ("expos", "Expositions par position", True),
+    ("largeur_mm", "Côté horizontal du capteur (mm : 24 en portrait plein format)", False),
+    ("pas_h", "Pas horizontal (°)", False),
+    ("pas_v", "Pas vertical (°)", False),
+    ("largeur_hdr", "Largeur du HDR (px)", True),
+    ("largeur_pleine", "Largeur de la pleine résolution (px)", True),
+]
+
+
+def propositions_nouveau(courant, date, focale, T, raws):
+    """Valeurs proposées pour un nouveau panorama, d'après ce qui est déjà connu (None = pas encore donné).
+
+    Les chemins suivent le guide (0D) : $T = <racine>\\<date>\\<focale>mm (racine du panorama courant, sinon
+    D:\\Panoramas), $H = <dossier des RAW>\\HDR. Une valeur de question vient du panorama.json déjà présent dans
+    $T, sinon du panorama courant (même série d'objectif), sinon du guide. `existant` : ce panorama.json, ou None."""
+    racine = str(Path(courant.T).parent.parent) if courant and courant.T else RACINE_GUIDE
+    if not T:
+        T = str(Path(racine, date, f"{focale:g}mm" if focale else ""))
+    existant = charger_panorama(T)
+    if raws is None:
+        raws = str(Path(existant.H).parent) if existant and existant.H else ""
+    H = existant.H if existant and existant.H else (str(Path(raws, "HDR")) if raws else "")
+    resultat = {"date": date, "focale": focale, "T": T, "raws": raws, "H": H, "existant": existant}
+    source = existant or courant
+    for cle, _, _ in QUESTIONS:
+        v = getattr(source, cle, None) if source else None
+        resultat[cle] = v if v is not None else DEFAUTS_GUIDE.get(cle)
+    return resultat
+
+
+def creer_nouveau(poste, valeurs):
+    """Crée le panorama décrit par `valeurs` (T, H, focale et les clés de QUESTIONS), son arborescence et son
+    panorama.json, le range parmi les panoramas connus du poste et le rend courant ; retourne (panorama, dossiers
+    créés). Ce que `valeurs` ne porte pas (maître, noms d'export, chemins reportés, réglages mémorisés) est
+    conservé d'un panorama.json déjà présent dans $T."""
+    T = valeurs["T"]
+    questions = {cle: valeurs.get(cle) for cle, _, _ in QUESTIONS}
+    p = Panorama(T=T, P=os.path.join(T, "Assemblage-Hugin"), H=valeurs.get("H") or "",
+                 focale=valeurs.get("focale"), **questions)
+    existant = charger_panorama(T)
+    if existant:
+        for cle in ("export_l", "export_h", "reglages", *CLES_CHEMIN_P):
+            setattr(p, cle, getattr(existant, cle))
+    crees = creer_arborescence(p)
+    enregistrer_panorama(p)
+    if T not in poste.panoramas:
+        poste.panoramas.append(T)
+    poste.courant = T
+    enregistrer_poste(poste)
+    return p, crees

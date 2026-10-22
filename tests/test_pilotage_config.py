@@ -116,5 +116,64 @@ class TestClesReportees(unittest.TestCase):
         self.assertIsNone(config.valeur(p, "rendu_hdr"))
 
 
+class TestNouveauPanorama(unittest.TestCase):
+    def test_propositions_nouveau_reprend_le_courant_et_les_chemins_du_guide(self):
+        courant = config.Panorama(T=r"D:\Panoramas\2026-07-01\35mm", P=r"D:\Panoramas\2026-07-01\35mm\Assemblage-Hugin",
+                                  focale=35, lignes=6, colonnes=14)
+        prop = config.propositions_nouveau(courant, "2026-10-22", 35.0, None, None)
+        self.assertEqual(prop["T"], r"D:\Panoramas\2026-10-22\35mm")
+        self.assertEqual((prop["lignes"], prop["colonnes"], prop["largeur_hdr"], prop["largeur_mm"]), (6, 14, 20000, 24))
+        self.assertIsNone(prop["expos"])
+        self.assertIsNone(prop["existant"])
+        self.assertEqual((prop["raws"], prop["H"]), ("", ""))
+        for cle, _, _ in config.QUESTIONS:
+            self.assertIn(cle, prop)
+
+    def test_propositions_nouveau_sans_courant_racine_du_guide_et_H_sous_les_raw(self):
+        prop = config.propositions_nouveau(None, "2026-10-22", None, None, r"D:\RAW\jour")
+        self.assertEqual(prop["T"], str(Path(config.RACINE_GUIDE, "2026-10-22")))
+        self.assertEqual(prop["H"], str(Path(r"D:\RAW\jour", "HDR")))
+        self.assertEqual(config.propositions_nouveau(None, "d", 200.0, r"E:\T", None)["T"], r"E:\T")
+
+    def test_propositions_nouveau_prefere_le_panorama_json_existant(self):
+        with tempfile.TemporaryDirectory() as d:
+            T, H = str(Path(d) / "pano"), str(Path(d) / "RAW" / "HDR")
+            config.enregistrer_panorama(config.Panorama(T=T, P="", H=H, lignes=4, colonnes=20))
+            courant = config.Panorama(T=r"D:\a\b\c", P="", lignes=9, colonnes=9, expos=3)
+            prop = config.propositions_nouveau(courant, "2026-10-22", None, T, None)
+            self.assertEqual((prop["lignes"], prop["colonnes"], prop["expos"]), (4, 20, None))
+            self.assertEqual((prop["raws"], prop["H"]), (str(Path(H).parent), H))
+            self.assertEqual(prop["existant"].lignes, 4)
+
+    def test_creer_nouveau_conserve_le_maitre_et_rend_courant(self):
+        with tempfile.TemporaryDirectory() as d:
+            T, H = str(Path(d) / "pano"), str(Path(d) / "RAW" / "HDR")
+            config.enregistrer_panorama(config.Panorama(
+                T=T, P="", maitre=r"3_optimisation\m.pto", export_l="L2", export_h="H2", hdr_pto=r"5_hdr\x.pto",
+                reglages={"id": {"-Nom": "vue"}}))
+            poste = config.Poste(panoramas=[T])
+            chemin_poste = Path(d) / "config.json"
+            valeurs = {"T": T, "H": H, "focale": 35.0, "lignes": 6, "colonnes": 14, "expos": None, "largeur_mm": 24,
+                       "pas_h": None, "pas_v": None, "largeur_hdr": 20000, "largeur_pleine": None}
+            with mock.patch.object(config, "chemin_poste", lambda: chemin_poste):
+                p, crees = config.creer_nouveau(poste, valeurs)
+            self.assertEqual((p.maitre, p.export_l, p.export_h, p.hdr_pto), (r"3_optimisation\m.pto", "L2", "H2", r"5_hdr\x.pto"))
+            self.assertEqual(p.reglages, {"id": {"-Nom": "vue"}})
+            self.assertEqual((p.P, p.H, p.focale, p.lignes), (os.path.join(T, "Assemblage-Hugin"), H, 35.0, 6))
+            self.assertEqual(config.charger_panorama(T), p)
+            self.assertTrue((Path(T) / "Assemblage-Hugin" / "3_grille").is_dir())
+            self.assertIn(Path(H) / "TIFF", crees)
+            self.assertEqual(poste.panoramas, [T])
+            self.assertEqual(config.charger_poste(chemin_poste).courant, T)
+
+    def test_creer_nouveau_ajoute_aux_panoramas_connus(self):
+        with tempfile.TemporaryDirectory() as d:
+            T = str(Path(d) / "pano")
+            poste = config.Poste()
+            with mock.patch.object(config, "chemin_poste", lambda: Path(d) / "config.json"):
+                p, _ = config.creer_nouveau(poste, {"T": T, "H": "", "focale": None})
+            self.assertEqual((poste.panoramas, poste.courant, p.H, p.maitre), ([T], T, "", ""))
+
+
 if __name__ == "__main__":
     unittest.main()

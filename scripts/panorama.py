@@ -33,6 +33,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from pilotage import arguments, catalogue, config, declarations_ps, lancer, menu, outils  # noqa: E402
 from pilotage.arguments import Arg  # noqa: E402
+from pilotage.config import DEFAUTS_GUIDE, QUESTIONS, RACINE_GUIDE  # noqa: E402,F401  (partagés avec l'interface web)
 from pilotage.couleurs import Couleurs, effacer_ecran, preparer_console  # noqa: E402
 from pilotage.menu import Entree, confirmer, demander, proposer  # noqa: E402
 
@@ -181,21 +182,6 @@ class _Annule(Exception):
     pass
 
 
-# Valeurs du guide, proposées faute de mieux
-DEFAUTS_GUIDE = {"largeur_mm": 24, "largeur_hdr": 20000}
-RACINE_GUIDE = r"D:\Panoramas"      # 0D : $T = <racine>\<date>\<focale>, $H = <dossier des RAW>\HDR
-QUESTIONS = [   # (clé, question, entier) ; la focale est demandée avant $T, qu'elle sert à nommer
-    ("lignes", "Lignes de la grille", True),
-    ("colonnes", "Colonnes de la grille", True),
-    ("expos", "Expositions par position", True),
-    ("largeur_mm", "Côté horizontal du capteur (mm : 24 en portrait plein format)", False),
-    ("pas_h", "Pas horizontal (°)", False),
-    ("pas_v", "Pas vertical (°)", False),
-    ("largeur_hdr", "Largeur du HDR (px)", True),
-    ("largeur_pleine", "Largeur de la pleine résolution (px)", True),
-]
-
-
 def _texte(v):
     return "" if v is None else (f"{v:g}" if isinstance(v, float) else str(v))
 
@@ -225,36 +211,25 @@ def nouveau_panorama(ctx):
         courant = ctx.panorama
         date = question("Date de la prise de vue (AAAA-MM-JJ)", datetime.date.today().isoformat())
         focale = question("Focale (mm)", courant.focale if courant else None, entier=False) or None
-        racine = str(Path(courant.T).parent.parent) if courant and courant.T else RACINE_GUIDE
         T = question("Dossier de travail $T (hors catalogue Lightroom)",
-                     str(Path(racine, date, f"{focale:g}mm" if focale else "")))
+                     config.propositions_nouveau(courant, date, focale, None, None)["T"])
         if not T:
             ctx.ecrire(c.attention("Dossier de travail vide : rien n'a été écrit."))
             return
-        existant = config.charger_panorama(T)
-        if existant:
+        prop = config.propositions_nouveau(courant, date, focale, T, None)
+        if prop["existant"]:
             ctx.ecrire(c.info(f"panorama.json trouvé dans {T} : ses valeurs sont proposées."))
-        source = existant or courant
         raws = question("Dossier des RAW de ce panorama, dans le catalogue Lightroom (facultatif)",
-                        str(Path(existant.H).parent) if existant and existant.H else None)
-        H = question("Dossier HDR $H (calques et DNG HDR)",
-                     existant.H if existant and existant.H else (str(Path(raws, "HDR")) if raws else None))
-        valeurs = {"focale": focale}
+                        prop["raws"] or None)
+        prop = config.propositions_nouveau(courant, date, focale, T, raws)
+        valeurs = {"T": T, "focale": focale}
+        valeurs["H"] = question("Dossier HDR $H (calques et DNG HDR)", prop["H"] or None)
         for cle, invite, entier in QUESTIONS:
-            defaut = getattr(source, cle, None) if source else None
-            valeurs[cle] = question(invite, defaut if defaut is not None else DEFAUTS_GUIDE.get(cle), entier) or None
+            valeurs[cle] = question(invite, prop[cle], entier) or None
     except _Annule:
         ctx.ecrire(c.attention("Annulé : rien n'a été écrit."))
         return
-    p = config.Panorama(T=T, P=os.path.join(T, "Assemblage-Hugin"), H=H or "", **valeurs)
-    if existant:            # ce que le lanceur ne demande pas (maître, noms d'export) est conservé
-        p.maitre, p.export_l, p.export_h = existant.maitre, existant.export_l, existant.export_h
-    crees = config.creer_arborescence(p)
-    config.enregistrer_panorama(p)
-    if T not in ctx.poste.panoramas:
-        ctx.poste.panoramas.append(T)
-    ctx.poste.courant = T
-    config.enregistrer_poste(ctx.poste)
+    p, crees = config.creer_nouveau(ctx.poste, valeurs)
     ctx.panorama = p
     for d in crees:
         ctx.ecrire(c.succes(f"créé : {d}"))
