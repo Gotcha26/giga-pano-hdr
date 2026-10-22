@@ -31,7 +31,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from pilotage import arguments, config, declarations_ps, lancer, menu, outils  # noqa: E402
+from pilotage import arguments, catalogue, config, declarations_ps, lancer, menu, outils  # noqa: E402
 from pilotage.arguments import Arg  # noqa: E402
 from pilotage.couleurs import Couleurs, effacer_ecran, preparer_console  # noqa: E402
 from pilotage.menu import Entree, confirmer, demander, proposer  # noqa: E402
@@ -327,96 +327,46 @@ def menu_configuration(ctx):
 
 # ---------------------------------------------------------------- phases 2 à 7
 
+def entree_depuis(tache):
+    """Entrée de menu d'une tâche du catalogue : geste informatif, action du lanceur, script PowerShell ou Python."""
+    if tache.geste:
+        return geste(tache.tete, tache.geste, section=tache.section)
+    if tache.action:
+        cles = tache.outils
+        return Entree(tache.tete, tache.sous_titre, effet=tache.effet, action=ACTIONS[tache.action],
+                      disponible=lambda ctx: all(lancer.present(ctx, k) for k in cles),
+                      raison=lambda ctx: ", ".join(o.nom for o in outils.OUTILS
+                                                   if o.cle in cles and not lancer.present(ctx, o.cle)) + " absent",
+                      section=tache.section)
+    if tache.script.endswith(".ps1"):
+        e = entree_ps(tache.tete, tache.script, tache.effet, *tache.outils, section=tache.section)
+        e.sous_titre = tache.sous_titre
+        return e
+    return Entree(tache.tete, tache.sous_titre, effet=tache.effet,
+                  action=_py(tache.script, tache.arguments, tache.ecrit or None), section=tache.section)
+
+
+ACTIONS = {"cpclean": cpclean}
+
+
 def menu_phase2(ctx):
-    S = "PHASE 2 — CONTRÔLER ET RENOMMER L'EXPORT"
-    table = [Arg("REFERENCE", "Dossier déjà renommé L_C_E", type="dossier", config="export_l"),
-             Arg("NOUVEL_EXPORT", "Fichier CSV à écrire (table raw,lce)", type="chemin", config="table"),
-             Arg("--table", "Écrire la table", type="drapeau", defaut=True)]
-    return [
-        Entree("Vérifier l'ordre et le motif d'exposition", "verifier_ordre.py (2E)", action=_py("verifier_ordre.py"), section=S),
-        Entree("Contrôler les réglages Lightroom des TIFF", "controle_reglages_export.py (2E)", action=_py("controle_reglages_export.py"), section=S),
-        Entree("Mesurer l'écart de rendu entre voisines", "ecart_paires.py (2E, à partir de la Phase 3)", action=_py("ecart_paires.py"), section=S),
-        Entree("Lire la taille d'un TIFF", "tiffinfo.py", action=_py("tiffinfo.py"), section=S),
-        Entree("Renommer le premier export en L_C_E", "renommer_pano.py (2F) : contrôlé par la table, ou l'écrit",
-               effet="noms de fichiers du dossier et table_raw_LCE.csv si elle manque (essai à blanc sans --apply)",
-               action=_py("renommer_pano.py"), section=S),
-        Entree("Écrire la table RAW → L_C_E", "renommer_par_raw.py --table (export déjà renommé autrement)", effet="table_raw_LCE.csv",
-               action=_py("renommer_par_raw.py", table, "la table CSV"), section=S),
-        Entree("Renommer un export d'après la table RAW", "renommer_par_raw.py (2D, 6A.2)", effet="noms de fichiers du nouvel export (essai à blanc sans --apply)",
-               action=_py("renommer_par_raw.py"), section=S),
-    ]
+    return [entree_depuis(t) for t in catalogue.console("phase2")]
 
 
 def menu_phase3(ctx):
-    A, B = "GRILLE ET POINTS (3A à 3D)", "OPTIMISER ET REPLACER (3E à 3H)"
-    return [
-        Entree("Générer le projet de grille", "generer_pto.py (3A)", effet="3_grille\\pano_grille.pto", action=_py("generer_pto.py"), section=A),
-        geste("3B — Points de contrôle", "dans Hugin : Photos → CPFind (prealigned) → Créer des points → Enregistrer sous 3_grille\\pano_grille_cp.pto", section=A),
-        Entree("Nettoyer les points", "cpclean -p -n 2 (3C.1)", effet="3_optimisation\\…_clean.pto", action=cpclean,
-               disponible=lambda ctx: lancer.present(ctx, "hugin"), raison="Hugin absent", section=A),
-        Entree("Remettre les chemins d'images en relatifs", "deplacer_projet.py (3C.1, après cpclean)", effet="le projet, en place", action=_py("deplacer_projet.py"), section=A),
-        Entree("Vérifier la grille", "diagnostic_cp.py (3C.2)", action=_py("diagnostic_cp.py"), section=A),
-        Entree("Chercher le pas vertical réel", "diagnostic_pas_v.py (3C.3)", action=_py("diagnostic_pas_v.py"), section=A),
-        Entree("Appliquer le pas vertical", "corriger_pas_v.py (3C.3)", effet="le projet de sortie", action=_py("corriger_pas_v.py"), section=A),
-        Entree("Filtrer les faux points", "filtrer_cp.py (3D)", effet="le projet de sortie", action=_py("filtrer_cp.py"), section=A),
-        Entree("Préparer l'optimisation", "preparer_optimisation.py (3E)", effet="le projet de sortie", action=_py("preparer_optimisation.py"), section=B),
-        geste("3E — Optimiser", "dans Hugin : ouvrir le projet préparé → Optimiser maintenant ! → Yes → Enregistrer sous", section=B),
-        Entree("Replacer les images du ciel", "placer_isoles.py (3G)", effet="le projet de sortie", action=_py("placer_isoles.py"), section=B),
-        Entree("Affiner les images faibles", "affiner_images_faibles.py (3G)", effet="le projet de sortie", action=_py("affiner_images_faibles.py"), section=B),
-        Entree("Détecter les trous", "detecter_trous.py (3H)", action=_py("detecter_trous.py"), section=B),
-        Entree("Compter les points d'une paire", "compter_cp_paire.py (3H)", action=_py("compter_cp_paire.py"), section=B),
-    ]
+    return [entree_depuis(t) for t in catalogue.console("phase3")]
 
 
 def menu_rendus(ctx):
-    P4, P5, P6 = "PHASE 4 — VUE CENTRÉE", "PHASE 5 — HDR", "PHASE 6 — PLEINE RÉSOLUTION"
-    return [
-        Entree("Régler la taille du projet", "redimensionner_projet.py (4A, 6C.1)", effet="le projet de sortie", action=_py("redimensionner_projet.py"), section=P4),
-        entree_ps("Rendre un projet (nona puis fusion)", "rendre_projet.ps1", "le dossier de rendu", "hugin", "multiblend", etape="4A, 6B, 6C.4", section=P4),
-        Entree("Ranger les images intermédiaires", "ranger_intermediaires.py (4B)", effet="_a_supprimer\\ (essai à blanc sans --apply)", action=_py("ranger_intermediaires.py"), section=P4),
-        Entree("Reporter la géométrie sur les expositions", "propager_geometrie.py (5A)", effet="le projet HDR dérivé", action=_py("propager_geometrie.py"), section=P5),
-        entree_ps("Reprojeter les images une à une", "nona_images.ps1", "le dossier de rendu (f_NNNN.tif)", "hugin", etape="5B, 6B, 6C.2", section=P5),
-        entree_ps("Fusionner un calque par exposition", "fusionner_par_exposition.ps1", "les calques pano_HDR_E*.tif", "multiblend", etape="5B", section=P5),
-        geste("5C — Fusion HDR", "dans Lightroom : déplacer les calques dans $H, Synchroniser le dossier, Photo → Fusion de photos → HDR", section=P5),
-        geste("6A — Export H", "dans Lightroom : préréglage PANO TIFF (H) E0 depuis les copies virtuelles, puis renommer d'après la table RAW", section=P6),
-        Entree("Extraire un sous-projet", "extraire_sous_projet.py (6B, 6C.1)", effet="le projet de sortie", action=_py("extraire_sous_projet.py"), section=P6),
-        Entree("Rattacher un projet à un dossier d'images", "deplacer_projet.py --images (6B, 6C.1)", effet="le projet de sortie", action=_py("deplacer_projet.py"), section=P6),
-        entree_ps("Copier un rendu en version lisible", "rendre_lisible.ps1", "<nom>_lisible.tif et <nom>_sRGB.jpg", "vips", etape="6B", section=P6),
-        entree_ps("Surveiller multiblend pendant la fusion", "surveiller_multiblend.ps1", "le fichier de relevés", etape="6C.4", section=P6),
-    ]
+    return [entree_depuis(t) for t in catalogue.console("rendus")]
 
 
 def menu_mesures(ctx):
-    CIEL, GEO = "CIEL ET RACCORDS", "GÉOMÉTRIE ET CHARGE"
-    controle = [Arg("--controle", "Pleine résolution recadrée dont mesurer le vide par coin", type="chemin", obligatoire=True),
-                Arg("--vips", "Chemin de vips.exe", type="chemin", config="outil:vips")]
-    return [
-        Entree("Luminosité du ciel par image", "mesurer_ciel.py (3F)", action=_py("mesurer_ciel.py"), section=CIEL),
-        Entree("Écart d'exposition entre voisines (ciel)", "mesurer_gain_paires.py (3F)", action=_py("mesurer_gain_paires.py"), section=CIEL),
-        Entree("Ondulation périodique d'un rendu", "mesurer_bandes_ciel.py (3F, 6C.5)", action=_py("mesurer_bandes_ciel.py"), section=CIEL),
-        Entree("Localiser les sauts de luminosité", "localiser_sauts_ciel.py (3F)", action=_py("localiser_sauts_ciel.py"), section=CIEL),
-        Entree("Comparer deux rendus (luminosité)", "comparer_rendus.py", action=_py("comparer_rendus.py"), section=CIEL),
-        Entree("Comparer des rendus (couleur)", "comparer_couleur.py", action=_py("comparer_couleur.py"), section=CIEL),
-        Entree("Rehausser le ciel pour voir les raccords", "rehausser_ciel.py (6C.5)", effet="l'image de sortie", action=_py("rehausser_ciel.py"), section=CIEL),
-        entree_ps("Profil d'une jonction", "profil_jonction.ps1", None, "vips", etape="6C.5", section=CIEL),
-        Entree("Voir les corrections par image", "voir_positions.py (3E, 3G)", action=_py("voir_positions.py"), section=GEO),
-        Entree("Lister les pires points de contrôle", "lister_pires_cp.py (3G)", action=_py("lister_pires_cp.py"), section=GEO),
-        Entree("Détecter les images aberrantes", "detecter_aberrantes.py (3G)", action=_py("detecter_aberrantes.py"), section=GEO),
-        Entree("Mesurer le vide d'un cadrage", "cadrage_lightroom.py --controle (7C)", action=_py("cadrage_lightroom.py", controle, None), section=GEO),
-        entree_ps("Mesurer la charge CPU et mémoire d'un rendu", "mesurer_charge.ps1", None, section=GEO),
-    ]
+    return [entree_depuis(t) for t in catalogue.console("mesures")]
 
 
 def menu_phase7(ctx):
-    S = "PHASE 7 — TUILER ET CADRER"
-    return [
-        entree_ps("Tuiler un panorama en pyramide Deep Zoom", "tuiler.ps1", "la pyramide .dzi et _files", "vips", etape="7A", section=S),
-        Entree("Contrôler les tuiles dans le navigateur", "controler_tuiles.py (7B)", action=_py("controler_tuiles.py"), section=S),
-        geste("7C — Cadrer", "dans Lightroom, sur le DNG HDR : outil Recadrage, angle 0 ; exporter une copie virtuelle NON recadrée", section=S),
-        Entree("Lire le cadrage Lightroom et imprimer les commandes", "cadrage_lightroom.py (7C)", action=_py("cadrage_lightroom.py"), section=S),
-        Entree("Empaqueter pour la mise en ligne", "empaqueter.py (7D)", effet="<Sortie>\\<Nom>\\ et <Nom>.zip",
-               action=_py("empaqueter.py"), section=S),
-    ]
+    return [entree_depuis(t) for t in catalogue.console("phase7")]
 
 
 SOUS_MENUS = {

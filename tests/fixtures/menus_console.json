@@ -1,0 +1,369 @@
+{
+ "phase2": [
+  {
+   "libelle": "Vérifier l'ordre et le motif d'exposition — verifier_ordre.py (2E)  [lecture seule]",
+   "numero": 1,
+   "section": "PHASE 2 — CONTRÔLER ET RENOMMER L'EXPORT",
+   "effet": null,
+   "informative": false
+  },
+  {
+   "libelle": "Contrôler les réglages Lightroom des TIFF — controle_reglages_export.py (2E)  [lecture seule]",
+   "numero": 2,
+   "section": "PHASE 2 — CONTRÔLER ET RENOMMER L'EXPORT",
+   "effet": null,
+   "informative": false
+  },
+  {
+   "libelle": "Mesurer l'écart de rendu entre voisines   — ecart_paires.py (2E, à partir de la Phase 3)  [lecture seule]",
+   "numero": 3,
+   "section": "PHASE 2 — CONTRÔLER ET RENOMMER L'EXPORT",
+   "effet": null,
+   "informative": false
+  },
+  {
+   "libelle": "Lire la taille d'un TIFF                  — tiffinfo.py  [lecture seule]",
+   "numero": 4,
+   "section": "PHASE 2 — CONTRÔLER ET RENOMMER L'EXPORT",
+   "effet": null,
+   "informative": false
+  },
+  {
+   "libelle": "Renommer le premier export en L_C_E       — renommer_pano.py (2F) : contrôlé par la table, ou l'écrit  [écrit — noms de fichiers du dossier et table_raw_LCE.csv si elle manque (essai à blanc sans --apply)]",
+   "numero": 5,
+   "section": "PHASE 2 — CONTRÔLER ET RENOMMER L'EXPORT",
+   "effet": "noms de fichiers du dossier et table_raw_LCE.csv si elle manque (essai à blanc sans --apply)",
+   "informative": false
+  },
+  {
+   "libelle": "Écrire la table RAW → L_C_E               — renommer_par_raw.py --table (export déjà renommé autrement)  [écrit — table_raw_LCE.csv]",
+   "numero": 6,
+   "section": "PHASE 2 — CONTRÔLER ET RENOMMER L'EXPORT",
+   "effet": "table_raw_LCE.csv",
+   "informative": false
+  },
+  {
+   "libelle": "Renommer un export d'après la table RAW   — renommer_par_raw.py (2D, 6A.2)  [écrit — noms de fichiers du nouvel export (essai à blanc sans --apply)]",
+   "numero": 7,
+   "section": "PHASE 2 — CONTRÔLER ET RENOMMER L'EXPORT",
+   "effet": "noms de fichiers du nouvel export (essai à blanc sans --apply)",
+   "informative": false
+  }
+ ],
+ "phase3": [
+  {
+   "libelle": "Générer le projet de grille               — generer_pto.py (3A)  [écrit — 3_grille\\pano_grille.pto]",
+   "numero": 1,
+   "section": "GRILLE ET POINTS (3A à 3D)",
+   "effet": "3_grille\\pano_grille.pto",
+   "informative": false
+  },
+  {
+   "libelle": "3B — Points de contrôle                   — dans Hugin : Photos → CPFind (prealigned) → Créer des points → Enregistrer sous 3_grille\\pano_grille_cp.pto",
+   "numero": null,
+   "section": "GRILLE ET POINTS (3A à 3D)",
+   "effet": null,
+   "informative": true
+  },
+  {
+   "libelle": "Nettoyer les points                       — cpclean -p -n 2 (3C.1)  [écrit — 3_optimisation\\…_clean.pto]",
+   "numero": null,
+   "section": "GRILLE ET POINTS (3A à 3D)",
+   "effet": "3_optimisation\\…_clean.pto",
+   "informative": false
+  },
+  {
+   "libelle": "Remettre les chemins d'images en relatifs — deplacer_projet.py (3C.1, après cpclean)  [écrit — le projet, en place]",
+   "numero": 2,
+   "section": "GRILLE ET POINTS (3A à 3D)",
+   "effet": "le projet, en place",
+   "informative": false
+  },
+  {
+   "libelle": "Vérifier la grille                        — diagnostic_cp.py (3C.2)  [lecture seule]",
+   "numero": 3,
+   "section": "GRILLE ET POINTS (3A à 3D)",
+   "effet": null,
+   "informative": false
+  },
+  {
+   "libelle": "Chercher le pas vertical réel             — diagnostic_pas_v.py (3C.3)  [lecture seule]",
+   "numero": 4,
+   "section": "GRILLE ET POINTS (3A à 3D)",
+   "effet": null,
+   "informative": false
+  },
+  {
+   "libelle": "Appliquer le pas vertical                 — corriger_pas_v.py (3C.3)  [écrit — le projet de sortie]",
+   "numero": 5,
+   "section": "GRILLE ET POINTS (3A à 3D)",
+   "effet": "le projet de sortie",
+   "informative": false
+  },
+  {
+   "libelle": "Filtrer les faux points                   — filtrer_cp.py (3D)  [écrit — le projet de sortie]",
+   "numero": 6,
+   "section": "GRILLE ET POINTS (3A à 3D)",
+   "effet": "le projet de sortie",
+   "informative": false
+  },
+  {
+   "libelle": "Préparer l'optimisation        — preparer_optimisation.py (3E)  [écrit — le projet de sortie]",
+   "numero": 7,
+   "section": "OPTIMISER ET REPLACER (3E à 3H)",
+   "effet": "le projet de sortie",
+   "informative": false
+  },
+  {
+   "libelle": "3E — Optimiser                 — dans Hugin : ouvrir le projet préparé → Optimiser maintenant ! → Yes → Enregistrer sous",
+   "numero": null,
+   "section": "OPTIMISER ET REPLACER (3E à 3H)",
+   "effet": null,
+   "informative": true
+  },
+  {
+   "libelle": "Replacer les images du ciel    — placer_isoles.py (3G)  [écrit — le projet de sortie]",
+   "numero": 8,
+   "section": "OPTIMISER ET REPLACER (3E à 3H)",
+   "effet": "le projet de sortie",
+   "informative": false
+  },
+  {
+   "libelle": "Affiner les images faibles     — affiner_images_faibles.py (3G)  [écrit — le projet de sortie]",
+   "numero": 9,
+   "section": "OPTIMISER ET REPLACER (3E à 3H)",
+   "effet": "le projet de sortie",
+   "informative": false
+  },
+  {
+   "libelle": "Détecter les trous             — detecter_trous.py (3H)  [lecture seule]",
+   "numero": 10,
+   "section": "OPTIMISER ET REPLACER (3E à 3H)",
+   "effet": null,
+   "informative": false
+  },
+  {
+   "libelle": "Compter les points d'une paire — compter_cp_paire.py (3H)  [lecture seule]",
+   "numero": 11,
+   "section": "OPTIMISER ET REPLACER (3E à 3H)",
+   "effet": null,
+   "informative": false
+  }
+ ],
+ "rendus": [
+  {
+   "libelle": "Régler la taille du projet          — redimensionner_projet.py (4A, 6C.1)  [écrit — le projet de sortie]",
+   "numero": 1,
+   "section": "PHASE 4 — VUE CENTRÉE",
+   "effet": "le projet de sortie",
+   "informative": false
+  },
+  {
+   "libelle": "Rendre un projet (nona puis fusion) — rendre_projet.ps1 (4A, 6B, 6C.4)  [écrit — le dossier de rendu]",
+   "numero": null,
+   "section": "PHASE 4 — VUE CENTRÉE",
+   "effet": "le dossier de rendu",
+   "informative": false
+  },
+  {
+   "libelle": "Ranger les images intermédiaires    — ranger_intermediaires.py (4B)  [écrit — _a_supprimer\\ (essai à blanc sans --apply)]",
+   "numero": 2,
+   "section": "PHASE 4 — VUE CENTRÉE",
+   "effet": "_a_supprimer\\ (essai à blanc sans --apply)",
+   "informative": false
+  },
+  {
+   "libelle": "Reporter la géométrie sur les expositions — propager_geometrie.py (5A)  [écrit — le projet HDR dérivé]",
+   "numero": 3,
+   "section": "PHASE 5 — HDR",
+   "effet": "le projet HDR dérivé",
+   "informative": false
+  },
+  {
+   "libelle": "Reprojeter les images une à une           — nona_images.ps1 (5B, 6B, 6C.2)  [écrit — le dossier de rendu (f_NNNN.tif)]",
+   "numero": null,
+   "section": "PHASE 5 — HDR",
+   "effet": "le dossier de rendu (f_NNNN.tif)",
+   "informative": false
+  },
+  {
+   "libelle": "Fusionner un calque par exposition        — fusionner_par_exposition.ps1 (5B)  [écrit — les calques pano_HDR_E*.tif]",
+   "numero": null,
+   "section": "PHASE 5 — HDR",
+   "effet": "les calques pano_HDR_E*.tif",
+   "informative": false
+  },
+  {
+   "libelle": "5C — Fusion HDR                           — dans Lightroom : déplacer les calques dans $H, Synchroniser le dossier, Photo → Fusion de photos → HDR",
+   "numero": null,
+   "section": "PHASE 5 — HDR",
+   "effet": null,
+   "informative": true
+  },
+  {
+   "libelle": "6A — Export H                             — dans Lightroom : préréglage PANO TIFF (H) E0 depuis les copies virtuelles, puis renommer d'après la table RAW",
+   "numero": null,
+   "section": "PHASE 6 — PLEINE RÉSOLUTION",
+   "effet": null,
+   "informative": true
+  },
+  {
+   "libelle": "Extraire un sous-projet                   — extraire_sous_projet.py (6B, 6C.1)  [écrit — le projet de sortie]",
+   "numero": 4,
+   "section": "PHASE 6 — PLEINE RÉSOLUTION",
+   "effet": "le projet de sortie",
+   "informative": false
+  },
+  {
+   "libelle": "Rattacher un projet à un dossier d'images — deplacer_projet.py --images (6B, 6C.1)  [écrit — le projet de sortie]",
+   "numero": 5,
+   "section": "PHASE 6 — PLEINE RÉSOLUTION",
+   "effet": "le projet de sortie",
+   "informative": false
+  },
+  {
+   "libelle": "Copier un rendu en version lisible        — rendre_lisible.ps1 (6B)  [écrit — <nom>_lisible.tif et <nom>_sRGB.jpg]",
+   "numero": null,
+   "section": "PHASE 6 — PLEINE RÉSOLUTION",
+   "effet": "<nom>_lisible.tif et <nom>_sRGB.jpg",
+   "informative": false
+  },
+  {
+   "libelle": "Surveiller multiblend pendant la fusion   — surveiller_multiblend.ps1 (6C.4)  [écrit — le fichier de relevés]",
+   "numero": 6,
+   "section": "PHASE 6 — PLEINE RÉSOLUTION",
+   "effet": "le fichier de relevés",
+   "informative": false
+  }
+ ],
+ "mesures": [
+  {
+   "libelle": "Luminosité du ciel par image             — mesurer_ciel.py (3F)  [lecture seule]",
+   "numero": 1,
+   "section": "CIEL ET RACCORDS",
+   "effet": null,
+   "informative": false
+  },
+  {
+   "libelle": "Écart d'exposition entre voisines (ciel) — mesurer_gain_paires.py (3F)  [lecture seule]",
+   "numero": 2,
+   "section": "CIEL ET RACCORDS",
+   "effet": null,
+   "informative": false
+  },
+  {
+   "libelle": "Ondulation périodique d'un rendu         — mesurer_bandes_ciel.py (3F, 6C.5)  [lecture seule]",
+   "numero": 3,
+   "section": "CIEL ET RACCORDS",
+   "effet": null,
+   "informative": false
+  },
+  {
+   "libelle": "Localiser les sauts de luminosité        — localiser_sauts_ciel.py (3F)  [lecture seule]",
+   "numero": 4,
+   "section": "CIEL ET RACCORDS",
+   "effet": null,
+   "informative": false
+  },
+  {
+   "libelle": "Comparer deux rendus (luminosité)        — comparer_rendus.py  [lecture seule]",
+   "numero": 5,
+   "section": "CIEL ET RACCORDS",
+   "effet": null,
+   "informative": false
+  },
+  {
+   "libelle": "Comparer des rendus (couleur)            — comparer_couleur.py  [lecture seule]",
+   "numero": 6,
+   "section": "CIEL ET RACCORDS",
+   "effet": null,
+   "informative": false
+  },
+  {
+   "libelle": "Rehausser le ciel pour voir les raccords — rehausser_ciel.py (6C.5)  [écrit — l'image de sortie]",
+   "numero": 7,
+   "section": "CIEL ET RACCORDS",
+   "effet": "l'image de sortie",
+   "informative": false
+  },
+  {
+   "libelle": "Profil d'une jonction                    — profil_jonction.ps1 (6C.5)  [lecture seule]",
+   "numero": null,
+   "section": "CIEL ET RACCORDS",
+   "effet": null,
+   "informative": false
+  },
+  {
+   "libelle": "Voir les corrections par image              — voir_positions.py (3E, 3G)  [lecture seule]",
+   "numero": 8,
+   "section": "GÉOMÉTRIE ET CHARGE",
+   "effet": null,
+   "informative": false
+  },
+  {
+   "libelle": "Lister les pires points de contrôle         — lister_pires_cp.py (3G)  [lecture seule]",
+   "numero": 9,
+   "section": "GÉOMÉTRIE ET CHARGE",
+   "effet": null,
+   "informative": false
+  },
+  {
+   "libelle": "Détecter les images aberrantes              — detecter_aberrantes.py (3G)  [lecture seule]",
+   "numero": 10,
+   "section": "GÉOMÉTRIE ET CHARGE",
+   "effet": null,
+   "informative": false
+  },
+  {
+   "libelle": "Mesurer le vide d'un cadrage                — cadrage_lightroom.py --controle (7C)  [lecture seule]",
+   "numero": 11,
+   "section": "GÉOMÉTRIE ET CHARGE",
+   "effet": null,
+   "informative": false
+  },
+  {
+   "libelle": "Mesurer la charge CPU et mémoire d'un rendu — mesurer_charge.ps1  [lecture seule]",
+   "numero": 12,
+   "section": "GÉOMÉTRIE ET CHARGE",
+   "effet": null,
+   "informative": false
+  }
+ ],
+ "phase7": [
+  {
+   "libelle": "Tuiler un panorama en pyramide Deep Zoom            — tuiler.ps1 (7A)  [écrit — la pyramide .dzi et _files]",
+   "numero": null,
+   "section": "PHASE 7 — TUILER ET CADRER",
+   "effet": "la pyramide .dzi et _files",
+   "informative": false
+  },
+  {
+   "libelle": "Contrôler les tuiles dans le navigateur             — controler_tuiles.py (7B)  [lecture seule]",
+   "numero": 1,
+   "section": "PHASE 7 — TUILER ET CADRER",
+   "effet": null,
+   "informative": false
+  },
+  {
+   "libelle": "7C — Cadrer                                         — dans Lightroom, sur le DNG HDR : outil Recadrage, angle 0 ; exporter une copie virtuelle NON recadrée",
+   "numero": null,
+   "section": "PHASE 7 — TUILER ET CADRER",
+   "effet": null,
+   "informative": true
+  },
+  {
+   "libelle": "Lire le cadrage Lightroom et imprimer les commandes — cadrage_lightroom.py (7C)  [lecture seule]",
+   "numero": 2,
+   "section": "PHASE 7 — TUILER ET CADRER",
+   "effet": null,
+   "informative": false
+  },
+  {
+   "libelle": "Empaqueter pour la mise en ligne                    — empaqueter.py (7D)  [écrit — <Sortie>\\<Nom>\\ et <Nom>.zip]",
+   "numero": 3,
+   "section": "PHASE 7 — TUILER ET CADRER",
+   "effet": "<Sortie>\\<Nom>\\ et <Nom>.zip",
+   "informative": false
+  }
+ ]
+}
