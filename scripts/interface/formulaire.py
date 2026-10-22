@@ -87,6 +87,12 @@ def lus_du_panorama(tache, arguments):
     return [replace(a, config=tache.lit[a.nom]) if a.nom in tache.lit else a for a in arguments]
 
 
+def arguments_d_outil(arguments):
+    """Noms des arguments qui désignent un outil du poste (config « outil:… ») : ni note « hors du panorama »,
+    ni candidats au dossier des fichiers produits."""
+    return {a.nom for a in arguments if a.config and a.config.startswith("outil:")}
+
+
 def _choix_pto(arg, valeur, panorama):
     dossier = config.dossier_phase(panorama, arg.phase) if arg.phase and panorama else None
     fichiers = sorted(str(f) for f in dossier.glob("*.pto")) if dossier and dossier.is_dir() else []
@@ -195,6 +201,21 @@ async def parcourir(genre, depart):
     if not ouverte:
         ui.notify(BOITE_DEJA_OUVERTE, type="warning", multi_line=True)
     return choisi
+
+
+async def confirmer(message, oui, details=()):
+    """Dialogue de confirmation (bouton `oui` ou Annuler) ; vrai si l'utilisateur confirme."""
+    from nicegui import ui
+    with ui.dialog() as dialogue, ui.card():
+        ui.label(message).classes("font-bold")
+        for d in details:
+            ui.label(d).classes("text-sm")
+        with ui.row():
+            ui.button(oui, on_click=lambda: dialogue.submit(True)).props("no-caps color=negative")
+            ui.button("Annuler", on_click=lambda: dialogue.submit(False)).props("flat no-caps")
+    reponse = await dialogue
+    dialogue.delete()
+    return bool(reponse)
 
 
 def _note_hors_panorama(champ, note, valeur):

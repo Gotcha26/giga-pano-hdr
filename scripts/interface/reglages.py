@@ -6,8 +6,13 @@ champs chemin du Panorama (maitre, hdr_pto, rendu_hdr, calques_hdr, pleine_res) 
 """
 
 import os
+import threading
 
 from pilotage import config
+
+# Sérialise, dans le serveur web, les écritures de panorama.json et les changements de panorama courant : report
+# depuis le fil de lecture d'une exécution, mémorisation, page Panorama, sélecteur de l'en-tête.
+VERROU_PANORAMA = threading.Lock()
 
 
 def memorisables(arguments):

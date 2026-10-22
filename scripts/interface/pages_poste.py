@@ -19,7 +19,7 @@ from typing import Any, Optional
 import panorama as lanceur
 from pilotage import config, outils
 
-from . import formulaire
+from . import formulaire, reglages
 
 GENRES_CHEMINS = {"T": "dossier", "P": "dossier", "H": "dossier", "export_l": "dossier", "export_h": "dossier",
                   "maitre": "pto", "hdr_pto": "pto", "rendu_hdr": "dossier", "calques_hdr": "dossier",
@@ -300,7 +300,7 @@ def panorama(etat):
     réécrit les clés modifiées ; « Oublier les réglages mémorisés » vide `reglages` après confirmation."""
     from nicegui import ui
 
-    from . import page
+    from . import entete       # import tardif : entete importe ce module
     ctx = etat.ctx
     p = ctx.panorama
     if p is None:
@@ -370,7 +370,7 @@ def panorama(etat):
             ui.notify(raison, type="negative", multi_line=True)
             return
         try:
-            with page.VERROU_PANORAMA:
+            with reglages.VERROU_PANORAMA:
                 config.mettre_a_jour(ancien_T, **modifiees)    # relu sur disque : un report fait entre-temps reste
                 for cle, v in modifiees.items():               # la mémoire ne suit qu'une écriture réussie
                     setattr(p, cle, v)
@@ -380,7 +380,7 @@ def panorama(etat):
         ui.notify("Enregistré : " + ", ".join(modifiees), type="positive", multi_line=True)
         if p.T != ancien_T:         # panorama déplacé : le poste suit le nouveau $T
             ctx.poste.panoramas = panoramas_apres_deplacement(ctx.poste.panoramas, ancien_T, p.T)
-            page.changer_panorama(ctx, p.T)
+            entete.changer_panorama(ctx, p.T)
             dialogue.close()
         else:
             contenu.refresh()
@@ -390,13 +390,13 @@ def panorama(etat):
         if not p.reglages:
             ui.notify("Aucun réglage mémorisé")
             return
-        if not await page._confirmer(f"Oublier les réglages mémorisés de {len(p.reglages)} tâche(s) ?", "Oublier",
+        if not await formulaire.confirmer(f"Oublier les réglages mémorisés de {len(p.reglages)} tâche(s) ?", "Oublier",
                                      sorted(p.reglages)):
             return
         if perime():
             return
         try:
-            with page.VERROU_PANORAMA:
+            with reglages.VERROU_PANORAMA:
                 config.mettre_a_jour(p.T, reglages={})
                 p.reglages = {}
         except OSError as e:
@@ -415,7 +415,6 @@ def nouveau_panorama(etat):
     modifiés à la main ; Créer écrit l'arborescence et panorama.json et rend le panorama courant."""
     from nicegui import ui
 
-    from . import page
     ctx = etat.ctx
     dialogue, corps = _dialogue("Nouveau panorama")
     initiales = valeurs_initiales_nouveau(ctx.panorama, datetime.date.today().isoformat())
@@ -447,7 +446,7 @@ def nouveau_panorama(etat):
             _notifier_erreurs(erreurs)
             return
         try:
-            with page.VERROU_PANORAMA:
+            with reglages.VERROU_PANORAMA:
                 p, crees = config.creer_nouveau(ctx.poste, valeurs)
                 ctx.panorama = p
         except OSError as e:
@@ -489,7 +488,6 @@ def phase0(etat):
     des préréglages Lightroom."""
     from nicegui import run, ui
 
-    from . import page
     ctx = etat.ctx
     _, corps = _dialogue("Phase 0 — outils et préréglages")
 
@@ -500,7 +498,7 @@ def phase0(etat):
 
     async def installer(ligne):
         if ligne["commande"]:
-            if not await page._confirmer(f"Installer {ligne['nom']} ?", "Exécuter", [ligne["commande"]]):
+            if not await formulaire.confirmer(f"Installer {ligne['nom']} ?", "Exécuter", [ligne["commande"]]):
                 return
             attente = ui.notification(f"Installation de {ligne['nom']} (sortie dans la console du serveur)…",
                                       spinner=True, timeout=None)
@@ -517,7 +515,7 @@ def phase0(etat):
         elif ligne["url"]:
             details = [ligne["url"]] + ([f"Dézipper dans un dossier durable, par exemple {ligne['dezipper']}"]
                                         if ligne["dezipper"] else [])
-            if await page._confirmer(f"Ouvrir la page de téléchargement de {ligne['nom']} ?", "Ouvrir", details):
+            if await formulaire.confirmer(f"Ouvrir la page de téléchargement de {ligne['nom']} ?", "Ouvrir", details):
                 ui.navigate.to(ligne["url"], new_tab=True)
 
     @ui.refreshable

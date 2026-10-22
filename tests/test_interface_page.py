@@ -295,6 +295,15 @@ class TestFumee(unittest.IsolatedAsyncioTestCase):
                 await user.open("/")
                 for texte in ("Phase 0", "4A", "Configuration"):
                     await user.should_see(texte)
+                # une tâche ouverte construit la zone centrale, la console et le volet d'aide (pages découpées)
+                from nicegui import ui
+                from nicegui.testing.user_interaction import UserInteraction
+                items = {e for e in user.find(kind=ui.item).elements
+                         if any("4A Rendre" in (getattr(d, "text", "") or "") for d in e.descendants())}
+                self.assertEqual(len(items), 1)
+                UserInteraction(user, items, None).click()
+                for texte in ("4A — Rendre", "Mémoriser ces réglages", "Fichiers produits", "Mode d'emploi du script"):
+                    await user.should_see(texte)
 
 
 if __name__ == "__main__":
