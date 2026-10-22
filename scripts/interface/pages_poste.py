@@ -43,6 +43,7 @@ DECLENCHEURS_NOUVEAU = ("date", "focale", "T", "raws")     # champs dont dépend
 GENRES_OUTILS = {cle: ("dossier" if cle == "hugin" else "fichier") for cle, _ in lanceur.OUTILS_CONFIGURABLES}
 
 MESSAGE_PERIME = "Le panorama courant a changé depuis l'ouverture de la page : rien n'est écrit."
+DELAI_RECALCUL = 0.4        # secondes de calme avant de recalculer les propositions du Nouveau panorama
 
 
 # ---------------------------------------------------------------- fonctions pures
@@ -171,6 +172,32 @@ def deplacement_refuse(ancien_T, nouveau_T):
         return (f"T : ce dossier contient déjà un {config.NOM_FICHIER_PANORAMA} ({nouveau_T}) : choisissez-le "
                 "dans la liste des panoramas ou videz le dossier")
     return None
+
+
+def p_refuse(nouveau_P):
+    """Raison de refuser un nouveau $P : dossier introuvable (les phases, le maître et les chemins reportés y sont
+    cherchés ; une faute de frappe les rendrait tous absents) ; None s'il existe."""
+    if not os.path.isdir(nouveau_P):
+        return f"P : dossier introuvable ({nouveau_P})"
+    return None
+
+
+def refus_enregistrement(ancien_T, modifiees):
+    """Raisons de refuser d'enregistrer les clés `modifiees` de la page Panorama ($T puis $P contrôlés)."""
+    raisons = []
+    if "T" in modifiees:
+        raisons.append(deplacement_refuse(ancien_T, modifiees["T"]))
+    if "P" in modifiees:
+        raisons.append(p_refuse(modifiees["P"]))
+    return [r for r in raisons if r]
+
+
+def page_encore_ouverte(client, element=None):
+    """Vrai si l'onglet `client` est toujours connecté et `element` (le dialogue d'une page) pas supprimé : après
+    une longue attente (installation), on ne touche à l'interface que dans ce cas."""
+    if client is None or not getattr(client, "has_socket_connection", False) or getattr(client, "is_deleted", False):
+        return False
+    return not (element is not None and getattr(element, "is_deleted", False))
 
 
 def panoramas_apres_deplacement(panoramas, ancien_T, nouveau_T):
@@ -365,9 +392,9 @@ def panorama(etat):
             ui.notify("Rien n'a changé")
             return
         ancien_T = p.T
-        raison = deplacement_refuse(ancien_T, modifiees["T"]) if "T" in modifiees else None
-        if raison:
-            ui.notify(raison, type="negative", multi_line=True)
+        raisons = refus_enregistrement(ancien_T, modifiees)
+        if raisons:
+            _notifier_erreurs(raisons)
             return
         try:
             with reglages.VERROU_PANORAMA:
@@ -418,10 +445,18 @@ def nouveau_panorama(etat):
     ctx = etat.ctx
     dialogue, corps = _dialogue("Nouveau panorama")
     initiales = valeurs_initiales_nouveau(ctx.panorama, datetime.date.today().isoformat())
-    elements, touches, remplissage = {}, set(), [False]
+    elements, touches, remplissage, attente = {}, set(), [False], [None]
 
     def saisies():
         return {n: el.value for n, el in elements.items()}
+
+    def recalculer_bientot():
+        """Recalcul DELAI_RECALCUL s après la dernière modification d'un déclencheur, pas à chaque frappe (chaque
+        recalcul relit le panorama.json du $T proposé) ; « Parcourir » passe aussi par là."""
+        if attente[0] is not None:
+            attente[0].cancel()
+        with corps:
+            attente[0] = ui.timer(DELAI_RECALCUL, recalculer, once=True)
 
     def recalculer():
         remplir, existant = recalculer_nouveau(ctx.panorama, saisies(), touches)
@@ -438,7 +473,7 @@ def nouveau_panorama(etat):
             return
         touches.add(nom)
         if nom in DECLENCHEURS_NOUVEAU:
-            recalculer()
+            recalculer_bientot()
 
     def creer():
         valeurs, erreurs = lire_nouveau(saisies())
@@ -489,7 +524,7 @@ def phase0(etat):
     from nicegui import run, ui
 
     ctx = etat.ctx
-    _, corps = _dialogue("Phase 0 — outils et préréglages")
+    dialogue, corps = _dialogue("Phase 0 — outils et préréglages")
 
     async def detecter():
         ctx.etats = await run.io_bound(outils.detecter_tous, ctx.poste.outils)
@@ -500,15 +535,23 @@ def phase0(etat):
         if ligne["commande"]:
             if not await formulaire.confirmer(f"Installer {ligne['nom']} ?", "Exécuter", [ligne["commande"]]):
                 return
+            client = ui.context.client          # l'installation peut durer : l'onglet a pu être fermé entre-temps
             attente = ui.notification(f"Installation de {ligne['nom']} (sortie dans la console du serveur)…",
                                       spinner=True, timeout=None)
             try:
                 r = await run.io_bound(subprocess.run, ligne["commande"], shell=True, stdin=subprocess.DEVNULL)
             except OSError as e:
-                ui.notify(f"Installation impossible : {e}", type="negative", multi_line=True)
+                r, erreur = None, e
+            else:
+                erreur = None
+            if not page_encore_ouverte(client, dialogue):
+                # onglet fermé ou page quittée : rien à afficher, mais la détection profite aux autres onglets
+                ctx.etats = await run.io_bound(outils.detecter_tous, ctx.poste.outils)
                 return
-            finally:
-                attente.dismiss()
+            attente.dismiss()
+            if erreur is not None:
+                ui.notify(f"Installation impossible : {erreur}", type="negative", multi_line=True)
+                return
             ui.notify(f"{ligne['nom']} : commande terminée (code {r.returncode})",
                       type="positive" if r.returncode == 0 else "warning")
             await detecter()

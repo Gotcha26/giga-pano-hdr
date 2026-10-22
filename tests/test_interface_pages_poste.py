@@ -121,6 +121,28 @@ class TestDeplacement(unittest.TestCase):
             (Path(occupe) / "panorama.json").write_text("{illisible", encoding="utf-8")
             self.assertIsNotNone(pages_poste.deplacement_refuse(ancien, occupe))
 
+    def test_p_modifie_doit_exister(self):
+        with tempfile.TemporaryDirectory() as d:
+            ancien = str(Path(d) / "T")
+            os.mkdir(ancien)
+            absent = str(Path(d) / "P-faute")
+            self.assertIsNone(pages_poste.p_refuse(d))
+            self.assertIn("P : dossier introuvable", pages_poste.p_refuse(absent))
+            self.assertEqual(pages_poste.refus_enregistrement(ancien, {"lignes": 3}), [])
+            self.assertEqual(pages_poste.refus_enregistrement(ancien, {"P": d}), [])
+            raisons = pages_poste.refus_enregistrement(ancien, {"T": str(Path(d) / "absent"), "P": absent})
+            self.assertEqual([r[:2] for r in raisons], ["T ", "P "])
+
+    def test_page_encore_ouverte(self):
+        from types import SimpleNamespace as N
+        connecte = N(has_socket_connection=True, is_deleted=False)
+        self.assertTrue(pages_poste.page_encore_ouverte(connecte))
+        self.assertTrue(pages_poste.page_encore_ouverte(connecte, N(is_deleted=False)))
+        self.assertFalse(pages_poste.page_encore_ouverte(connecte, N(is_deleted=True)))     # page refermée
+        self.assertFalse(pages_poste.page_encore_ouverte(N(has_socket_connection=False, is_deleted=False)))
+        self.assertFalse(pages_poste.page_encore_ouverte(N(has_socket_connection=True, is_deleted=True)))
+        self.assertFalse(pages_poste.page_encore_ouverte(None))
+
     def test_liste_des_panoramas_sans_doublon(self):
         f = pages_poste.panoramas_apres_deplacement
         self.assertEqual(f(["a", "b", "c"], "b", "x"), ["a", "x", "c"])
