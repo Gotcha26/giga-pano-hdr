@@ -206,6 +206,16 @@ class TestNouveau(unittest.TestCase):
             self.assertIsNotNone(existant)
             self.assertEqual((remplir["lignes"], remplir["H"], remplir["raws"]), (4, r"D:\RAW\x\HDR", r"D:\RAW\x"))
 
+    def test_solder_recalcul_avant_creer(self):
+        vus = []
+        minuteur = mock.Mock()
+        attente = [minuteur]
+        self.assertTrue(pages_poste.solder_recalcul(attente, lambda: vus.append("recalcul")))
+        minuteur.cancel.assert_called_once_with()
+        self.assertEqual((attente, vus), ([None], ["recalcul"]))
+        self.assertFalse(pages_poste.solder_recalcul(attente, lambda: vus.append("encore")))
+        self.assertEqual(vus, ["recalcul"])
+
     def test_lire_nouveau(self):
         valeurs, erreurs = pages_poste.lire_nouveau({"date": "2026-10-22", "focale": 35, "T": r" E:\T ", "raws": "x",
                                                      "H": "", "lignes": 6.0, "pas_h": "5", "largeur_mm": 24})

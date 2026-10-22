@@ -63,7 +63,7 @@ def titre(t):
 # ---------------------------------------------------------------- partie NiceGUI
 
 def construire(etat, arbre):
-    """Pose la fonction rafraîchissable de la colonne dans `etat.colonne` et `ouvrir(tache)` dans `etat.ouvrir`."""
+    """Pose la fonction rafraîchissable de la colonne dans `etat.colonne`."""
     from nicegui import ui
 
     def ouvrir(t, vue="tache"):
@@ -93,5 +93,5 @@ def construire(etat, arbre):
                         if etat.tache is t:
                             item.classes("bg-blue-100")
 
-    etat.colonne, etat.ouvrir = colonne, ouvrir
+    etat.colonne = colonne
     return colonne

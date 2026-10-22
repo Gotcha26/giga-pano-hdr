@@ -4,6 +4,7 @@ Logique pure, sans NiceGUI. Le cache vit dans %LOCALAPPDATA%\\giga-pano-hdr\\ape
 jamais sous $T ; son nom dépend du chemin et de la date de modification, donc un fichier retouché est re-réduit.
 """
 
+import contextlib
 import hashlib
 import os
 import subprocess
@@ -94,7 +95,8 @@ def apercu(fichier, vips, largeur=LARGEUR, lancer=subprocess.run, racine=None, d
                 raise RuntimeError((r.stderr or "").strip() or f"vips thumbnail a échoué (code {r.returncode})")
             os.replace(partiel, cache)
         except BaseException:
-            partiel.unlink(missing_ok=True)
+            with contextlib.suppress(OSError):      # un partiel verrouillé ne masque pas l'erreur d'origine
+                partiel.unlink(missing_ok=True)
             raise
     return cache
 

@@ -23,6 +23,8 @@ from typing import Callable, Optional
 CODE_INTERRUPTION = 130
 DELAI_FIN = 10                              # secondes de grâce entre fin de sortie et fin de processus (et inversement)
 PAGE_OEM_REPLI = "cp850"
+NOTE_ENFANT = ("[interface] processus parent terminé, un enfant garde la sortie : tâche close, "
+               "la suite de sa sortie s'affiche encore ici")
 # sans console à créer : le serveur peut tourner sans fenêtre, un script lancé ne doit pas en ouvrir une
 SANS_FENETRE = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
 
@@ -65,12 +67,13 @@ def _etat_final(ex):
 
 
 def page_oem():
-    """Page de code de la console (« cp850 »…) : celle des programmes Windows qui n'écrivent pas en UTF-8 ;
-    PAGE_OEM_REPLI hors Windows ou sans console (le serveur lancé sans fenêtre)."""
+    """Page de code OEM du système (« cp850 »…) : celle des programmes Windows qui n'écrivent pas en UTF-8. Les
+    scripts tournent dans leur propre console cachée (CREATE_NO_WINDOW), ouverte avec cette page-là, quelle que
+    soit celle de la console du serveur (un « chcp 65001 » n'y change rien) ; PAGE_OEM_REPLI hors Windows."""
     if sys.platform == "win32":
         try:
             import ctypes
-            page = ctypes.windll.kernel32.GetConsoleOutputCP()
+            page = ctypes.windll.kernel32.GetOEMCP()
             if page:
                 return f"cp{page}"
         except (OSError, AttributeError):
@@ -128,12 +131,15 @@ def _attendre_code(ex, sur_ligne):
         return ex.processus.wait()
 
 
-def _conclure(ex, sur_ligne, sur_fin, code=None):
-    """Clôt l'exécution une seule fois (fil de lecture ou fil de surveillance, le premier arrivé)."""
+def _conclure(ex, sur_ligne, sur_fin, code=None, note=None):
+    """Clôt l'exécution une seule fois (fil de lecture ou fil de surveillance, le premier arrivé) ; `note` n'est
+    écrite que par celui qui clôt (jamais une ligne trompeuse si l'autre fil a déjà conclu)."""
     with ex.verrou:
         if ex.conclue:
             return
         ex.conclue = True
+        if note:
+            _noter(ex, sur_ligne, note)
         try:
             ex.code = _attendre_code(ex, sur_ligne) if code is None else code
             ex.etat = _etat_final(ex)
@@ -166,9 +172,7 @@ def _surveiller(ex, sur_ligne, sur_fin):
     code = ex.processus.wait()
     if ex.fini.wait(DELAI_FIN):
         return
-    _noter(ex, sur_ligne, "[interface] processus parent terminé, un enfant garde la sortie : tâche close, "
-                          "la suite de sa sortie s'affiche encore ici")
-    _conclure(ex, sur_ligne, sur_fin, code=code)
+    _conclure(ex, sur_ligne, sur_fin, code=code, note=NOTE_ENFANT)
 
 
 def options_fenetre():

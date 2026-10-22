@@ -54,7 +54,6 @@ class Etat:
     # fonctions posées par les parties (construire de chaque module)
     en_tete: object = None                  # entete : en-tête rafraîchissable
     colonne: object = None                  # colonne : colonne rafraîchissable
-    ouvrir: object = None                   # colonne : ouvrir(tache)
     centre: object = None                   # zone_tache : zone centrale rafraîchissable
     boutons: object = None                  # zone_tache : boutons Lancer / Mémoriser / Arrêter
     apercus: object = None                  # console : fichiers produits rafraîchissables

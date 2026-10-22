@@ -243,6 +243,18 @@ def recalculer_nouveau(courant, saisies, touches):
     return remplir, prop["existant"]
 
 
+def solder_recalcul(attente, recalculer):
+    """Un recalcul des propositions qui attend son délai (`attente[0]`, minuteur NiceGUI) est annulé et fait tout
+    de suite : « Créer » lit alors des propositions à jour. Vrai s'il y en avait un."""
+    minuteur = attente[0]
+    if minuteur is None:
+        return False
+    minuteur.cancel()
+    attente[0] = None
+    recalculer()
+    return True
+
+
 def lire_nouveau(saisies):
     """Valeurs passées à `config.creer_nouveau` (T, H, focale et les clés de QUESTIONS) ; retourne (valeurs,
     erreurs). $T est obligatoire ; les nombres entiers le sont là où QUESTIONS le dit."""
@@ -469,6 +481,7 @@ def nouveau_panorama(etat):
             attente[0] = ui.timer(DELAI_RECALCUL, recalculer, once=True)
 
     def recalculer():
+        attente[0] = None
         remplir, existant = recalculer_nouveau(ctx.panorama, saisies(), touches)
         remplissage[0] = True
         try:
@@ -486,6 +499,7 @@ def nouveau_panorama(etat):
             recalculer_bientot()
 
     def creer():
+        solder_recalcul(attente, recalculer)    # « Créer » moins de DELAI_RECALCUL s après la dernière frappe
         valeurs, erreurs = lire_nouveau(saisies())
         if erreurs:
             _notifier_erreurs(erreurs)

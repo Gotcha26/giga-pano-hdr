@@ -318,6 +318,16 @@ class TestExecutionFactice(unittest.TestCase):
         self.assertEqual(len(ex.lignes), 3)
         self.assertEqual(sum("boum" in l for l in ex.lignes), 1)
 
+    def test_note_de_l_enfant_seulement_si_la_surveillance_clot(self):
+        vues = []
+        ex = execution.Execution("t/f.py", ["x"], processus=_FauxProcessus())
+        ex.conclue = True                                   # la lecture a déjà conclu (sur_fin encore en cours)
+        execution._conclure(ex, vues.append, None, code=0, note=execution.NOTE_ENFANT)
+        self.assertEqual((ex.lignes, vues), ([], []))
+        ex = execution.Execution("t/f.py", ["x"], processus=_FauxProcessus())
+        execution._conclure(ex, vues.append, None, code=0, note=execution.NOTE_ENFANT)
+        self.assertEqual((ex.lignes, vues, ex.etat), ([execution.NOTE_ENFANT], [execution.NOTE_ENFANT], "terminée"))
+
     def test_deja_en_cours_est_une_runtime_error(self):
         self.assertTrue(issubclass(execution.DejaEnCours, RuntimeError))
 
@@ -336,6 +346,13 @@ class TestDecodage(unittest.TestCase):
         for page in ("cp65001", "cp-inconnue"):
             with mock.patch.object(execution, "page_oem", return_value=page):
                 self.assertEqual(execution._decoder(b"caf\xe9"), "caf�", page)
+
+    @unittest.skipUnless(sys.platform == "win32", "page OEM de Windows")
+    def test_page_oem_systeme_et_non_celle_de_la_console(self):
+        import ctypes
+        with mock.patch.object(ctypes.windll.kernel32, "GetOEMCP", return_value=437, create=True), \
+                mock.patch.object(ctypes.windll.kernel32, "GetConsoleOutputCP", return_value=65001, create=True):
+            self.assertEqual(execution.page_oem(), "cp437")
 
     def test_page_oem_hors_windows(self):
         with mock.patch.object(execution.sys, "platform", "linux"):

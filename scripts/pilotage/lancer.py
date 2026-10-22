@@ -20,7 +20,7 @@ from .menu import pause
 
 RE_CONSTANTE = re.compile(r"^(COLS|ROWS|FOCALE|LARGEUR_MM|PAS_H|PAS_V|EXPOS|FOV_H|FOV_V)\s*=\s*([\d.]+)", re.MULTILINE)
 RE_DIESE = re.compile(r"^# ?")          # début d'une ligne de commentaire PowerShell : « # » puis un espace facultatif
-RE_CONSTANTES_DOUBLE =re.compile(r"^(COLS|ROWS), (COLS|ROWS)\s*=\s*([\d.]+),\s*([\d.]+)", re.MULTILINE)
+RE_CONSTANTES_DOUBLE = re.compile(r"^(COLS|ROWS), (COLS|ROWS)\s*=\s*([\d.]+),\s*([\d.]+)", re.MULTILINE)
 
 MESSAGES_INTERRUPTION = {
     "nona_images.ps1": "La même commande reprend là où elle s'est arrêtée (les images déjà rendues sont sautées).",

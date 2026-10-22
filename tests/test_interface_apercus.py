@@ -111,6 +111,12 @@ class TestApercus(unittest.TestCase):
             apercus.apercu(f, "vips.exe", lancer=lancer, racine=self.cache)
         self.assertEqual(list(self.cache.glob("*.jpg")), [])
 
+    def test_partiel_indelebile_ne_masque_pas_l_erreur_de_vips(self):
+        f = self._fichier("a.tif")
+        with mock.patch.object(Path, "unlink", side_effect=PermissionError("verrouillé")):
+            with self.assertRaisesRegex(RuntimeError, "boom"):
+                apercus.apercu(f, "vips.exe", lancer=self._lanceur([], code=1, stderr="boom"), racine=self.cache)
+
     def test_apercu_delai_depasse_leve_en_francais(self):
         f = self._fichier("a.tif")
         vu = []
