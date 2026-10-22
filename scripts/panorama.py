@@ -66,34 +66,48 @@ def _sous_menu(titre, constructeur):
     return action
 
 
-def _py(script, arguments=None, ecrit=None):
-    """Action : menu de pilotage puis exécution d'un script Python (déclaration lue dans le script)."""
-    return menu.sans_pause(lambda ctx: lancer.python(ctx, script, arguments, ecrit))
+def _py(script, declares=None, ecrit=None, lit=None):
+    """Action : menu de pilotage puis exécution d'un script Python (déclaration lue dans le script, sauf
+    `declares`) ; `lit` (argument -> clé de panorama.json) relie ces arguments au panorama pour les préremplir."""
+    def action(ctx):
+        args, annonce = declares, ecrit
+        if lit:
+            if args is None:
+                args, annonce, _ = arguments.lire_declaration(ctx.scripts / script)
+            args = arguments.appliquer_lit(args, lit)
+        return lancer.python(ctx, script, args, annonce)
+    return menu.sans_pause(action)
 
 
-def _ps(script):
-    """Action : menu de pilotage puis exécution d'un script PowerShell (déclaration de declarations_ps)."""
+def _ps(script, lit=None):
+    """Action : menu de pilotage puis exécution d'un script PowerShell (déclaration de declarations_ps) ; `lit`
+    comme pour _py."""
     args, ecrit = declarations_ps.PS[script]
+    if lit:
+        args = arguments.appliquer_lit(args, lit)
     return menu.sans_pause(lambda ctx: lancer.powershell(ctx, script, args, ecrit))
 
 
-def _requiert(*cles):
-    """Disponibilité : PowerShell et les outils nommés doivent être présents ; sinon la raison dit lequel manque."""
+def _requiert(*cles, powershell=True):
+    """Disponibilité : PowerShell (sauf `powershell=False`) et les outils nommés doivent être présents ; sinon la
+    raison (_raison) dit lequel manque."""
     def disponible(ctx):
-        return lancer.powershell_disponible(ctx) and all(lancer.present(ctx, k) for k in cles)
+        return (not powershell or lancer.powershell_disponible(ctx)) and all(lancer.present(ctx, k) for k in cles)
     return disponible
 
 
-def _raison(ctx, *cles):
-    if not lancer.powershell_disponible(ctx):
+def _raison(ctx, *cles, powershell=True):
+    if powershell and not lancer.powershell_disponible(ctx):
         return "PowerShell introuvable"
     manquants = [outils.OUTILS[[o.cle for o in outils.OUTILS].index(k)].nom for k in cles if not lancer.present(ctx, k)]
     return f"{', '.join(manquants)} absent" if manquants else ""
 
 
-def entree_ps(tete, script, effet, *cles, etape="", section=""):
-    sous_titre = f"{script} ({etape})" if etape else script
-    return Entree(tete, sous_titre, effet=effet, action=_ps(script), disponible=_requiert(*cles),
+def entree_ps(tete, script, effet, *cles, etape="", section="", sous_titre=None, lit=None):
+    """Entrée d'un script PowerShell ; sous-titre « script (étape) » sauf `sous_titre` donné."""
+    if sous_titre is None:
+        sous_titre = f"{script} ({etape})" if etape else script
+    return Entree(tete, sous_titre, effet=effet, action=_ps(script, lit), disponible=_requiert(*cles),
                   raison=lambda ctx: _raison(ctx, *cles), section=section)
 
 
@@ -305,22 +319,23 @@ def menu_configuration(ctx):
 # ---------------------------------------------------------------- phases 2 à 7
 
 def entree_depuis(tache):
-    """Entrée de menu d'une tâche du catalogue : geste informatif, action du lanceur, script PowerShell ou Python."""
+    """Entrée de menu d'une tâche du catalogue : geste informatif, action du lanceur, script PowerShell ou Python.
+
+    `tache.lit` relie des arguments au panorama (préremplissage), comme dans la page web. La console n'a qu'UNE
+    entrée par script, celle de la tâche qui porte `groupe_console` : c'est son `lit` qui s'applique (5B pour
+    nona_images.ps1), pas celui des autres repères du même script (6B, 6C.2), absents de la console."""
     if tache.geste:
         return geste(tache.tete, tache.geste, section=tache.section)
     if tache.action:
         cles = tache.outils
         return Entree(tache.tete, tache.sous_titre, effet=tache.effet, action=ACTIONS[tache.action],
-                      disponible=lambda ctx: all(lancer.present(ctx, k) for k in cles),
-                      raison=lambda ctx: ", ".join(o.nom for o in outils.OUTILS
-                                                   if o.cle in cles and not lancer.present(ctx, o.cle)) + " absent",
-                      section=tache.section)
+                      disponible=_requiert(*cles, powershell=False),
+                      raison=lambda ctx: _raison(ctx, *cles, powershell=False), section=tache.section)
     if tache.script.endswith(".ps1"):
-        e = entree_ps(tache.tete, tache.script, tache.effet, *tache.outils, section=tache.section)
-        e.sous_titre = tache.sous_titre
-        return e
+        return entree_ps(tache.tete, tache.script, tache.effet, *tache.outils, section=tache.section,
+                         sous_titre=tache.sous_titre, lit=tache.lit)
     return Entree(tache.tete, tache.sous_titre, effet=tache.effet,
-                  action=_py(tache.script, tache.arguments, tache.ecrit or None), section=tache.section)
+                  action=_py(tache.script, tache.arguments, tache.ecrit or None, lit=tache.lit), section=tache.section)
 
 
 ACTIONS = {"cpclean": cpclean}

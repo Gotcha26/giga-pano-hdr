@@ -80,11 +80,11 @@ def a_un_formulaire(tache):
 
 def lus_du_panorama(tache, arguments):
     """Les arguments, ceux que `tache.lit` nomme reliés à leur clé de panorama.json (config) : préremplis
-    d'après le panorama, donc jamais mémorisés. La déclaration du script, partagée entre repères, est intacte."""
-    inconnus = set(tache.lit) - {a.nom for a in arguments}
-    if inconnus:
-        raise ValueError(f"{tache.identifiant} : lit un argument non déclaré : {', '.join(sorted(inconnus))}")
-    return [replace(a, config=tache.lit[a.nom]) if a.nom in tache.lit else a for a in arguments]
+    d'après le panorama, donc jamais mémorisés (args_mod.appliquer_lit, partagée avec le lanceur console)."""
+    try:
+        return args_mod.appliquer_lit(arguments, tache.lit)
+    except ValueError as e:
+        raise ValueError(f"{tache.identifiant} : {e}") from None
 
 
 def arguments_d_outil(arguments):

@@ -276,6 +276,38 @@ class TestSousMenus(unittest.TestCase):
         # contre-témoin : la convention est en usage
         self.assertTrue(any(e.effet for e in panorama.menu_phase3(ctx)))
 
+    def test_entree_console_5b_nona_lit_le_projet_hdr(self):
+        import panorama
+        from pilotage import catalogue, declarations_ps
+        ctx = contexte([])
+        tache = next(t for t in catalogue.console("rendus") if t.script == "nona_images.ps1")
+        self.assertEqual(tache.repere, "5B")              # la seule entrée console des trois repères
+        vu = []
+        with mock.patch.object(panorama.lancer, "powershell", lambda ctx, script, args, ecrit: vu.append(args)):
+            panorama.entree_depuis(tache).action(ctx)
+        projet = next(a for a in vu[0] if a.nom == "-Projet")
+        self.assertEqual(projet.config, "hdr_pto")
+        declare = next(a for a in declarations_ps.PS["nona_images.ps1"][0] if a.nom == "-Projet")
+        self.assertIsNone(declare.config)                 # la déclaration partagée reste intacte
+
+    def test_entree_console_python_avec_lit(self):
+        import panorama
+        from pilotage.catalogue import Tache
+        ctx = contexte([])
+        t = Tache("x", 2, "2", "tiffinfo.py", lit={"image.tif": "pleine_res"}, groupe_console="phase2")
+        vu = []
+        with mock.patch.object(panorama.lancer, "python", lambda ctx, script, args, ecrit: vu.append(args)):
+            panorama.entree_depuis(t).action(ctx)
+        self.assertEqual(next(a for a in vu[0] if a.nom == "image.tif").config, "pleine_res")
+
+    def test_action_sans_powershell_raison_de_l_outil(self):
+        import panorama
+        ctx = contexte([])
+        e = next(x for x in panorama.menu_phase3(ctx) if "cpclean" in x.sous_titre)
+        with mock.patch.object(panorama.lancer, "powershell_disponible", return_value=False):
+            self.assertFalse(e.disponible(ctx))
+            self.assertEqual(e.raison(ctx), "Hugin absent")    # cpclean ne dépend pas de PowerShell
+
     def test_gestes_hugin_et_lightroom_informatifs(self):
         import panorama
         ctx = contexte([])

@@ -8,7 +8,7 @@ la ligne de commande avait été tapée. Avec des arguments, ou sans terminal, r
 
 import os
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Optional
 
@@ -70,6 +70,16 @@ class Arg:
     @property
     def option(self):
         return self.nom.startswith("-")
+
+
+def appliquer_lit(arguments, lit):
+    """Les arguments, ceux que `lit` nomme (argument -> clé de panorama.json) reliés à cette clé (config) :
+    préremplis d'après le panorama, donc jamais mémorisés. Copies : la déclaration du script, partagée entre
+    repères, reste intacte. ValueError si `lit` nomme un argument non déclaré (une faute de frappe du catalogue)."""
+    inconnus = set(lit) - {a.nom for a in arguments}
+    if inconnus:
+        raise ValueError(f"lit un argument non déclaré : {', '.join(sorted(inconnus))}")
+    return [replace(a, config=lit[a.nom]) if a.nom in lit else a for a in arguments]
 
 
 def construire_argv(arguments, valeurs):

@@ -41,6 +41,16 @@ class TestArgv(unittest.TestCase):
         v = {"optimise.pto": "a.pto", "sortie.pto": "b.pto", "--rapport": False, "--images": ""}
         self.assertEqual(arguments.construire_argv(ARGS, v), ["a.pto", "b.pto"])
 
+    def test_appliquer_lit_relie_au_panorama_sans_toucher_la_declaration(self):
+        relies = arguments.appliquer_lit(ARGS, {"sortie.pto": "hdr_pto"})
+        self.assertEqual(relies[1].config, "hdr_pto")
+        self.assertIsNone(ARGS[1].config)                         # copie : la déclaration est intacte
+        self.assertEqual([a.nom for a in relies], [a.nom for a in ARGS])
+        self.assertEqual(relies[:1] + relies[2:], ARGS[:1] + ARGS[2:])
+        self.assertEqual(arguments.appliquer_lit(ARGS, {}), ARGS)
+        with self.assertRaisesRegex(ValueError, "non déclaré : -Absent"):
+            arguments.appliquer_lit(ARGS, {"-Absent": "maitre"})
+
     def test_obligatoire_deduit(self):
         self.assertTrue(ARGS[0].obligatoire)
         self.assertFalse(ARGS[2].obligatoire)
