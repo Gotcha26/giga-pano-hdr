@@ -109,6 +109,10 @@ class TestClesReportees(unittest.TestCase):
         self.assertEqual(config.ranger_chemin(p, r"E:\Rendus\complet"), r"E:\Rendus\complet")
         self.assertEqual(config.ranger_chemin(p, ""), "")
 
+    def test_ranger_chemin_sans_P_inchange(self):
+        sous_courant = os.path.join(os.getcwd(), "5_hdr", "a.pto")     # $P vide ne vaut pas le dossier courant
+        self.assertEqual(config.ranger_chemin(config.Panorama(T=r"D:\x", P=""), sous_courant), sous_courant)
+
     def test_valeur_recompose_relatif_et_garde_absolu(self):
         p = config.Panorama(T=r"D:\x", P=r"D:\x\P", hdr_pto=r"5_hdr\pano_HDR.pto", pleine_res=r"E:\R\c.tif")
         self.assertEqual(config.valeur(p, "hdr_pto"), r"D:\x\P\5_hdr\pano_HDR.pto")

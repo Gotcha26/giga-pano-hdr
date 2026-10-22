@@ -164,8 +164,9 @@ def _normaliser(chemin):
 
 
 def ranger_chemin(p, chemin):
-    """Chemin à stocker dans panorama.json : relatif à $P s'il est dessous (casse ignorée), sinon inchangé."""
-    if not chemin:
+    """Chemin à stocker dans panorama.json : relatif à $P s'il est dessous (casse ignorée), sinon inchangé
+    (inchangé aussi si $P est vide : le dossier courant n'est pas une racine de panorama)."""
+    if not chemin or not p.P:
         return chemin
     racine = _normaliser(p.P)
     complet = _normaliser(chemin)

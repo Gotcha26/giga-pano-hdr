@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from dataclasses import replace
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
@@ -105,6 +106,10 @@ class TestResoudre(unittest.TestCase):
         g = _tache_geste()
         self.assertEqual(reglages.resoudre(g, {}, p), {"maitre": ATTENDU})
 
+    def test_resoudre_attendu_vide_omet_la_cle(self):
+        g = Tache("g", 3, "3G", geste="…", attendu="", reporte={"maitre": "attendu"})
+        self.assertEqual(reglages.resoudre(g, {}, _panorama()), {})
+
     def test_resoudre_nom_d_argument_range_sous_p_et_omet_le_vide(self):
         p = _panorama()
         t = Tache("x", 5, "5B", script="nona_images.ps1", reporte={"rendu_hdr": "-Sortie"})
@@ -188,6 +193,50 @@ class TestGeste(unittest.TestCase):
             self.assertIsNone(reglages.reporter_geste(g, p, mettre_a_jour=rien))            # maître désigné plus récent
             self._ecrire(attendu, 300)
             self.assertEqual(reglages.reporter_geste(g, p, mettre_a_jour=rien), ATTENDU)
+
+    def test_etat_geste_sans_p_n_existe_pas(self):
+        self.assertEqual(reglages.etat_geste(_tache_geste(), Panorama(T=r"D:\T", P="")), (False, ""))
+
+    def test_geste_meme_date_ne_remplace_pas(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Panorama(T=d, P=d, maitre=r"3_optimisation\autre.pto")
+            self._ecrire(os.path.join(d, ATTENDU), 100)
+            self._ecrire(os.path.join(d, p.maitre), 100)
+            self.assertIsNone(reglages.reporter_geste(_tache_geste(), p, mettre_a_jour=_rien))
+            self.assertEqual(p.maitre, r"3_optimisation\autre.pto")
+
+    def test_geste_attendu_disparu_avant_lecture_de_sa_date(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Panorama(T=d, P=d)
+            self._ecrire(os.path.join(d, ATTENDU), 100)
+            vu = []
+            with mock.patch.object(reglages.os, "stat", side_effect=FileNotFoundError):
+                self.assertIsNone(reglages.reporter_geste(_tache_geste(), p,
+                                                          mettre_a_jour=_faux_mettre_a_jour(p, vu)))
+            self.assertEqual((vu, p.maitre), ([], ""))
+
+    def test_geste_courant_illisible_est_remplace(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Panorama(T=d, P=d, maitre=r"3_optimisation\autre.pto")
+            attendu = os.path.join(d, ATTENDU)
+            self._ecrire(attendu, 100)
+            self._ecrire(os.path.join(d, p.maitre), 200)
+            stat_reel = os.stat
+
+            def stat(chemin, *a, **k):
+                if str(chemin).endswith("autre.pto"):
+                    raise PermissionError("verrouillé")
+                return stat_reel(chemin, *a, **k)
+            with mock.patch.object(reglages.os, "stat", stat):
+                self.assertEqual(reglages.reporter_geste(_tache_geste(), p, mettre_a_jour=_rien), ATTENDU)
+
+    def test_geste_ne_traite_que_la_premiere_cle_attendu(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Panorama(T=d, P=d)
+            self._ecrire(os.path.join(d, ATTENDU), 100)
+            g = Tache("g", 3, "3G", geste="…", attendu=ATTENDU, reporte={"maitre": "attendu", "hdr_pto": "attendu"})
+            self.assertEqual(reglages.reporter_geste(g, p, mettre_a_jour=_rien), ATTENDU)
+            self.assertEqual((p.maitre, p.hdr_pto), (ATTENDU, ""))
 
     def test_geste_enregistre_quand_il_reporte(self):
         with tempfile.TemporaryDirectory() as d:

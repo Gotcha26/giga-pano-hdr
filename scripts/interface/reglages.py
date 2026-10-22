@@ -8,7 +8,6 @@ champs chemin du Panorama (maitre, hdr_pto, rendu_hdr, calques_hdr, pleine_res) 
 import os
 
 from pilotage import config
-from pilotage.catalogue import Tache  # noqa: F401  (type des paramètres)
 
 
 def memorisables(arguments):
@@ -81,29 +80,44 @@ def reporter_apres_execution(tache, valeurs, p, mettre_a_jour=config.mettre_a_jo
 
 
 def etat_geste(tache, p):
-    """(le fichier attendu existe, son chemin absolu) ; (False, "") sans attendu ou sans panorama."""
-    if p is None or not tache.attendu:
+    """(le fichier attendu existe, son chemin absolu) ; (False, "") sans attendu, sans panorama ou sans $P
+    (un attendu relatif joint à un $P vide désignerait un fichier du dossier courant)."""
+    if p is None or not p.P or not tache.attendu:
         return False, ""
     chemin = os.path.join(p.P, tache.attendu)
     return os.path.isfile(chemin), chemin
+
+
+def _date(chemin):
+    """Date de modification, ou None si le fichier a disparu ou est illisible."""
+    try:
+        return os.stat(chemin).st_mtime
+    except OSError:
+        return None
 
 
 def reporter_geste(tache, p, mettre_a_jour=config.mettre_a_jour):
     """Reporte le fichier produit par un geste s'il existe et qu'il est plus récent que celui désigné par la clé
     (écriture par `config.mettre_a_jour`, puis recopie dans `p`).
 
+    Seule la PREMIÈRE clé dont la source est « attendu » est traitée : un geste ne produit qu'un fichier, que le
+    catalogue reporte dans une seule clé (3G -> maitre). Un fichier courant illisible compte comme absent (le
+    geste le remplace) ; un attendu disparu entre le contrôle d'existence et la lecture de sa date : rien ne change.
     Retourne la valeur stockée, ou None si rien n'a changé."""
     existe, attendu = etat_geste(tache, p)
     if not existe:
         return None
-    for cle, source in tache.reporte.items():
-        if source != "attendu":
-            continue
-        courant = config.valeur(p, cle)
-        if courant and os.path.isfile(courant) and os.stat(courant).st_mtime >= os.stat(attendu).st_mtime:
-            continue
-        stocke = _stocker(p, cle, attendu)
-        mettre_a_jour(p.T, **{cle: stocke})
-        setattr(p, cle, stocke)
-        return stocke
-    return None
+    cle = next((c for c, source in tache.reporte.items() if source == "attendu"), None)
+    if cle is None:
+        return None
+    date_attendu = _date(attendu)
+    if date_attendu is None:
+        return None
+    courant = config.valeur(p, cle)
+    date_courant = _date(courant) if courant and os.path.isfile(courant) else None
+    if date_courant is not None and date_courant >= date_attendu:
+        return None
+    stocke = _stocker(p, cle, attendu)
+    mettre_a_jour(p.T, **{cle: stocke})
+    setattr(p, cle, stocke)
+    return stocke
