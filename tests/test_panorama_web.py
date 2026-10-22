@@ -21,6 +21,12 @@ class TestPointDEntree(unittest.TestCase):
         import panorama_web
         self.assertGreater(panorama_web.port_libre(), 1024)
 
+    def test_sans_navigateur_par_option_ou_variable(self):
+        import panorama_web
+        self.assertTrue(panorama_web.ouvrir_navigateur([], environ={}))
+        self.assertFalse(panorama_web.ouvrir_navigateur(["--sans-navigateur"], environ={}))
+        self.assertFalse(panorama_web.ouvrir_navigateur([], environ={"GIGA_PANO_SANS_NAVIGATEUR": "1"}))
+
     def test_mode_d_emploi_en_tete(self):
         texte = (SCRIPTS / "panorama_web.py").read_text(encoding="utf-8")
         for rubrique in ("CONTEXTE", "MODE OPÉRATOIRE", "ENTRÉES", "SORTIES", "EXEMPLE"):

@@ -2,10 +2,14 @@
 
 Partie pure, sans NiceGUI : `champs()` décrit chaque argument comme un `Champ` que la page rend ; `commande()`
 construit la ligne de commande à partir des valeurs saisies, exactement comme le fait le lanceur console.
+
+Partie NiceGUI, en fin de module : `rendre()` pose les éléments d'un formulaire, `valeurs()` les relit,
+`parcourir()` ouvre la boîte de dialogue native de Windows. NiceGUI n'y est importé qu'à l'appel, pour que la
+partie pure reste utilisable (et testée) sans lui.
 """
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Optional
 
@@ -107,3 +111,138 @@ def commande(tache, ctx, valeurs):
     if tache.script.endswith(".ps1"):
         return lancer.commande_powershell(ctx, tache.script, lancer.construire_ps(arguments, valeurs))
     return lancer.commande_python(ctx, tache.script, args_mod.construire_argv(arguments, valeurs))
+
+
+# ---------------------------------------------------------------- partie NiceGUI
+
+NOTE_HORS_PANORAMA = "hors du panorama ($T, $P, $H) : à vérifier"
+
+
+def _boite_native(genre, depart):
+    """Boîte de dialogue Windows (tkinter), fenêtre racine cachée et au premier plan ; None si annulée."""
+    import tkinter
+    from tkinter import filedialog
+    racine = tkinter.Tk()
+    try:
+        racine.withdraw()
+        racine.attributes("-topmost", True)
+        initial = depart if depart and os.path.isdir(depart) else (os.path.dirname(depart) if depart else "")
+        options = {"parent": racine, "initialdir": initial or None}
+        if genre == "dossier":
+            choisi = filedialog.askdirectory(mustexist=True, **options)
+        elif genre == "pto":
+            choisi = filedialog.askopenfilename(filetypes=[("Projets Hugin", "*.pto"), ("Tous les fichiers", "*.*")],
+                                                **options)
+        else:
+            choisi = filedialog.askopenfilename(**options)
+    finally:
+        racine.destroy()
+    return os.path.normpath(choisi) if choisi else None
+
+
+async def parcourir(genre, depart):
+    """Chemin choisi dans la boîte de dialogue native (fichier, .pto ou dossier selon `genre`), ou None.
+
+    Le serveur tourne sur le poste de l'utilisateur : la boîte s'ouvre sur son écran, dans un fil à part
+    (run.io_bound) pour ne pas bloquer la page."""
+    from nicegui import run
+    return await run.io_bound(_boite_native, genre, depart)
+
+
+def _note_hors_panorama(champ, note, valeur):
+    note.set_visibility(replace(champ, valeur=valeur).hors_panorama)
+
+
+def _bouton_parcourir(champ, cible, genre):
+    from nicegui import ui
+
+    async def choisir():
+        choisi = await parcourir(genre, cible.value or champ.depart)
+        if choisi:
+            cible.set_value(choisi)
+    return ui.button("Parcourir…", on_click=choisir).props("flat dense no-caps")
+
+
+def _libelle(champ):
+    return champ.arg.nom + (" *" if champ.obligatoire else "")
+
+
+def _obligatoire(champ):
+    return {"Obligatoire": lambda v: bool(v)} if champ.obligatoire else None
+
+
+def _champ_chemin(champ, genre):
+    from nicegui import ui
+    with ui.row().classes("w-full items-center no-wrap gap-2"):
+        saisie = ui.input(_libelle(champ), value=champ.valeur or "", validation=_obligatoire(champ)).classes("grow")
+        _bouton_parcourir(champ, saisie, genre)
+    return saisie
+
+
+def choix_initial(champ):
+    """Choix sélectionné au départ dans la liste d'un champ « pto » : celui qui désigne la valeur préremplie
+    (casse et séparateurs ignorés) ; sans valeur, aucun choix s'il y a des .pto à proposer, sinon « Autre… »."""
+    if champ.valeur:
+        forme = os.path.normcase(os.path.normpath(champ.valeur))
+        for choix in champ.choix:
+            if choix != AUTRE and os.path.normcase(os.path.normpath(choix)) == forme:
+                return choix
+    return None if len(champ.choix) > 1 else AUTRE
+
+
+def _champ_pto(champ):
+    """Liste déroulante des .pto de la phase, plus « Autre… » qui fait apparaître un champ texte + Parcourir."""
+    from nicegui import ui
+    depart = choix_initial(champ)
+    liste = ui.select(champ.choix, value=depart, label=_libelle(champ)).classes("w-full")
+    with ui.row().classes("w-full items-center no-wrap gap-2") as ligne:
+        saisie = ui.input("Autre chemin", value="").classes("grow")
+        _bouton_parcourir(champ, saisie, "pto")
+    ligne.set_visibility(depart == AUTRE)
+    liste.on_value_change(lambda e: ligne.set_visibility(e.value == AUTRE))
+    liste.saisie_autre = saisie         # lu par valeurs()
+    return liste
+
+
+def rendre(liste_champs, sans_note=()):
+    """Pose un élément par champ dans le conteneur NiceGUI courant ; retourne {nom d'argument: élément}.
+
+    `sans_note` : arguments dont le chemin n'a pas à être sous le panorama (chemins d'outils)."""
+    from nicegui import ui
+    elements = {}
+    for champ in liste_champs:
+        with ui.column().classes("w-full gap-0"):
+            if champ.genre == "interrupteur":
+                element = ui.switch(champ.arg.nom, value=bool(champ.valeur))
+            elif champ.genre == "pto":
+                element = _champ_pto(champ)
+            elif champ.genre in ("fichier", "dossier"):
+                element = _champ_chemin(champ, champ.genre)
+            else:
+                element = ui.input(_libelle(champ), value=str(champ.valeur or ""),
+                                   validation=_obligatoire(champ)).classes("w-full")
+                if champ.genre == "nombre":
+                    element.props("inputmode=decimal")
+            aide = champ.aide + (" (séparés par des espaces)" if champ.arg.type == "liste" else "")
+            if aide:
+                ui.label(aide).classes("text-xs text-gray-500")
+            if champ.genre in GENRES_CHEMIN and champ.arg.nom not in sans_note:
+                note = ui.label(NOTE_HORS_PANORAMA).classes("text-xs text-amber-700 italic")
+                _note_hors_panorama(champ, note, champ.valeur)
+                source = getattr(element, "saisie_autre", None)
+                element.on_value_change(lambda e, c=champ, n=note: _note_hors_panorama(c, n, e.value))
+                if source is not None:
+                    source.on_value_change(lambda e, c=champ, n=note: _note_hors_panorama(c, n, e.value))
+        elements[champ.arg.nom] = element
+    return elements
+
+
+def valeurs(elements):
+    """Valeurs saisies : {nom d'argument: chaîne, ou booléen pour un interrupteur}."""
+    resultat = {}
+    for nom, element in elements.items():
+        v = element.value
+        if v == AUTRE and hasattr(element, "saisie_autre"):
+            v = element.saisie_autre.value
+        resultat[nom] = v if isinstance(v, bool) else ("" if v is None else str(v).strip())
+    return resultat

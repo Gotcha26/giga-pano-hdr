@@ -14,15 +14,19 @@ MODE OPÉRATOIRE
     4. choisit un port libre et démarre le serveur ; le navigateur s'ouvre tout seul.
 
 ENTRÉES
-    Aucune en ligne de commande : tout se fait dans la page.
+    Aucune obligatoire : tout se fait dans la page.
+    --sans-navigateur (ou la variable GIGA_PANO_SANS_NAVIGATEUR=1) : démarre le serveur sans ouvrir le
+    navigateur ; l'adresse s'affiche dans la console.
 
 SORTIES
     Celles des scripts lancés depuis la page. Le point d'entrée n'écrit rien lui-même.
 
 EXEMPLE
     python panorama_web.py
+    python panorama_web.py --sans-navigateur
 """
 
+import os
 import socket
 import sys
 from pathlib import Path
@@ -31,6 +35,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from pilotage import config, lancer, outils  # noqa: E402
 from pilotage.couleurs import Couleurs  # noqa: E402
+
+SANS_NAVIGATEUR = "GIGA_PANO_SANS_NAVIGATEUR"
 
 
 def verifier_nicegui():
@@ -49,6 +55,13 @@ def port_libre():
         return s.getsockname()[1]
 
 
+def ouvrir_navigateur(argv=None, environ=None):
+    """Faux avec --sans-navigateur ou GIGA_PANO_SANS_NAVIGATEUR=1 (serveur seul, pour un test ou un autre poste)."""
+    argv = sys.argv[1:] if argv is None else argv
+    environ = os.environ if environ is None else environ
+    return "--sans-navigateur" not in argv and environ.get(SANS_NAVIGATEUR) != "1"
+
+
 def main(argv=None, ecrire=print):
     message = verifier_nicegui()
     if message:
@@ -57,12 +70,8 @@ def main(argv=None, ecrire=print):
     poste = config.charger_poste()
     ctx = lancer.Contexte(poste=poste, panorama=config.panorama_courant(poste),
                           etats=outils.detecter_tous(poste.outils), c=Couleurs())
-    try:
-        from interface.page import demarrer
-    except ImportError:
-        ecrire("Interface non encore disponible (interface.page n'existe pas encore).")
-        return 0
-    demarrer(ctx, port_libre())
+    from interface.page import demarrer
+    demarrer(ctx, port_libre(), ouvrir=ouvrir_navigateur(argv))
     return 0
 
 
