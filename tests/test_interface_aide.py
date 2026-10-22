@@ -56,6 +56,14 @@ class TestAide(unittest.TestCase):
         self.assertIn("MODE OPERATOIRE", aide.mode_d_emploi(SCRIPTS / "rendre_projet.ps1"))
         self.assertEqual(aide.mode_d_emploi(SCRIPTS / "INDEX.md"), "")
 
+    def test_mode_d_emploi_d_un_py_sans_docstring_est_vide(self):
+        from pilotage import arguments
+        with tempfile.TemporaryDirectory() as t:
+            py = Path(t) / "nu.py"
+            py.write_text("x = 1\nprint(x)\n", encoding="utf-8")
+            self.assertEqual(aide.mode_d_emploi(py), "")
+            self.assertEqual(arguments.lire_declaration(py), ([], None, ""))
+
     def test_commentaire_ps_s_arrete_au_premier_code(self):
         with tempfile.TemporaryDirectory() as t:
             ps = Path(t) / "x.ps1"

@@ -117,6 +117,38 @@ class TestExecutionArrierePlan(unittest.TestCase):
         self.assertIsNotNone(ex.processus.poll())
         self.assertEqual(ex.etat, "interrompue")
 
+    @staticmethod
+    def _pid_existe(pid):
+        sortie = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/NH", "/FO", "CSV"], capture_output=True,
+                                text=True, errors="replace").stdout
+        return f'"{pid}"' in sortie
+
+    @unittest.skipUnless(sys.platform == "win32", "taskkill /T n'existe que sous Windows")
+    def test_arreter_tue_aussi_les_descendants(self):
+        parent = ("import subprocess, sys, time\n"
+                  "e = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'],"
+                  " stdout=subprocess.DEVNULL)\n"
+                  "print(e.pid, flush=True)\n"
+                  "time.sleep(60)\n")
+        ex = self._demarrer("t/arbre.py", [sys.executable, "-c", parent])
+        limite = time.monotonic() + 20
+        while not ex.lignes and time.monotonic() < limite:
+            time.sleep(0.05)
+        self.assertTrue(ex.lignes, "le parent n'a pas imprimé le PID de son enfant")
+        enfant = int(ex.lignes[0])
+
+        def tuer_l_enfant():                                    # même en cas d'échec : aucun processus résiduel
+            subprocess.run(["taskkill", "/F", "/PID", str(enfant)], capture_output=True)
+        self.addCleanup(tuer_l_enfant)
+        self.assertTrue(self._pid_existe(enfant), "l'enfant devrait vivre avant l'arrêt")
+
+        execution.arreter(ex)
+        self._attendre_fin(ex)
+        limite = time.monotonic() + 10
+        while self._pid_existe(enfant) and time.monotonic() < limite:
+            time.sleep(0.2)
+        self.assertFalse(self._pid_existe(enfant), "taskkill /T doit emporter l'enfant du processus arrêté")
+
     def test_registre_et_en_cours(self):
         ex = self._demarrer("t/x.py", DORMIR)
         self.assertIs(execution.derniere("t/x.py"), ex)

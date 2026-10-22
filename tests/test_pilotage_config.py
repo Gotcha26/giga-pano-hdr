@@ -109,6 +109,22 @@ class TestClesReportees(unittest.TestCase):
         self.assertEqual(config.ranger_chemin(p, r"E:\Rendus\complet"), r"E:\Rendus\complet")
         self.assertEqual(config.ranger_chemin(p, ""), "")
 
+    def test_ranger_chemin_egal_a_P_reste_inchange_et_non_vide(self):
+        # « $P » lui-même n'est pas « sous » $P : le chemin est gardé tel quel (jamais "" ni "." pour un champ attendu)
+        p = config.Panorama(T=r"D:\Panos\x", P=r"D:\Panos\x\Assemblage-Hugin")
+        self.assertEqual(config.ranger_chemin(p, r"D:\Panos\x\Assemblage-Hugin"), r"D:\Panos\x\Assemblage-Hugin")
+
+    def test_ranger_chemin_dossier_frere_de_meme_prefixe_reste_absolu(self):
+        p = config.Panorama(T=r"D:\Panos\x", P=r"D:\Panos\x\Assemblage-Hugin")
+        frere = r"D:\Panos\x\Assemblage-Hugin2\x"
+        self.assertEqual(config.ranger_chemin(p, frere), frere)
+
+    @unittest.skipUnless(os.sep == "\\", "séparateur « / » reconnu comme équivalent de « \\ » : Windows")
+    def test_ranger_chemin_separateur_oblique_reconnu_sous_P(self):
+        p = config.Panorama(T=r"D:\Panos\x", P=r"D:\Panos\x\Assemblage-Hugin")
+        self.assertEqual(config.ranger_chemin(p, "D:/Panos/x/Assemblage-Hugin/5_hdr/pano_HDR.pto"),
+                         r"5_hdr\pano_HDR.pto")
+
     def test_sous(self):
         self.assertTrue(config.sous(r"D:\T", r"d:\t\a\b.pto"))
         self.assertTrue(config.sous("D:\\T\\", r"D:\T\a"))
@@ -156,6 +172,16 @@ class TestMettreAJour(unittest.TestCase):
         self.assertEqual(relu.reglages, {"a/x.py": {"-A": "3"}, "b/y.py": {"-B": "2"}})
         self.assertEqual(config.mettre_a_jour(self.T, reglages={}).reglages, {})
         self.assertEqual(config.charger_panorama(self.T).reglages, {})
+
+    def test_premier_memoriser_sur_un_ancien_fichier_ecrit_toutes_les_cles(self):
+        (Path(self.T) / "panorama.json").write_text(json.dumps({"T": self.T, "P": "x", "lignes": 3}),
+                                                    encoding="utf-8")
+        config.mettre_a_jour(self.T, reglages={"a/x.py": {"-A": "1"}})
+        sur_disque = json.loads((Path(self.T) / "panorama.json").read_text(encoding="utf-8"))
+        for cle in ("hdr_pto", "rendu_hdr", "calques_hdr", "pleine_res", "reglages", "maitre", "export_l"):
+            self.assertIn(cle, sur_disque)
+        self.assertEqual(sur_disque["reglages"], {"a/x.py": {"-A": "1"}})
+        self.assertEqual(sur_disque["lignes"], 3)
 
     def test_panorama_absent_ou_cle_inconnue(self):
         with self.assertRaises(FileNotFoundError):

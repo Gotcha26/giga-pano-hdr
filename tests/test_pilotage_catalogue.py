@@ -28,6 +28,21 @@ class TestConsoleIdentique(unittest.TestCase):
             self.assertEqual(obtenu, lignes, groupe)
 
 
+    def test_menus_console_identiques_a_l_instantane_avec_tous_les_outils_detectes(self):
+        # Instantané pris avec tous les outils présents (disponibilités et libellés « manque … » absents) ; identique à
+        # celui du lanceur d'avant la refonte (2ea911b) rejoué contre pilotage/ actuel.
+        import panorama
+        from pilotage import outils
+        attendu = json.loads((FIXTURES / "menus_console_outils.json").read_text(encoding="utf-8"))
+        etats = [outils.Etat(o, rf"C:\Outils\{o.cle}.exe", "1.0") for o in outils.OUTILS]
+        ctx = contexte([], etats=etats)
+        for groupe, lignes in attendu.items():
+            entrees = panorama.SOUS_MENUS[groupe](ctx)
+            obtenu = [{"libelle": l, "numero": n, "section": e.section, "effet": e.effet, "informative": e.action is None}
+                      for l, n, e in zip(menu.libelles(entrees, ctx), menu.numeroter(entrees, ctx), entrees)]
+            self.assertEqual(obtenu, lignes, groupe)
+
+
 class TestCatalogue(unittest.TestCase):
     def setUp(self):
         from pilotage import catalogue

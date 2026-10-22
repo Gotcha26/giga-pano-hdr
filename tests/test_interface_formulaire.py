@@ -204,6 +204,22 @@ class TestChamps(unittest.TestCase):
         self.assertEqual(cmd[cmd.index("-File") + 1], str(SCRIPTS / "rendre_projet.ps1"))
         self.assertEqual(cmd[cmd.index("-File") + 2:], ["-Projet", r"D:\a.pto", "-Sortie", r"D:\r", "-BigTiff"])
 
+    def test_commande_python_avec_option_et_drapeau(self):
+        t = replace(next(t for t in catalogue.TACHES if t.script == "tiffinfo.py"),
+                    arguments=[args_mod.Arg("image.tif", "Image", type="chemin"),
+                               args_mod.Arg("--seuil", "Seuil", type="nombre"),
+                               args_mod.Arg("--apply", "Appliquer", type="drapeau")])
+        cmd = formulaire.commande(t, self.ctx, {"image.tif": r"D:\x.tif", "--seuil": "2.5", "--apply": True})
+        self.assertEqual(cmd[1:], [str(SCRIPTS / "tiffinfo.py"), r"D:\x.tif", "--seuil", "2.5", "--apply"])
+        cmd = formulaire.commande(t, self.ctx, {"image.tif": r"D:\x.tif", "--seuil": "", "--apply": False})
+        self.assertEqual(cmd[1:], [str(SCRIPTS / "tiffinfo.py"), r"D:\x.tif"])         # vide et faux : omis
+
+    def test_commande_utilise_tache_arguments_plutot_que_la_declaration_du_script(self):
+        t = replace(next(t for t in catalogue.TACHES if t.script == "tiffinfo.py"),
+                    arguments=[args_mod.Arg("--seuil", "Seuil", type="nombre")])
+        cmd = formulaire.commande(t, self.ctx, {"--seuil": "3", "image.tif": r"D:\ignoree.tif"})
+        self.assertEqual(cmd[1:], [str(SCRIPTS / "tiffinfo.py"), "--seuil", "3"])       # « image.tif » du script ignoré
+
 
 if __name__ == "__main__":
     unittest.main()

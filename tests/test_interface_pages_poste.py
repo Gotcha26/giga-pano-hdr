@@ -4,6 +4,7 @@
 import asyncio
 import dataclasses
 import importlib.util
+import json
 import os
 import sys
 import tempfile
@@ -142,6 +143,26 @@ class TestDeplacement(unittest.TestCase):
         self.assertFalse(pages_poste.page_encore_ouverte(N(has_socket_connection=False, is_deleted=False)))
         self.assertFalse(pages_poste.page_encore_ouverte(N(has_socket_connection=True, is_deleted=True)))
         self.assertFalse(pages_poste.page_encore_ouverte(None))
+
+    def test_oublier_vide_les_reglages_sur_disque_et_garde_les_autres_cles(self):
+        with tempfile.TemporaryDirectory() as d:
+            config.enregistrer_panorama(config.Panorama(T=d, P=r"D:\P", lignes=6, maitre=r"3_optimisation\m.pto",
+                                                        reglages={"a/x.py": {"-A": "1"}, "b/y.py": {"-B": "2"}}))
+            config.mettre_a_jour(d, reglages={})                # ce que fait « Oublier les réglages mémorisés »
+            sur_disque = json.loads((Path(d) / "panorama.json").read_text(encoding="utf-8"))
+            self.assertEqual(sur_disque["reglages"], {})
+            self.assertEqual((sur_disque["lignes"], sur_disque["maitre"], sur_disque["P"]),
+                             (6, r"3_optimisation\m.pto", r"D:\P"))
+
+    def test_bilan_installation_en_francais_selon_le_code_de_retour(self):
+        from types import SimpleNamespace as N
+        message, genre = pages_poste.bilan_installation("Hugin", N(returncode=0))
+        self.assertEqual((message, genre), ("Hugin : installation terminée (code 0)", "positive"))
+        message, genre = pages_poste.bilan_installation("Hugin", N(returncode=1603))
+        self.assertEqual((message, genre), ("Hugin : échec de l'installation (code 1603)", "warning"))
+        message, genre = pages_poste.bilan_installation("Hugin", None, FileNotFoundError("winget"))
+        self.assertEqual(genre, "negative")
+        self.assertTrue(message.startswith("Installation impossible : "))
 
     def test_liste_des_panoramas_sans_doublon(self):
         f = pages_poste.panoramas_apres_deplacement

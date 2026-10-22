@@ -200,6 +200,16 @@ def page_encore_ouverte(client, element=None):
     return not (element is not None and getattr(element, "is_deleted", False))
 
 
+def bilan_installation(nom, resultat, erreur=None):
+    """(message, type de notification) d'une installation : `erreur` (OSError au lancement), sinon le code de retour
+    de `resultat` (0 = réussi ; autre = « warning », la détection dira si l'outil est quand même là)."""
+    if erreur is not None:
+        return f"Installation impossible : {erreur}", "negative"
+    if resultat.returncode == 0:
+        return f"{nom} : installation terminée (code 0)", "positive"
+    return f"{nom} : échec de l'installation (code {resultat.returncode})", "warning"
+
+
 def panoramas_apres_deplacement(panoramas, ancien_T, nouveau_T):
     """Liste des panoramas connus après un déplacement : `nouveau_T` à la place de `ancien_T`, sans doublon."""
     resultat = []
@@ -549,11 +559,10 @@ def phase0(etat):
                 ctx.etats = await run.io_bound(outils.detecter_tous, ctx.poste.outils)
                 return
             attente.dismiss()
+            message, genre = bilan_installation(ligne["nom"], r, erreur)
+            ui.notify(message, type=genre, multi_line=erreur is not None)
             if erreur is not None:
-                ui.notify(f"Installation impossible : {erreur}", type="negative", multi_line=True)
                 return
-            ui.notify(f"{ligne['nom']} : commande terminée (code {r.returncode})",
-                      type="positive" if r.returncode == 0 else "warning")
             await detecter()
         elif ligne["url"]:
             details = [ligne["url"]] + ([f"Dézipper dans un dossier durable, par exemple {ligne['dezipper']}"]

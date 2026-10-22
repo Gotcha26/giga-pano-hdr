@@ -106,6 +106,23 @@ class TestMenu(unittest.TestCase):
         self.assertIsNone(r)
         self.assertIn("obligatoire", texte.lower())
 
+    def test_deux_familles_d_erreurs_ecrites_ensemble_avec_une_seule_pause(self):
+        args = [arguments.Arg("a.pto", "a", type="pto"), arguments.Arg("b.pto", "b", type="pto")]
+        invites, lignes = [], []
+        reponses = iter(["1", r"rel\x.pto", "L", "", "0"])      # a relatif, b vide : obligatoire + chemin relatif
+
+        def lire(invite=""):
+            invites.append(invite)
+            return next(reponses)
+
+        r = arguments.menu("T", args, None, c=C, lire=lire, ecrire=lignes.append, effacer=lambda: None,
+                           chemins_absolus=True)
+        self.assertIsNone(r)                                    # retour au menu, puis « 0 »
+        texte = "\n".join(lignes)
+        self.assertIn("Argument obligatoire non renseigné : b.pto", texte)
+        self.assertIn("Chemin à saisir en entier", texte)
+        self.assertEqual(sum("Appuyez sur Entrée" in i for i in invites), 1)
+
     def test_drapeau_et_nargs(self):
         r, _ = self.menu(["2", "s.pto", "6", "7", "3456 5184", "L"])
         self.assertEqual(r[-4:], ["--rapport", "--images", "3456", "5184"])
