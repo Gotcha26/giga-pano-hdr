@@ -16,7 +16,7 @@ MODE OPÉRATOIRE
 ENTRÉES
     Aucune obligatoire : tout se fait dans la page.
     --sans-navigateur (ou la variable GIGA_PANO_SANS_NAVIGATEUR=1) : démarre le serveur sans ouvrir le
-    navigateur ; l'adresse s'affiche dans la console.
+    navigateur, pour un test automatisé ; l'adresse s'affiche dans la console.
 
 SORTIES
     Celles des scripts lancés depuis la page. Le point d'entrée n'écrit rien lui-même.
@@ -56,7 +56,7 @@ def port_libre():
 
 
 def ouvrir_navigateur(argv=None, environ=None):
-    """Faux avec --sans-navigateur ou GIGA_PANO_SANS_NAVIGATEUR=1 (serveur seul, pour un test ou un autre poste)."""
+    """Faux avec --sans-navigateur ou GIGA_PANO_SANS_NAVIGATEUR=1 (serveur seul, pour un test automatisé)."""
     argv = sys.argv[1:] if argv is None else argv
     environ = os.environ if environ is None else environ
     return "--sans-navigateur" not in argv and environ.get(SANS_NAVIGATEUR) != "1"

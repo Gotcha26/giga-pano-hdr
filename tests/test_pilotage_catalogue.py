@@ -84,6 +84,44 @@ class TestCatalogue(unittest.TestCase):
         self.assertEqual([t.identifiant for t in self.catalogue.console("phase7")],
                          [t.identifiant for t in self.catalogue.TACHES if t.groupe_console == "phase7"])
 
+    # Clés reportées qu'aucune tâche ne relit, avec la raison ; vide aujourd'hui (calques_hdr : rappel du geste 5C).
+    CLES_REPORTEES_NON_LUES = {}
+
+    def _configs_des_arguments(self):
+        from pilotage import arguments as args_mod
+        from pilotage import declarations_ps
+        configs = set()
+        for t in self.catalogue.TACHES:
+            if t.arguments is not None:
+                declares = t.arguments
+            elif t.script.endswith(".ps1"):
+                declares = declarations_ps.PS[t.script][0]
+            elif t.script:
+                declares = args_mod.lire_declaration(SCRIPTS / t.script)[0]
+            else:
+                declares = []
+            configs |= {a.config for a in declares if a.config}
+        return configs
+
+    def test_toute_cle_reportee_est_relue(self):
+        reportees = {cle for t in self.catalogue.TACHES for cle in t.reporte}
+        lues = {cle for t in self.catalogue.TACHES for cle in t.lit.values()} | self._configs_des_arguments()
+        for cle in sorted(reportees):
+            with self.subTest(cle):
+                self.assertTrue(cle in lues or cle in self.CLES_REPORTEES_NON_LUES,
+                                f"{cle} est reportée mais aucune tâche ne la relit")
+
+    def test_lit_nomme_des_arguments_declares(self):
+        from pilotage import declarations_ps
+        for t in self.catalogue.TACHES:
+            if t.lit and t.script.endswith(".ps1"):
+                with self.subTest(t.identifiant):
+                    self.assertLessEqual(set(t.lit), {a.nom for a in declarations_ps.PS[t.script][0]})
+
+    def test_les_reperes_supplementaires_ne_lisent_pas_la_cle_du_repere_d_origine(self):
+        nona = {t.repere: t.lit for t in self.catalogue.TACHES if t.script == "nona_images.ps1"}
+        self.assertEqual(nona, {"5B": {"-Projet": "hdr_pto"}, "6B": {}, "6C.2": {}})
+
     def test_scripts_cites(self):
         cites = self.catalogue.scripts_cites()
         self.assertIn("rendre_projet.ps1", cites)

@@ -32,7 +32,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from pilotage import arguments, catalogue, config, declarations_ps, lancer, menu, outils  # noqa: E402
-from pilotage.arguments import Arg  # noqa: E402
 from pilotage.config import DEFAUTS_GUIDE, QUESTIONS, RACINE_GUIDE  # noqa: E402,F401  (partagés avec l'interface web)
 from pilotage.couleurs import Couleurs, effacer_ecran, preparer_console  # noqa: E402
 from pilotage.menu import Entree, confirmer, demander, proposer  # noqa: E402
@@ -104,15 +103,18 @@ def geste(tete, rappel, section=""):
 
 
 def cpclean(ctx):
-    """cpclean.exe (livré avec Hugin), puis on rappelle de remettre les chemins en relatifs."""
-    args = [Arg("entree.pto", "Projet avec points de contrôle bruts", type="pto", config="cp_pto", phase="3_grille"),
-            Arg("sortie.pto", "Projet nettoyé à écrire (dans 3_optimisation)", type="pto")]
-    argv = arguments.menu("cpclean : nettoyage statistique des points de contrôle (-p -n 2)", args,
-                          "le projet de sortie (chemins d'images ABSOLUS : remettre en relatifs ensuite)",
+    """cpclean.exe (livré avec Hugin), puis on rappelle de remettre les chemins en relatifs. Déclaration et
+    commande partagées avec l'interface web (catalogue.ARGS_CPCLEAN, lancer.commande_cpclean)."""
+    argv = arguments.menu(catalogue.DOC_CPCLEAN, catalogue.ARGS_CPCLEAN, catalogue.ECRIT_CPCLEAN,
                           panorama=ctx.panorama, c=ctx.c, lire=ctx.lire, ecrire=ctx.ecrire)
     if argv is None:
         return None
-    return lancer.outil(ctx, "hugin", ["cpclean.exe", "-p", "-n", "2", "-o", argv[1], argv[0]])
+    try:
+        commande = lancer.commande_cpclean(ctx, argv)
+    except LookupError as e:
+        ctx.ecrire(ctx.c.erreur(str(e)))
+        return None
+    return lancer._executer(ctx, commande)
 
 
 # ---------------------------------------------------------------- phase 0

@@ -88,14 +88,43 @@ def enregistrer_poste(poste, chemin=None):
 
 
 def charger_panorama(T):
+    """Le panorama de $T, ou None si son panorama.json manque ou est illisible ; des réglages mémorisés qui ne
+    sont pas un dictionnaire (fichier corrompu, « null ») sont ignorés."""
     donnees = _lire_json(Path(T) / NOM_FICHIER_PANORAMA)
     if not isinstance(donnees, dict) or "T" not in donnees or "P" not in donnees:
         return None
-    return _depuis_dict(Panorama, donnees)
+    p = _depuis_dict(Panorama, donnees)
+    if not isinstance(p.reglages, dict):
+        p.reglages = {}
+    return p
 
 
 def enregistrer_panorama(p):
     _ecrire_json(Path(p.T) / NOM_FICHIER_PANORAMA, asdict(p))
+
+
+def mettre_a_jour(T, /, **cles):
+    """Relit le panorama.json de $T, lui applique `cles`, l'enregistre et retourne le panorama relu et modifié.
+
+    Ce qui a changé sur disque depuis le chargement d'un objet Panorama gardé en mémoire (une autre tâche, un
+    autre onglet, une modification à la main) est conservé : seules les clés données sont réécrites.
+    `reglages={identifiant: {...}}` remplace les réglages de ces identifiants seulement ; `reglages={}` les
+    vide tous. Une clé `T` différente déplace l'enregistrement dans le nouveau $T.
+    FileNotFoundError si $T n'a pas de panorama.json lisible ; TypeError pour une clé inconnue."""
+    p = charger_panorama(T)
+    if p is None:
+        raise FileNotFoundError(f"{NOM_FICHIER_PANORAMA} absent ou illisible dans {T}")
+    connues = {f.name for f in fields(Panorama)}
+    inconnues = set(cles) - connues
+    if inconnues:
+        raise TypeError(f"clé de panorama inconnue : {', '.join(sorted(inconnues))}")
+    if "reglages" in cles:
+        reglages = cles.pop("reglages")
+        p.reglages = {**p.reglages, **reglages} if reglages else {}
+    for cle, v in cles.items():
+        setattr(p, cle, v)
+    enregistrer_panorama(p)
+    return p
 
 
 def panorama_courant(poste):

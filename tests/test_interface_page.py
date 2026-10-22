@@ -202,17 +202,42 @@ class TestApresExecution(unittest.TestCase):
         self.P = Path(self.tmp.name) / "P"
         (self.P / "3_optimisation").mkdir(parents=True)
         self.p = config.Panorama(T=self.tmp.name, P=str(self.P))
+        config.enregistrer_panorama(self.p)
         self.ecrits = []
+
+    def _mettre_a_jour(self, T, /, **cles):
+        self.ecrits.append(dict(cles))
+        return config.mettre_a_jour(T, **cles)
 
     def _ex(self, code, etat):
         return SimpleNamespace(code=code, etat=etat, lignes=["sortie"])
+
+    def test_retour_au_meme_panorama_pendant_l_execution_recopie_le_report(self):
+        t = _tache("5B/nona_images.ps1")
+        revenu = config.charger_panorama(self.tmp.name)        # A → B → A : un autre objet pour le même $T
+        ctx = SimpleNamespace(panorama=revenu)
+        self.page.apres_execution(t, {"-Sortie": str(self.P / "5_hdr" / "rendu")}, self.p, self._ex(0, "terminée"),
+                                  verrou=threading.Lock(), mettre_a_jour=self._mettre_a_jour, ctx=ctx)
+        self.assertEqual(revenu.rendu_hdr, os.path.join("5_hdr", "rendu"))
+        self.assertEqual(config.charger_panorama(self.tmp.name).rendu_hdr, os.path.join("5_hdr", "rendu"))
+        autre = config.Panorama(T=str(self.P), P=str(self.P))     # un autre panorama courant : pas touché
+        self.page.apres_execution(t, {"-Sortie": str(self.P / "r2")}, self.p, self._ex(0, "terminée"),
+                                  verrou=threading.Lock(), mettre_a_jour=self._mettre_a_jour,
+                                  ctx=SimpleNamespace(panorama=autre))
+        self.assertEqual(autre.rendu_hdr, "")
+
+    def test_valeurs_lues_par_un_geste(self):
+        t = _tache("5C/geste")
+        self.assertEqual(self.page.valeurs_lues(t, self.p), [])
+        self.p.calques_hdr = r"5_hdr\calques"
+        self.assertEqual(self.page.valeurs_lues(t, self.p), [("Calques à déplacer", str(self.P / "5_hdr" / "calques"))])
 
     def test_report_de_la_tache_annonce_dans_le_journal(self):
         t = _tache("5B/nona_images.ps1")
         ex = self._ex(0, "terminée")
         sortie = str(self.P / "5_hdr" / "rendu")
         self.page.apres_execution(t, {"-Sortie": sortie}, self.p, ex, verrou=threading.Lock(),
-                                  enregistrer=self.ecrits.append)
+                                  mettre_a_jour=self._mettre_a_jour)
         attendu = "→ panorama.json : rendu_hdr = " + os.path.join("5_hdr", "rendu")
         self.assertEqual(ex.lignes, ["sortie", attendu])
         self.assertEqual(self.p.rendu_hdr, os.path.join("5_hdr", "rendu"))
@@ -221,7 +246,7 @@ class TestApresExecution(unittest.TestCase):
         (self.P / "3_optimisation" / "pano_grille_opt.pto").write_text("", encoding="utf-8")
         t = _tache("3H/detecter_trous.py")
         ex = self._ex(0, "terminée")
-        self.page.apres_execution(t, {}, self.p, ex, verrou=threading.Lock(), enregistrer=self.ecrits.append)
+        self.page.apres_execution(t, {}, self.p, ex, verrou=threading.Lock(), mettre_a_jour=self._mettre_a_jour)
         self.assertEqual(ex.lignes[-1], r"→ panorama.json : maitre = 3_optimisation\pano_grille_opt.pto")
         self.assertEqual(self.p.maitre, r"3_optimisation\pano_grille_opt.pto")
 
@@ -229,11 +254,11 @@ class TestApresExecution(unittest.TestCase):
         t = _tache("5B/nona_images.ps1")
         ex = self._ex(None, "interrompue")
         self.page.apres_execution(t, {"-Sortie": str(self.P)}, self.p, ex, verrou=threading.Lock(),
-                                  enregistrer=self.ecrits.append)
+                                  mettre_a_jour=self._mettre_a_jour)
         self.assertEqual(ex.lignes[1:], ["Interrompu.", lancer.MESSAGES_INTERRUPTION["nona_images.ps1"]])
         ex = self._ex(3, "échec")
         self.page.apres_execution(t, {"-Sortie": str(self.P)}, self.p, ex, verrou=threading.Lock(),
-                                  enregistrer=self.ecrits.append)
+                                  mettre_a_jour=self._mettre_a_jour)
         self.assertEqual(ex.lignes[1:], ["Échec (code 3)."])
         self.assertEqual(self.ecrits, [])
         self.assertEqual(self.p.rendu_hdr, "")

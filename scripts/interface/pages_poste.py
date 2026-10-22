@@ -371,8 +371,8 @@ def panorama(etat):
             return
         try:
             with page.VERROU_PANORAMA:
-                config.enregistrer_panorama(replace(p, **modifiees))   # la mémoire ne suit qu'une écriture réussie
-                for cle, v in modifiees.items():
+                config.mettre_a_jour(ancien_T, **modifiees)    # relu sur disque : un report fait entre-temps reste
+                for cle, v in modifiees.items():               # la mémoire ne suit qu'une écriture réussie
                     setattr(p, cle, v)
         except OSError as e:
             ui.notify(f"Écriture impossible : {e}", type="negative", multi_line=True)
@@ -397,7 +397,7 @@ def panorama(etat):
             return
         try:
             with page.VERROU_PANORAMA:
-                config.enregistrer_panorama(replace(p, reglages={}))
+                config.mettre_a_jour(p.T, reglages={})
                 p.reglages = {}
         except OSError as e:
             ui.notify(f"Écriture impossible : {e}", type="negative", multi_line=True)

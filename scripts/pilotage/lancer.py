@@ -99,10 +99,12 @@ def _piloter(ctx, doc, arguments, ecrit, commande, script, constantes=None, cons
 
 
 def environnement_enfant():
-    """Environnement d'un script lancé : jamais de second menu (GIGA_PANO_SANS_MENU), sortie en UTF-8."""
+    """Environnement d'un script lancé : jamais de second menu (GIGA_PANO_SANS_MENU), sortie en UTF-8 et sans
+    tampon (lue par un tube depuis la page web, une sortie Python tamponnée n'arriverait qu'à la fin)."""
     env = dict(os.environ)
     env[args_mod.SANS_MENU] = "1"          # l'enfant hérite de la console : il ne doit pas rouvrir un menu
     env["PYTHONIOENCODING"] = "utf-8"
+    env["PYTHONUNBUFFERED"] = "1"
     return env
 
 
@@ -193,11 +195,19 @@ def powershell(ctx, script, arguments, ecrit, doc=None):
                     construire=construire_ps)
 
 
-def outil(ctx, cle, args):
-    """Exécute un programme livré avec un outil détecté (ex. cpclean.exe du dossier de Hugin)."""
+def commande_outil(ctx, cle, args):
+    """Commande d'un programme livré avec un outil détecté (ex. cpclean.exe à côté de nona.exe, dans le dossier
+    bin de Hugin) ; LookupError si l'outil est absent."""
     e = etat(ctx, cle)
     if not (e and e.present):
-        ctx.ecrire(ctx.c.erreur(f"{cle} introuvable : voir Configuration."))
-        return None
-    dossier = os.path.dirname(e.chemin)
-    return _executer(ctx, [os.path.join(dossier, args[0]), *args[1:]])
+        raise LookupError(f"{cle} introuvable : voir Configuration.")
+    return [os.path.join(os.path.dirname(e.chemin), args[0]), *args[1:]]
+
+
+def commande_cpclean(ctx, argv):
+    """cpclean.exe -p -n 2 -o <sortie> <entrée>, `argv` = [entrée, sortie] (catalogue.ARGS_CPCLEAN construits)."""
+    entree, sortie = argv
+    return commande_outil(ctx, "hugin", ["cpclean.exe", "-p", "-n", "2", "-o", sortie, entree])
+
+
+COMMANDES_ACTIONS = {"cpclean": commande_cpclean}      # action du catalogue -> commande(ctx, argv)

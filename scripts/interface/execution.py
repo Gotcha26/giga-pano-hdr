@@ -29,6 +29,7 @@ class Execution:
 
 
 REGISTRE: dict = {}
+_VERROU_DEMARRAGE = threading.Lock()       # contrôle « déjà en cours » et inscription au registre, d'un tenant
 
 
 def en_cours():
@@ -87,10 +88,19 @@ def _lire(ex, sur_ligne, sur_fin):
 
 def demarrer(identifiant, commande, cwd, env, sur_ligne: Optional[Callable] = None,
              sur_fin: Optional[Callable] = None, Popen=subprocess.Popen):
-    """Lance la commande, enregistre l'exécution dans REGISTRE et rend la main ; OSError si le lancement échoue.
+    """Lance la commande, enregistre l'exécution dans REGISTRE et rend la main ; OSError si le lancement échoue,
+    RuntimeError si la même tâche tourne encore (deux onglets, ou un double clic : une seule à la fois).
 
     L'entrée standard est fermée (DEVNULL) : un script interactif qui appelle input() échoue au lieu d'attendre
     une saisie que la page ne peut pas fournir."""
+    with _VERROU_DEMARRAGE:
+        precedente = derniere(identifiant)
+        if precedente is not None and precedente.etat == "en cours":
+            raise RuntimeError(f"tâche déjà en cours : {identifiant}")
+        return _lancer(identifiant, commande, cwd, env, sur_ligne, sur_fin, Popen)
+
+
+def _lancer(identifiant, commande, cwd, env, sur_ligne, sur_fin, Popen):
     processus = Popen(commande, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                       stderr=subprocess.STDOUT, bufsize=0)
     ex = Execution(identifiant, list(commande), processus=processus)

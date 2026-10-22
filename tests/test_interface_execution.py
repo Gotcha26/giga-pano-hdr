@@ -133,6 +133,22 @@ class TestExecutionArrierePlan(unittest.TestCase):
         b = self._demarrer("t/x.py", [sys.executable, "-c", "pass"])
         self.assertIs(execution.derniere("t/x.py"), b)
 
+    def test_sortie_python_lue_en_direct_sans_tampon(self):
+        code = "import time; print('debut'); time.sleep(2); print('fin')"
+        ex = self._demarrer("t/x.py", [sys.executable, "-c", code])
+        time.sleep(1)
+        self.assertEqual(ex.lignes, ["debut"])
+        self._attendre_fin(ex)
+        self.assertEqual(ex.lignes, ["debut", "fin"])
+
+    def test_meme_tache_deja_en_cours_refusee(self):
+        ex = self._demarrer("t/x.py", DORMIR)
+        with self.assertRaisesRegex(RuntimeError, "tâche déjà en cours : t/x.py"):
+            self._demarrer("t/x.py", [sys.executable, "-c", "pass"])
+        self.assertIs(execution.derniere("t/x.py"), ex)
+        autre = self._demarrer("t/y.py", [sys.executable, "-c", "pass"])     # une autre tâche, elle, démarre
+        self._attendre_fin(autre)
+
     def test_exception_dans_un_rappel_ne_tue_pas_la_lecture(self):
         def casse(ligne):
             raise ValueError("boum")
@@ -160,6 +176,7 @@ class TestEnvironnementEtCommandes(unittest.TestCase):
         env = lancer.environnement_enfant()
         self.assertEqual(env["GIGA_PANO_SANS_MENU"], "1")
         self.assertEqual(env["PYTHONIOENCODING"], "utf-8")
+        self.assertEqual(env["PYTHONUNBUFFERED"], "1")
 
     def test_commande_python(self):
         ctx = type("C", (), {"scripts": SCRIPTS})()

@@ -33,6 +33,8 @@ class Tache:
     geste: str = ""                         # rappel d'un geste dans Hugin ou Lightroom (aucun script)
     attendu: str = ""                       # fichier que le geste doit produire, relatif à $P
     reporte: dict = field(default_factory=dict)   # clé du panorama.json -> argument ou attendu qui la remplit
+    lit: dict = field(default_factory=dict)       # argument -> clé du panorama.json qui le préremplit (geste :
+                                                  # libellé du rappel -> clé affichée)
     sortie: str = ""                        # nom de l'argument « dossier de sortie »
     groupe_console: str = ""                # "phase2", "phase3", "rendus", "mesures", "phase7" ; vide = hors console
     variante: str = ""                      # distingue deux tâches de même repère et même script
@@ -62,6 +64,13 @@ _TABLE = [Arg("REFERENCE", "Dossier déjà renommé L_C_E", type="dossier", conf
 _CONTROLE = [Arg("--controle", "Pleine résolution recadrée dont mesurer le vide par coin", type="chemin", obligatoire=True),
              Arg("--vips", "Chemin de vips.exe", type="chemin", config="outil:vips")]
 
+# cpclean.exe (livré avec Hugin) : une action, pas un script ; déclaration partagée par la console et la page,
+# la commande est construite par lancer.commande_cpclean
+ARGS_CPCLEAN = [Arg("entree.pto", "Projet avec points de contrôle bruts", type="pto", config="cp_pto", phase="3_grille"),
+                Arg("sortie.pto", "Projet nettoyé à écrire (dans 3_optimisation)", type="pto")]
+DOC_CPCLEAN = "cpclean : nettoyage statistique des points de contrôle (-p -n 2)"
+ECRIT_CPCLEAN = "le projet de sortie (chemins d'images ABSOLUS : remettre en relatifs ensuite, 3C.1)"
+
 _CONSOLE = [
     # phase 2
     Tache("Vérifier l'ordre et le motif d'exposition", 2, "2E", "verifier_ordre.py", sous_titre="verifier_ordre.py (2E)",
@@ -88,7 +97,8 @@ _CONSOLE = [
           geste="dans Hugin : Photos → CPFind (prealigned) → Créer des points → Enregistrer sous 3_grille\\pano_grille_cp.pto",
           section=S3A, groupe_console="phase3"),
     Tache("Nettoyer les points", 3, "3C.1", action="cpclean", sous_titre="cpclean -p -n 2 (3C.1)",
-          effet="3_optimisation\\…_clean.pto", section=S3A, outils=("hugin",), groupe_console="phase3"),
+          effet="3_optimisation\\…_clean.pto", section=S3A, outils=("hugin",), arguments=ARGS_CPCLEAN,
+          ecrit=ECRIT_CPCLEAN, groupe_console="phase3"),
     Tache("Remettre les chemins d'images en relatifs", 3, "3C.1", "deplacer_projet.py",
           sous_titre="deplacer_projet.py (3C.1, après cpclean)", effet="le projet, en place", section=S3A,
           groupe_console="phase3"),
@@ -128,13 +138,14 @@ _CONSOLE = [
           reporte={"hdr_pto": "sortie.pto"}, groupe_console="rendus"),
     Tache("Reprojeter les images une à une", 5, "5B", "nona_images.ps1", sous_titre="nona_images.ps1 (5B, 6B, 6C.2)",
           effet="le dossier de rendu (f_NNNN.tif)", section=S5, outils=("hugin",),
-          reporte={"rendu_hdr": "-Sortie"}, sortie="-Sortie", groupe_console="rendus"),
+          reporte={"rendu_hdr": "-Sortie"}, lit={"-Projet": "hdr_pto"}, sortie="-Sortie", groupe_console="rendus"),
     Tache("Fusionner un calque par exposition", 5, "5B", "fusionner_par_exposition.ps1",
           sous_titre="fusionner_par_exposition.ps1 (5B)", effet="les calques pano_HDR_E*.tif", section=S5,
-          outils=("multiblend",), reporte={"calques_hdr": "-Sortie"}, sortie="-Sortie", groupe_console="rendus"),
+          outils=("multiblend",), reporte={"calques_hdr": "-Sortie"}, lit={"-Rendu": "rendu_hdr"}, sortie="-Sortie",
+          groupe_console="rendus"),
     Tache("5C — Fusion HDR", 5, "5C",
           geste="dans Lightroom : déplacer les calques dans $H, Synchroniser le dossier, Photo → Fusion de photos → HDR",
-          section=S5, groupe_console="rendus"),
+          lit={"Calques à déplacer": "calques_hdr"}, section=S5, groupe_console="rendus"),
     Tache("6A — Export H", 6, "6A",
           geste="dans Lightroom : préréglage PANO TIFF (H) E0 depuis les copies virtuelles, puis renommer d'après la table RAW",
           section=S6, groupe_console="rendus"),
@@ -178,7 +189,8 @@ _CONSOLE = [
           sous_titre="mesurer_charge.ps1", section=SGEO, groupe_console="mesures"),
     # phase 7
     Tache("Tuiler un panorama en pyramide Deep Zoom", 7, "7A", "tuiler.ps1", sous_titre="tuiler.ps1 (7A)",
-          effet="la pyramide .dzi et _files", section=S7, outils=("vips",), groupe_console="phase7"),
+          effet="la pyramide .dzi et _files", section=S7, outils=("vips",), lit={"-Image": "pleine_res"},
+          groupe_console="phase7"),
     Tache("Contrôler les tuiles dans le navigateur", 7, "7B", "controler_tuiles.py", sous_titre="controler_tuiles.py (7B)",
           section=S7, groupe_console="phase7"),
     Tache("7C — Cadrer", 7, "7C",
@@ -194,9 +206,10 @@ _CONSOLE = [
 # ---------------------------------------------------------------- repères supplémentaires d'un script
 
 def _aussi(identifiant, repere, **champs):
-    """Copie hors console de la tâche `identifiant`, rattachée à un autre repère où le guide cite le même script."""
+    """Copie hors console de la tâche `identifiant`, rattachée à un autre repère où le guide cite le même script
+    (sans ses reports ni ses lectures du panorama, propres au repère d'origine, sauf s'ils sont redonnés)."""
     source = next(t for t in _CONSOLE if t.identifiant == identifiant)
-    champs = {"reporte": {}, **champs}
+    champs = {"reporte": {}, "lit": {}, **champs}
     return dataclasses.replace(source, repere=repere, phase=int(repere[0]) if repere else source.phase, groupe_console="", **champs)
 
 

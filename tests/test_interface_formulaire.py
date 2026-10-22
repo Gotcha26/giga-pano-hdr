@@ -127,6 +127,74 @@ class TestChamps(unittest.TestCase):
         self.p.reglages[RENDRE] = {"-Projet": str(dossier / "A.PTO").upper()}
         self.assertEqual(len(self._champs()["-Projet"].choix), 3)
 
+    def test_nona_5b_prerempli_le_projet_depuis_hdr_pto(self):
+        t = _tache("5B/nona_images.ps1")
+        self.p.hdr_pto = r"5_hdr\pano_hdr.pto"            # forme stockée : relative à $P
+        self.p.reglages[t.identifiant] = {"-Projet": r"D:\ancien.pto", "-A": "41"}
+        args, _, _ = formulaire.arguments_de(t, self.ctx)
+        champs = {c.arg.nom: c for c in formulaire.champs(t, args, self.p, self.ctx)}
+        self.assertEqual(champs["-Projet"].valeur, str(self.P / "5_hdr" / "pano_hdr.pto"))
+        self.assertEqual(champs["-A"].valeur, "41")         # un argument propre garde sa valeur mémorisée
+        self.assertEqual(next(a for a in args if a.nom == "-Projet").config, "hdr_pto")   # donc jamais mémorisé
+
+    def test_lit_ne_touche_pas_la_declaration_partagee_ni_les_autres_reperes(self):
+        from pilotage import declarations_ps
+        formulaire.arguments_de(_tache("5B/nona_images.ps1"), self.ctx)
+        self.assertIsNone(next(a for a in declarations_ps.PS["nona_images.ps1"][0] if a.nom == "-Projet").config)
+        self.p.hdr_pto = r"5_hdr\pano_hdr.pto"
+        t = _tache("6B/nona_images.ps1")
+        args, _, _ = formulaire.arguments_de(t, self.ctx)
+        self.assertEqual({c.arg.nom: c for c in formulaire.champs(t, args, self.p, self.ctx)}["-Projet"].valeur, "")
+
+    def test_fusion_5b_et_tuilage_7a_lisent_le_rendu_hdr_et_la_pleine_resolution(self):
+        self.p.rendu_hdr, self.p.pleine_res = r"5_hdr\rendu", r"E:\complet\complet.tif"
+        for identifiant, nom, attendu in (("5B/fusionner_par_exposition.ps1", "-Rendu", str(self.P / "5_hdr" / "rendu")),
+                                          ("7A/tuiler.ps1", "-Image", r"E:\complet\complet.tif")):
+            with self.subTest(identifiant):
+                t = _tache(identifiant)
+                args, _, _ = formulaire.arguments_de(t, self.ctx)
+                self.assertEqual({c.arg.nom: c for c in formulaire.champs(t, args, self.p, self.ctx)}[nom].valeur,
+                                 attendu)
+
+    def test_lit_d_un_argument_non_declare_leve_une_erreur(self):
+        t = replace(_tache("7A/tuiler.ps1"), lit={"-Inconnu": "pleine_res"})
+        with self.assertRaises(ValueError):
+            formulaire.arguments_de(t, self.ctx)
+
+    def test_cpclean_formulaire_et_commande_partages_avec_la_console(self):
+        from pilotage import outils
+        t = _tache("3C.1/cpclean")
+        self.assertTrue(formulaire.a_un_formulaire(t))
+        self.assertFalse(formulaire.a_un_formulaire(_tache("3B/geste")))
+        args, ecrit, _ = formulaire.arguments_de(t, self.ctx)
+        self.assertEqual(args[0].config, "cp_pto")
+        self.assertEqual([a.nom for a in args], [a.nom for a in catalogue.ARGS_CPCLEAN])
+        self.assertIn("ABSOLUS", ecrit)
+        champs = {c.arg.nom: c for c in formulaire.champs(t, args, self.p, self.ctx)}
+        self.assertEqual(champs["entree.pto"].valeur, str(self.P / "3_grille" / "pano_grille_cp.pto"))
+        valeurs = {"entree.pto": r"D:\P\3_grille\cp.pto", "sortie.pto": r"D:\P\3_optimisation\cp_clean.pto"}
+        with self.assertRaises(LookupError):                 # Hugin absent
+            formulaire.commande(t, self.ctx, valeurs)
+        hugin = next(o for o in outils.OUTILS if o.cle == "hugin")
+        self.ctx.etats = [outils.Etat(hugin, r"C:\Hugin\bin\nona.exe", "2025")]
+        attendu = [r"C:\Hugin\bin\cpclean.exe", "-p", "-n", "2", "-o", r"D:\P\3_optimisation\cp_clean.pto",
+                   r"D:\P\3_grille\cp.pto"]
+        self.assertEqual(formulaire.commande(t, self.ctx, valeurs), attendu)
+        self.assertEqual(lancer.commande_cpclean(self.ctx, [valeurs["entree.pto"], valeurs["sortie.pto"]]), attendu)
+
+    def test_une_seule_boite_parcourir_a_la_fois(self):
+        import threading
+        verrou, vus = threading.Lock(), []
+
+        def boite(genre, depart):
+            vus.append((genre, depart))
+            return r"D:\choisi"
+        self.assertEqual(formulaire.boite_exclusive("dossier", r"D:\x", boite=boite, verrou=verrou), (True, r"D:\choisi"))
+        with verrou:                                         # une boîte est ouverte
+            self.assertEqual(formulaire.boite_exclusive("pto", "", boite=boite, verrou=verrou), (False, None))
+        self.assertEqual(vus, [("dossier", r"D:\x")])
+        self.assertFalse(verrou.locked())                    # libéré après usage
+
     def test_commande_py_et_ps1(self):
         t_py = next(t for t in catalogue.TACHES if t.script == "tiffinfo.py")
         self.assertEqual(formulaire.commande(t_py, self.ctx, {"image.tif": r"D:\x.tif"})[1:],

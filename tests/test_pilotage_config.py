@@ -116,6 +116,53 @@ class TestClesReportees(unittest.TestCase):
         self.assertIsNone(config.valeur(p, "rendu_hdr"))
 
 
+class TestMettreAJour(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.T = self.tmp.name
+        self.p = config.Panorama(T=self.T, P=str(Path(self.T) / "P"), reglages={"a/x.py": {"-A": "1"}})
+        config.enregistrer_panorama(self.p)
+
+    def _modifier_a_la_main(self, **cles):
+        donnees = json.loads((Path(self.T) / "panorama.json").read_text(encoding="utf-8"))
+        donnees.update(cles)
+        (Path(self.T) / "panorama.json").write_text(json.dumps(donnees), encoding="utf-8")
+
+    def test_une_cle_modifiee_sur_disque_entre_chargement_et_mise_a_jour_est_conservee(self):
+        self._modifier_a_la_main(maitre=r"3_optimisation\pano_grille_opt.pto", lignes=6)
+        relu = config.mettre_a_jour(self.p.T, rendu_hdr=r"5_hdr\rendu")
+        self.assertEqual((relu.maitre, relu.lignes, relu.rendu_hdr),
+                         (r"3_optimisation\pano_grille_opt.pto", 6, r"5_hdr\rendu"))
+        self.assertEqual(config.charger_panorama(self.T), relu)
+        self.assertEqual(self.p.maitre, "")                     # l'objet en mémoire n'est pas touché
+
+    def test_reglages_remplace_l_identifiant_donne_et_vide_avec_un_dict_vide(self):
+        self._modifier_a_la_main(reglages={"a/x.py": {"-A": "1"}, "b/y.py": {"-B": "2"}})
+        relu = config.mettre_a_jour(self.T, reglages={"a/x.py": {"-A": "3"}})
+        self.assertEqual(relu.reglages, {"a/x.py": {"-A": "3"}, "b/y.py": {"-B": "2"}})
+        self.assertEqual(config.mettre_a_jour(self.T, reglages={}).reglages, {})
+        self.assertEqual(config.charger_panorama(self.T).reglages, {})
+
+    def test_panorama_absent_ou_cle_inconnue(self):
+        with self.assertRaises(FileNotFoundError):
+            config.mettre_a_jour(str(Path(self.T) / "absent"), maitre="m.pto")
+        with self.assertRaises(TypeError):
+            config.mettre_a_jour(self.T, inconnue=1)
+
+    def test_changer_T_enregistre_dans_le_nouveau_dossier(self):
+        nouveau = Path(self.T) / "ailleurs"
+        nouveau.mkdir()
+        config.mettre_a_jour(self.T, T=str(nouveau))
+        self.assertEqual(config.charger_panorama(nouveau).reglages, {"a/x.py": {"-A": "1"}})
+
+    def test_reglages_corrompus_ignores_au_chargement(self):
+        self._modifier_a_la_main(reglages=None)
+        self.assertEqual(config.charger_panorama(self.T).reglages, {})
+        self._modifier_a_la_main(reglages=["x"])
+        self.assertEqual(config.mettre_a_jour(self.T, reglages={"a/x.py": {}}).reglages, {"a/x.py": {}})
+
+
 class TestNouveauPanorama(unittest.TestCase):
     def test_propositions_nouveau_reprend_le_courant_et_les_chemins_du_guide(self):
         courant = config.Panorama(T=r"D:\Panoramas\2026-07-01\35mm", P=r"D:\Panoramas\2026-07-01\35mm\Assemblage-Hugin",

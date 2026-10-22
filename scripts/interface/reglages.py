@@ -16,16 +16,19 @@ def memorisables(arguments):
     return [a for a in arguments if a.config is None]
 
 
-def memoriser(p, identifiant, arguments, valeurs, enregistrer=config.enregistrer_panorama):
-    """Remplace les réglages mémorisés de `identifiant` par les valeurs renseignées des arguments mémorisables."""
+def memoriser(p, identifiant, arguments, valeurs, mettre_a_jour=config.mettre_a_jour):
+    """Remplace les réglages mémorisés de `identifiant` par les valeurs renseignées des arguments mémorisables.
+
+    L'écriture relit panorama.json (`config.mettre_a_jour`) : rien de ce qui a changé sur disque depuis le
+    chargement de `p` n'est perdu ; les réglages relus sont recopiés dans `p`."""
     ecrit = {}
     for a in memorisables(arguments):
         v = valeurs.get(a.nom)
         if v is None or v == "":
             continue
         ecrit[a.nom] = bool(v) if a.type == "drapeau" else str(v)
-    p.reglages[identifiant] = ecrit
-    enregistrer(p)
+    relu = mettre_a_jour(p.T, reglages={identifiant: ecrit})
+    p.reglages = relu.reglages
     return ecrit
 
 
@@ -55,7 +58,7 @@ def resoudre(tache, valeurs, p):
             brut = os.path.join(p.P, tache.attendu) if tache.attendu else ""
         elif "{" in source:
             try:
-                brut = source.format_map(sources)
+                brut = os.path.normpath(source.format_map(sources))   # « E:\R\ » + « \nom.tif » : un seul « \ »
             except (KeyError, IndexError, ValueError):
                 continue
         else:
@@ -66,15 +69,14 @@ def resoudre(tache, valeurs, p):
     return resolu
 
 
-def reporter_apres_execution(tache, valeurs, p, enregistrer=config.enregistrer_panorama):
-    """Affecte au panorama les valeurs reportées par `tache` ; retourne [(clé, valeur stockée)] des changements."""
-    changes = []
-    for cle, stocke in resoudre(tache, valeurs, p).items():
-        if getattr(p, cle, None) != stocke:
-            setattr(p, cle, stocke)
-            changes.append((cle, stocke))
+def reporter_apres_execution(tache, valeurs, p, mettre_a_jour=config.mettre_a_jour):
+    """Écrit dans panorama.json les valeurs reportées par `tache` (relu avant écriture : seules ces clés
+    changent) et les recopie dans `p` ; retourne [(clé, valeur stockée)] des changements."""
+    changes = [(cle, stocke) for cle, stocke in resoudre(tache, valeurs, p).items() if getattr(p, cle, None) != stocke]
     if changes:
-        enregistrer(p)
+        mettre_a_jour(p.T, **dict(changes))
+        for cle, stocke in changes:
+            setattr(p, cle, stocke)
     return changes
 
 
@@ -86,8 +88,9 @@ def etat_geste(tache, p):
     return os.path.isfile(chemin), chemin
 
 
-def reporter_geste(tache, p, enregistrer=config.enregistrer_panorama):
-    """Reporte le fichier produit par un geste s'il existe et qu'il est plus récent que celui désigné par la clé.
+def reporter_geste(tache, p, mettre_a_jour=config.mettre_a_jour):
+    """Reporte le fichier produit par un geste s'il existe et qu'il est plus récent que celui désigné par la clé
+    (écriture par `config.mettre_a_jour`, puis recopie dans `p`).
 
     Retourne la valeur stockée, ou None si rien n'a changé."""
     existe, attendu = etat_geste(tache, p)
@@ -100,7 +103,7 @@ def reporter_geste(tache, p, enregistrer=config.enregistrer_panorama):
         if courant and os.path.isfile(courant) and os.stat(courant).st_mtime >= os.stat(attendu).st_mtime:
             continue
         stocke = _stocker(p, cle, attendu)
+        mettre_a_jour(p.T, **{cle: stocke})
         setattr(p, cle, stocke)
-        enregistrer(p)
         return stocke
     return None

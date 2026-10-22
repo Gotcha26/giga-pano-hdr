@@ -9,6 +9,7 @@ partie pure reste utilisable (et testée) sans lui.
 """
 
 import os
+import threading
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Optional
@@ -53,8 +54,11 @@ class Champ:
 
 def arguments_de(tache, ctx):
     """(arguments, ecrit, doc) d'une tâche : sa déclaration propre si elle en a une, sinon celle de son script
-    (en-tête Python lu par analyse syntaxique, ou déclaration PowerShell du lanceur)."""
+    (en-tête Python lu par analyse syntaxique, ou déclaration PowerShell du lanceur). Une action du lanceur
+    (cpclean) a un formulaire si le catalogue déclare ses arguments et que `lancer` sait construire sa commande."""
     if not tache.script:
+        if a_un_formulaire(tache):
+            return lus_du_panorama(tache, tache.arguments), tache.ecrit or tache.effet, tache.sous_titre or tache.tete
         raise ValueError("tâche sans script : " + tache.identifiant)
     if tache.script.endswith(".ps1"):
         arguments, ecrit = declarations_ps.PS[tache.script]
@@ -64,7 +68,23 @@ def arguments_de(tache, ctx):
     if tache.arguments is not None:
         arguments = tache.arguments
         ecrit = tache.ecrit or tache.effet or ecrit
-    return list(arguments), ecrit, doc
+    return lus_du_panorama(tache, arguments), ecrit, doc
+
+
+def a_un_formulaire(tache):
+    """Vrai pour une tâche à lancer depuis la page : un script, ou une action dont la commande est connue."""
+    if tache.script:
+        return True
+    return bool(tache.action) and tache.arguments is not None and tache.action in lancer.COMMANDES_ACTIONS
+
+
+def lus_du_panorama(tache, arguments):
+    """Les arguments, ceux que `tache.lit` nomme reliés à leur clé de panorama.json (config) : préremplis
+    d'après le panorama, donc jamais mémorisés. La déclaration du script, partagée entre repères, est intacte."""
+    inconnus = set(tache.lit) - {a.nom for a in arguments}
+    if inconnus:
+        raise ValueError(f"{tache.identifiant} : lit un argument non déclaré : {', '.join(sorted(inconnus))}")
+    return [replace(a, config=tache.lit[a.nom]) if a.nom in tache.lit else a for a in arguments]
 
 
 def _choix_pto(arg, valeur, panorama):
@@ -87,9 +107,15 @@ def _depart(arg, panorama):
 
 
 def champs(tache, arguments, panorama, ctx):
-    """Un Champ par argument, préremplis : réglage mémorisé, sinon configuration du panorama, sinon défaut."""
+    """Un Champ par argument, préremplis : réglage mémorisé, sinon configuration du panorama, sinon défaut.
+
+    Un réglage mémorisé n'est repris que pour un argument sans clé de panorama : celui qu'un `lit` relie au
+    panorama après coup suit le panorama, même si une valeur avait été mémorisée avant."""
+    arguments = lus_du_panorama(tache, arguments)
+    propres = {a.nom for a in arguments if a.config is None}
     arguments = lancer._prerempli_outils(ctx, arguments)
     memorises = panorama.reglages.get(tache.identifiant) if panorama else None
+    memorises = {k: v for k, v in (memorises or {}).items() if k in propres}
     valeurs = args_mod.valeurs_initiales(arguments, panorama, memorises=memorises)
     resultat = []
     for a in arguments:
@@ -105,9 +131,12 @@ def champs(tache, arguments, panorama, ctx):
 
 
 def commande(tache, ctx, valeurs):
-    """Ligne de commande de la tâche pour les `valeurs` saisies (nom d'argument -> valeur)."""
+    """Ligne de commande de la tâche pour les `valeurs` saisies (nom d'argument -> valeur) ; LookupError pour
+    une action dont l'outil manque."""
     arguments, _, _ = arguments_de(tache, ctx)
     arguments = lancer._prerempli_outils(ctx, arguments)
+    if not tache.script:
+        return lancer.COMMANDES_ACTIONS[tache.action](ctx, args_mod.construire_argv(arguments, valeurs))
     if tache.script.endswith(".ps1"):
         return lancer.commande_powershell(ctx, tache.script, lancer.construire_ps(arguments, valeurs))
     return lancer.commande_python(ctx, tache.script, args_mod.construire_argv(arguments, valeurs))
@@ -140,13 +169,32 @@ def _boite_native(genre, depart):
     return os.path.normpath(choisi) if choisi else None
 
 
+VERROU_BOITE = threading.Lock()         # une seule boîte native à la fois (Tk n'aime pas deux racines en parallèle)
+BOITE_DEJA_OUVERTE = "Une boîte « Parcourir » est déjà ouverte : la fermer d'abord (elle peut être derrière le navigateur)."
+
+
+def boite_exclusive(genre, depart, boite=_boite_native, verrou=VERROU_BOITE):
+    """(ouverte, chemin choisi ou None) : la boîte n'est pas ouverte, et (False, None) est rendu aussitôt, si une
+    autre l'est déjà (deuxième clic, autre onglet) ; on ne fait pas attendre une boîte cachée derrière la première."""
+    if not verrou.acquire(blocking=False):
+        return False, None
+    try:
+        return True, boite(genre, depart)
+    finally:
+        verrou.release()
+
+
 async def parcourir(genre, depart):
     """Chemin choisi dans la boîte de dialogue native (fichier, .pto ou dossier selon `genre`), ou None.
 
     Le serveur tourne sur le poste de l'utilisateur : la boîte s'ouvre sur son écran, dans un fil à part
-    (run.io_bound) pour ne pas bloquer la page."""
-    from nicegui import run
-    return await run.io_bound(_boite_native, genre, depart)
+    (run.io_bound) pour ne pas bloquer la page. Si une boîte est déjà ouverte, rien ne s'ouvre : un avis le dit
+    et None est rendu."""
+    from nicegui import run, ui
+    ouverte, choisi = await run.io_bound(boite_exclusive, genre, depart)
+    if not ouverte:
+        ui.notify(BOITE_DEJA_OUVERTE, type="warning", multi_line=True)
+    return choisi
 
 
 def _note_hors_panorama(champ, note, valeur):

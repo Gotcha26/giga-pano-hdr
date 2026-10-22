@@ -31,7 +31,8 @@ VIPS_ABSENT = "libvips absent : voir Configuration"
 LIMITE_IMAGES = 200
 MESSAGE_PERIME = "Le panorama courant a changé dans un autre onglet : rien n'est lancé ni mémorisé, la page est rechargée."
 MESSAGE_CHANGE = "Le panorama courant a changé dans un autre onglet : page rechargée."
-DELAI_SORTIE_FORCEE = 10              # secondes entre « Quitter » et la sortie forcée du processus
+DEJA_EN_COURS = "Cette tâche tourne déjà"
+DELAI_SORTIE_FORCEE = 10             # secondes entre « Quitter » et la sortie forcée du processus
 
 VERROU_PANORAMA = threading.Lock()     # report depuis le fil de lecture, mémorisation et changement de panorama
 
@@ -144,24 +145,37 @@ def ligne_report(cle, valeur):
     return f"→ panorama.json : {cle} = {valeur}"
 
 
+def valeurs_lues(t, p):
+    """[(libellé, chemin)] des clés de panorama.json que le geste `t` rappelle (`t.lit`), renseignées seulement."""
+    resultat = []
+    for libelle_lu, cle in t.lit.items():
+        v = config.valeur(p, cle)
+        if v:
+            resultat.append((libelle_lu, v))
+    return resultat
+
+
 def cle_attendu(t):
     return next((cle for cle, source in t.reporte.items() if source == "attendu"), None)
 
 
-def reporter_gestes(phase, p, taches=None, enregistrer=config.enregistrer_panorama):
-    """Report des gestes de `phase` dont le fichier attendu existe ; retourne les lignes à afficher."""
-    lignes = []
+def reporter_gestes(phase, p, taches=None, mettre_a_jour=config.mettre_a_jour):
+    """Report des gestes de `phase` dont le fichier attendu existe ; retourne [(clé, valeur stockée)]."""
+    changes = []
     for g in (catalogue.TACHES if taches is None else taches):
         if g.est_geste and g.phase == phase and g.attendu:
-            v = reglages.reporter_geste(g, p, enregistrer=enregistrer)
+            v = reglages.reporter_geste(g, p, mettre_a_jour=mettre_a_jour)
             if v is not None:
-                lignes.append(ligne_report(cle_attendu(g), v))
-    return lignes
+                changes.append((cle_attendu(g), v))
+    return changes
 
 
-def apres_execution(t, valeurs, p, ex, verrou=VERROU_PANORAMA, enregistrer=config.enregistrer_panorama):
+def apres_execution(t, valeurs, p, ex, verrou=VERROU_PANORAMA, mettre_a_jour=config.mettre_a_jour, ctx=None):
     """Fin d'une exécution, dans le fil de lecture : message d'interruption, puis, si le code est 0, report des
-    valeurs de la tâche et des gestes de sa phase dans panorama.json. Les lignes vont dans `ex.lignes`."""
+    valeurs de la tâche et des gestes de sa phase dans panorama.json. Les lignes vont dans `ex.lignes`.
+
+    `p` est le panorama du lancement ; si le panorama courant de `ctx` est le même $T sous un autre objet (on a
+    changé de panorama puis on y est revenu pendant l'exécution), les valeurs reportées y sont recopiées aussi."""
     lignes = []
     if ex.etat == "interrompue":
         lignes.append("Interrompu.")
@@ -171,9 +185,13 @@ def apres_execution(t, valeurs, p, ex, verrou=VERROU_PANORAMA, enregistrer=confi
         lignes.append(f"Échec (code {ex.code}).")
     elif p is not None:
         with verrou:
-            changes = reglages.reporter_apres_execution(t, valeurs, p, enregistrer=enregistrer)
-            lignes += [ligne_report(cle, v) for cle, v in changes]
-            lignes += reporter_gestes(t.phase, p, enregistrer=enregistrer)
+            changes = reglages.reporter_apres_execution(t, valeurs, p, mettre_a_jour=mettre_a_jour)
+            changes += reporter_gestes(t.phase, p, mettre_a_jour=mettre_a_jour)
+            courant = getattr(ctx, "panorama", None)
+            if courant is not None and courant is not p and courant.T == p.T:
+                for cle, v in changes:
+                    setattr(courant, cle, v)
+        lignes += [ligne_report(cle, v) for cle, v in changes]
     ex.lignes.extend(lignes)
     return lignes
 
@@ -366,13 +384,18 @@ def construire(ctx):
         tout_rafraichir()
         return True
 
+    def refuser_si_en_cours(t):
+        ex = execution.derniere(t.identifiant)
+        if ex is not None and ex.etat == "en cours":
+            ui.notify(DEJA_EN_COURS, type="warning")
+            return True
+        return False
+
     async def lancer_tache():
         if refuser_si_perime():
             return
         t, p = etat.tache, ctx.panorama
-        ex = execution.derniere(t.identifiant)
-        if ex is not None and ex.etat == "en cours":
-            ui.notify("Cette tâche tourne déjà", type="warning")
+        if refuser_si_en_cours(t):
             return
         valeurs = valeurs_saisies()
         erreurs = args_mod.verifier(etat.arguments, {a.nom: valeurs.get(a.nom, "") for a in etat.arguments})
@@ -387,13 +410,16 @@ def construire(ctx):
                     "Les constantes du script contredisent le panorama courant :", "Lancer quand même",
                     [f"{nom} = {vs} dans le script, {vp} dans le panorama" for nom, vs, vp in ecarts]):
                 return
-            if refuser_si_perime():         # le panorama a pu changer pendant la confirmation
-                return
+            if refuser_si_perime() or refuser_si_en_cours(t):   # pendant la confirmation : autre panorama, ou
+                return                                          # la même tâche lancée depuis un autre onglet
         try:
             nouvelle = execution.demarrer(t.identifiant, formulaire.commande(t, ctx, valeurs), cwd=str(ctx.scripts),
                                           env=lancer.environnement_enfant(),
-                                          sur_fin=lambda fin: apres_execution(t, valeurs, p, fin))
-        except OSError as e:
+                                          sur_fin=lambda fin: apres_execution(t, valeurs, p, fin, ctx=ctx))
+        except RuntimeError:
+            ui.notify(DEJA_EN_COURS, type="warning")
+            return
+        except (OSError, LookupError) as e:          # LookupError : outil d'une action absent (cpclean sans Hugin)
             ui.notify(f"Lancement impossible : {e}", type="negative")
             return
         etat.lancees.append(nouvelle)
@@ -413,8 +439,12 @@ def construire(ctx):
         if p is None:
             ui.notify("Aucun panorama courant : rien à mémoriser", type="warning")
             return
-        with VERROU_PANORAMA:
-            ecrit = reglages.memoriser(p, etat.tache.identifiant, etat.arguments, valeurs_saisies())
+        try:
+            with VERROU_PANORAMA:
+                ecrit = reglages.memoriser(p, etat.tache.identifiant, etat.arguments, valeurs_saisies())
+        except OSError as e:
+            ui.notify(f"Écriture impossible : {e}", type="negative", multi_line=True)
+            return
         ui.notify("Mémorisé dans panorama.json : " + (", ".join(ecrit) or "aucune valeur propre au script"))
 
     @ui.refreshable
@@ -436,12 +466,18 @@ def construire(ctx):
 
     def zone_geste(t):
         ui.label(t.geste).classes("text-xl")
+        for libelle_lu, valeur_lue in valeurs_lues(t, ctx.panorama):
+            ui.label(f"{libelle_lu} : {valeur_lue}").classes("text-sm")
         if not t.attendu:
             return
         p = ctx.panorama
         if p is not None:
-            with VERROU_PANORAMA:
-                v = reglages.reporter_geste(t, p)
+            try:
+                with VERROU_PANORAMA:
+                    v = reglages.reporter_geste(t, p)
+            except OSError as e:
+                v = None
+                ui.label(f"Report impossible : {e}").classes("text-red-700")
             if v is not None:
                 etat.journal.push(ligne_report(cle_attendu(t), v))
                 en_tete.refresh()
@@ -458,8 +494,8 @@ def construire(ctx):
             arguments, ecrit, _ = formulaire.arguments_de(t, ctx)
             liste = formulaire.champs(t, arguments, p, ctx)
             constantes = lancer.constantes_du_fichier(ctx.scripts / t.script) if t.script.endswith(".py") else {}
-        except (OSError, KeyError, ValueError, SyntaxError) as e:
-            ui.label(f"Formulaire impossible : {e}").classes("text-red-700")
+        except (OSError, KeyError, ValueError, SyntaxError, AttributeError, TypeError) as e:
+            ui.label(f"Formulaire impossible : {e}").classes("text-red-700")      # dont un panorama.json abîmé
             return
         etat.arguments, etat.champs = arguments, liste
         with ui.card().classes("w-full"):
@@ -481,17 +517,18 @@ def construire(ctx):
             return
         ui.label(titre(t)).classes("text-2xl font-bold")
         with ui.row().classes("items-center gap-1 text-sm text-gray-600"):
-            if t.script:
-                ui.label(f"Script {t.script}")
+            programme = f"Script {t.script}" if t.script else (t.sous_titre if formulaire.a_un_formulaire(t) else "")
+            if programme:
+                ui.label(programme)
             if t.repere:
-                if t.script:
+                if programme:
                     ui.label("·")
                 ui.link(f"§ {t.repere} du guide", aide.lien_guide(t.repere), new_tab=True)
         journal = ui.log(max_lines=5000).classes("w-full h-64")    # posé tôt (un geste y écrit), déplacé après
         etat.journal = journal
         if t.est_geste:
             zone_geste(t)
-        elif t.script:
+        elif formulaire.a_un_formulaire(t):
             zone_script(t)
         else:
             ui.label(ACTION_MESSAGE).classes("text-gray-600")
@@ -624,7 +661,7 @@ def construire(ctx):
     def rafraichir_suivi():
         """Rebranche le journal sur la dernière exécution de la tâche affichée, et pousse ce qui manque."""
         t, journal = etat.tache, etat.journal
-        if journal is None or t is None or not t.script:
+        if journal is None or t is None or not formulaire.a_un_formulaire(t):
             return
         ex = execution.derniere(t.identifiant)
         if ex is not etat.ex_vue:
