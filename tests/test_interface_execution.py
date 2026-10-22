@@ -6,6 +6,7 @@ import threading
 import time
 import unittest
 from pathlib import Path
+from unittest import mock
 
 SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
 sys.path.insert(0, str(SCRIPTS))
@@ -55,7 +56,7 @@ class TestExecutionArrierePlan(unittest.TestCase):
                             sur_fin=lambda e: (vus.append((e.etat, e.code)), fin.set()))
         self.assertTrue(fin.wait(30))
         self.assertEqual(vus, [("terminée", 0)])
-        self.assertIsNotNone(ex)
+        self.assertTrue(ex.fini.wait(5))
 
     def test_fins_de_ligne_windows_et_derniere_ligne_sans_saut(self):
         code = "import sys; sys.stdout.buffer.write(b'a\\r\\nb\\n\\nfin')"
@@ -69,11 +70,12 @@ class TestExecutionArrierePlan(unittest.TestCase):
         self._attendre_fin(ex)
         self.assertEqual(ex.lignes, ["oups"])
 
-    def test_octets_invalides_remplaces(self):
+    def test_octets_non_utf8_decodes_dans_la_page_de_la_console(self):
         code = "import sys; sys.stdout.buffer.write(b'caf\\xe9 ok\\n')"
-        ex = self._demarrer("t/x.py", [sys.executable, "-c", code])
-        self._attendre_fin(ex)
-        self.assertEqual(ex.lignes, ["caf� ok"])
+        with mock.patch.object(execution, "page_oem", return_value="cp1252"):
+            ex = self._demarrer("t/x.py", [sys.executable, "-c", code])
+            self._attendre_fin(ex)
+        self.assertEqual(ex.lignes, ["café ok"])
 
     def test_sortie_utf8_decodee(self):
         ex = self._demarrer("t/x.py", [sys.executable, "-c", "print('café – ok')"])
@@ -143,7 +145,7 @@ class TestExecutionArrierePlan(unittest.TestCase):
 
     def test_meme_tache_deja_en_cours_refusee(self):
         ex = self._demarrer("t/x.py", DORMIR)
-        with self.assertRaisesRegex(RuntimeError, "tâche déjà en cours : t/x.py"):
+        with self.assertRaisesRegex(execution.DejaEnCours, "tâche déjà en cours : t/x.py"):
             self._demarrer("t/x.py", [sys.executable, "-c", "pass"])
         self.assertIs(execution.derniere("t/x.py"), ex)
         autre = self._demarrer("t/y.py", [sys.executable, "-c", "pass"])     # une autre tâche, elle, démarre
@@ -169,6 +171,143 @@ class TestExecutionArrierePlan(unittest.TestCase):
         ex = self._demarrer("t/x.py", [sys.executable, "-c", "pass"])
         self._attendre_fin(ex)
         self.assertNotIn("processus", repr(ex))
+
+    def test_un_enfant_qui_garde_la_sortie_ne_bloque_pas_la_fin(self):
+        petit = "import time; time.sleep(2); print('tard', flush=True)"
+        code = (f"import subprocess, sys; subprocess.Popen([sys.executable, '-c', {petit!r}], stdout=sys.stdout);"
+                " print('parent fini', flush=True)")
+        with mock.patch.object(execution, "DELAI_FIN", 0.3):
+            ex = self._demarrer("t/x.py", [sys.executable, "-c", code])
+            self.assertTrue(ex.fini.wait(1.8))          # avant la fin du petit-enfant (2 s)
+        self.assertEqual((ex.etat, ex.code), ("terminée", 0))
+        self.assertIn("parent fini", ex.lignes)
+        self.assertTrue(any("un enfant garde la sortie" in l for l in ex.lignes))
+        fin = time.time() + 10
+        while "tard" not in ex.lignes and time.time() < fin:    # la suite arrive encore dans le journal
+            time.sleep(0.1)
+        self.assertIn("tard", ex.lignes)
+
+
+class _FauxProcessus:
+    """Processus factice : sortie fournie d'avance, lecture retenue jusqu'à `liberer`, wait/poll pilotables."""
+
+    def __init__(self, sortie=b"", code=0, retenir=False, delais_depasses=0):
+        self.pid = 4242
+        self._sortie, self._code = sortie, code
+        self._libre = threading.Event()
+        if not retenir:
+            self._libre.set()
+        self.delais_depasses = delais_depasses
+        self.attentes = []
+        self.stdout = self
+
+    def read(self, n):
+        self._libre.wait(10)
+        bloc, self._sortie = self._sortie, b""
+        return bloc
+
+    def liberer(self):
+        self._libre.set()
+
+    def wait(self, timeout=None):
+        self.attentes.append(timeout)
+        if timeout is not None and self.delais_depasses:
+            self.delais_depasses -= 1
+            raise subprocess.TimeoutExpired("faux", timeout)
+        return self._code
+
+    def poll(self):
+        return self._code
+
+    def kill(self):
+        pass
+
+
+class TestExecutionFactice(unittest.TestCase):
+    def setUp(self):
+        self.addCleanup(execution.REGISTRE.clear)
+
+    def _demarrer(self, proc, plateforme=None, **kw):
+        vu = {}
+
+        def Popen(cmd, **k):
+            vu.update(k)
+            return proc
+        if plateforme:
+            with mock.patch.object(execution.sys, "platform", plateforme):
+                ex = execution.demarrer("t/f.py", ["x"], cwd=".", env={}, Popen=Popen, **kw)
+        else:
+            ex = execution.demarrer("t/f.py", ["x"], cwd=".", env={}, Popen=Popen, **kw)
+        return ex, vu
+
+    def test_arreter_un_processus_deja_fini_garde_l_etat_terminee(self):
+        proc = _FauxProcessus(b"ok\n", code=0, retenir=True)
+        ex, _ = self._demarrer(proc)
+        vu = []
+        execution.arreter(ex, lancer=lambda c, **k: vu.append(c))
+        proc.liberer()
+        self.assertTrue(ex.fini.wait(5))
+        self.assertEqual((ex.etat, ex.code, ex.arret_demande, vu), ("terminée", 0, False, []))
+
+    def test_popen_et_taskkill_sans_fenetre_sous_windows(self):
+        proc = _FauxProcessus(retenir=True)
+        proc.poll = lambda: None                    # tourne encore
+        ex, vu = self._demarrer(proc, plateforme="win32")
+        self.assertTrue(vu["creationflags"] & execution.SANS_FENETRE)
+        appels = []
+        with mock.patch.object(execution.sys, "platform", "win32"):
+            execution.arreter(ex, lancer=lambda c, **k: appels.append(k))
+        self.assertTrue(appels[0]["creationflags"] & execution.SANS_FENETRE)
+        proc.liberer()
+        self.assertTrue(ex.fini.wait(5))
+
+    def test_pas_de_creationflags_hors_windows(self):
+        ex, vu = self._demarrer(_FauxProcessus(), plateforme="linux")
+        self.assertNotIn("creationflags", vu)
+        self.assertTrue(ex.fini.wait(5))
+
+    def test_sortie_fermee_processus_encore_vivant_puis_fini(self):
+        proc = _FauxProcessus(b"un\n", code=0, delais_depasses=1)
+        vues = []
+        ex, _ = self._demarrer(proc, sur_ligne=vues.append)
+        self.assertTrue(ex.fini.wait(5))
+        self.assertEqual((ex.etat, ex.code), ("terminée", 0))
+        self.assertIn(execution.DELAI_FIN, proc.attentes)
+        self.assertTrue(any(l.startswith("[interface] sortie fermée") for l in ex.lignes))
+        self.assertEqual(vues, ex.lignes)              # les lignes [interface] passent aussi par sur_ligne
+
+    def test_rappel_qui_leve_sur_une_ligne_interface_n_en_ajoute_pas(self):
+        def casse(ligne):
+            raise ValueError("boum")
+        proc = _FauxProcessus(b"un\n", code=0, delais_depasses=1)
+        ex, _ = self._demarrer(proc, sur_ligne=casse)
+        self.assertTrue(ex.fini.wait(5))
+        # « un » -> une erreur de rappel ; l'erreur et la ligne « sortie fermée » ne produisent rien de plus
+        self.assertEqual(len(ex.lignes), 3)
+        self.assertEqual(sum("boum" in l for l in ex.lignes), 1)
+
+    def test_deja_en_cours_est_une_runtime_error(self):
+        self.assertTrue(issubclass(execution.DejaEnCours, RuntimeError))
+
+
+class TestDecodage(unittest.TestCase):
+    def test_utf8_d_abord(self):
+        self.assertEqual(execution._decoder("café".encode("utf-8")), "café")
+
+    def test_repli_sur_la_page_de_la_console(self):
+        with mock.patch.object(execution, "page_oem", return_value="cp850"):
+            self.assertEqual(execution._decoder(b"caf\x82"), "café")
+        with mock.patch.object(execution, "page_oem", return_value="cp1252"):
+            self.assertEqual(execution._decoder(b"caf\xe9"), "café")
+
+    def test_page_utf8_ou_inconnue_remplace(self):
+        for page in ("cp65001", "cp-inconnue"):
+            with mock.patch.object(execution, "page_oem", return_value=page):
+                self.assertEqual(execution._decoder(b"caf\xe9"), "caf�", page)
+
+    def test_page_oem_hors_windows(self):
+        with mock.patch.object(execution.sys, "platform", "linux"):
+            self.assertEqual(execution.page_oem(), "cp850")
 
 
 class TestEnvironnementEtCommandes(unittest.TestCase):

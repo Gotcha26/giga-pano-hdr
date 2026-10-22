@@ -416,10 +416,10 @@ def construire(ctx):
             nouvelle = execution.demarrer(t.identifiant, formulaire.commande(t, ctx, valeurs), cwd=str(ctx.scripts),
                                           env=lancer.environnement_enfant(),
                                           sur_fin=lambda fin: apres_execution(t, valeurs, p, fin, ctx=ctx))
-        except RuntimeError:
+        except execution.DejaEnCours:
             ui.notify(DEJA_EN_COURS, type="warning")
             return
-        except (OSError, LookupError) as e:          # LookupError : outil d'une action absent (cpclean sans Hugin)
+        except (RuntimeError, OSError, LookupError) as e:   # LookupError : outil d'une action absent (cpclean sans Hugin)
             ui.notify(f"Lancement impossible : {e}", type="negative")
             return
         etat.lancees.append(nouvelle)
