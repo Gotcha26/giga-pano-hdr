@@ -149,29 +149,29 @@ _CONSOLE = [
           sous_titre="surveiller_multiblend.ps1 (6C.4)", effet="le fichier de relevés", section=S6,
           groupe_console="rendus"),
     # mesures
-    Tache("Luminosité du ciel par image", "mesures", "3F", "mesurer_ciel.py", sous_titre="mesurer_ciel.py (3F)",
+    Tache("Luminosité du ciel par image", 3, "3F", "mesurer_ciel.py", sous_titre="mesurer_ciel.py (3F)",
           section=SCIEL, groupe_console="mesures"),
-    Tache("Écart d'exposition entre voisines (ciel)", "mesures", "3F", "mesurer_gain_paires.py",
+    Tache("Écart d'exposition entre voisines (ciel)", 3, "3F", "mesurer_gain_paires.py",
           sous_titre="mesurer_gain_paires.py (3F)", section=SCIEL, groupe_console="mesures"),
-    Tache("Ondulation périodique d'un rendu", "mesures", "3F", "mesurer_bandes_ciel.py",
+    Tache("Ondulation périodique d'un rendu", 3, "3F", "mesurer_bandes_ciel.py",
           sous_titre="mesurer_bandes_ciel.py (3F, 6C.5)", section=SCIEL, groupe_console="mesures"),
-    Tache("Localiser les sauts de luminosité", "mesures", "3F", "localiser_sauts_ciel.py",
+    Tache("Localiser les sauts de luminosité", 3, "3F", "localiser_sauts_ciel.py",
           sous_titre="localiser_sauts_ciel.py (3F)", section=SCIEL, groupe_console="mesures"),
     Tache("Comparer deux rendus (luminosité)", "mesures", "", "comparer_rendus.py", sous_titre="comparer_rendus.py",
           section=SCIEL, groupe_console="mesures"),
     Tache("Comparer des rendus (couleur)", "mesures", "", "comparer_couleur.py", sous_titre="comparer_couleur.py",
           section=SCIEL, groupe_console="mesures"),
-    Tache("Rehausser le ciel pour voir les raccords", "mesures", "6C.5", "rehausser_ciel.py",
+    Tache("Rehausser le ciel pour voir les raccords", 6, "6C.5", "rehausser_ciel.py",
           sous_titre="rehausser_ciel.py (6C.5)", effet="l'image de sortie", section=SCIEL, groupe_console="mesures"),
-    Tache("Profil d'une jonction", "mesures", "6C.5", "profil_jonction.ps1", sous_titre="profil_jonction.ps1 (6C.5)",
+    Tache("Profil d'une jonction", 6, "6C.5", "profil_jonction.ps1", sous_titre="profil_jonction.ps1 (6C.5)",
           section=SCIEL, outils=("vips",), groupe_console="mesures"),
-    Tache("Voir les corrections par image", "mesures", "3E", "voir_positions.py", sous_titre="voir_positions.py (3E, 3G)",
+    Tache("Voir les corrections par image", 3, "3E", "voir_positions.py", sous_titre="voir_positions.py (3E, 3G)",
           section=SGEO, groupe_console="mesures"),
-    Tache("Lister les pires points de contrôle", "mesures", "3G", "lister_pires_cp.py",
+    Tache("Lister les pires points de contrôle", 3, "3G", "lister_pires_cp.py",
           sous_titre="lister_pires_cp.py (3G)", section=SGEO, groupe_console="mesures"),
-    Tache("Détecter les images aberrantes", "mesures", "3G", "detecter_aberrantes.py",
+    Tache("Détecter les images aberrantes", 3, "3G", "detecter_aberrantes.py",
           sous_titre="detecter_aberrantes.py (3G)", section=SGEO, groupe_console="mesures"),
-    Tache("Mesurer le vide d'un cadrage", "mesures", "7C", "cadrage_lightroom.py",
+    Tache("Mesurer le vide d'un cadrage", 7, "7C", "cadrage_lightroom.py",
           sous_titre="cadrage_lightroom.py --controle (7C)", section=SGEO, arguments=_CONTROLE,
           groupe_console="mesures", variante="controle"),
     Tache("Mesurer la charge CPU et mémoire d'un rendu", "mesures", "", "mesurer_charge.ps1",
@@ -197,7 +197,7 @@ def _aussi(identifiant, repere, **champs):
     """Copie hors console de la tâche `identifiant`, rattachée à un autre repère où le guide cite le même script."""
     source = next(t for t in _CONSOLE if t.identifiant == identifiant)
     champs = {"reporte": {}, **champs}
-    return dataclasses.replace(source, repere=repere, phase=int(repere[0]), groupe_console="", **champs)
+    return dataclasses.replace(source, repere=repere, phase=int(repere[0]) if repere else source.phase, groupe_console="", **champs)
 
 
 _AUTRES_REPERES = [

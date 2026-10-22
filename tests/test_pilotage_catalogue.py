@@ -57,6 +57,16 @@ class TestCatalogue(unittest.TestCase):
         self.assertEqual(reperes, sorted(reperes, key=self.catalogue.cle_tri))
         self.assertLess(reperes.index("3C.2"), reperes.index("3D"))
 
+    def test_phase_mesures_reservee_aux_taches_sans_repere(self):
+        for t in self.catalogue.TACHES:
+            if t.phase == "mesures":
+                with self.subTest(t.identifiant):
+                    self.assertEqual(t.repere, "")
+            elif t.repere:
+                with self.subTest(t.identifiant):
+                    self.assertEqual(t.phase, int(t.repere[0]))
+        self.assertTrue(any(t.repere == "3F" for t in self.catalogue.par_phase()[3]))
+
     def test_par_phase_cles(self):
         self.assertEqual(list(self.catalogue.par_phase()), [0, 1, 2, 3, 4, 5, 6, 7, "mesures"])
 
