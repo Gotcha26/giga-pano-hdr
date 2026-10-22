@@ -106,6 +106,28 @@ class TestLirePanorama(unittest.TestCase):
         self.assertTrue(any(e.startswith("T") for e in erreurs))
 
 
+class TestDeplacement(unittest.TestCase):
+    def test_deplacement_refuse_si_introuvable_ou_deja_un_panorama(self):
+        with tempfile.TemporaryDirectory() as d:
+            ancien, libre, occupe = (str(Path(d) / n) for n in ("ancien", "libre", "occupe"))
+            for dossier in (ancien, libre, occupe):
+                os.mkdir(dossier)
+            config.enregistrer_panorama(config.Panorama(T=occupe, P="", maitre=r"3_optimisation\m.pto"))
+            self.assertIsNone(pages_poste.deplacement_refuse(ancien, libre))
+            self.assertIsNone(pages_poste.deplacement_refuse(ancien, ancien.upper() + os.sep))
+            self.assertIn("introuvable", pages_poste.deplacement_refuse(ancien, str(Path(d) / "absent")))
+            raison = pages_poste.deplacement_refuse(ancien, occupe)
+            self.assertIn("contient déjà un panorama.json", raison)
+            (Path(occupe) / "panorama.json").write_text("{illisible", encoding="utf-8")
+            self.assertIsNotNone(pages_poste.deplacement_refuse(ancien, occupe))
+
+    def test_liste_des_panoramas_sans_doublon(self):
+        f = pages_poste.panoramas_apres_deplacement
+        self.assertEqual(f(["a", "b", "c"], "b", "x"), ["a", "x", "c"])
+        self.assertEqual(f(["a", "b", "x"], "b", "x"), ["a", "x"])
+        self.assertEqual(f(["a"], "b", "x"), ["a", "x"])
+
+
 class TestNouveau(unittest.TestCase):
     def setUp(self):
         self.courant = config.Panorama(T=r"D:\Panoramas\2026-07-01\35mm",

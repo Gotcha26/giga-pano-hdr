@@ -12,7 +12,7 @@ propositions de valeurs, même écriture de panorama.json et de la configuration
 import datetime
 import os
 import subprocess
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, fields, replace
 from pathlib import Path
 from typing import Any, Optional
 
@@ -158,6 +158,31 @@ def modifications_panorama(affichees, saisies):
     avant, _ = lire_panorama(affichees)
     apres, erreurs = lire_panorama(saisies)
     return {cle: v for cle, v in apres.items() if v != avant.get(cle)}, erreurs
+
+
+def deplacement_refuse(ancien_T, nouveau_T):
+    """Raison de refuser de déplacer le panorama de `ancien_T` vers `nouveau_T` (dossier introuvable, ou qui
+    contient déjà un panorama.json, qu'on écraserait) ; None si le déplacement est permis ou si $T ne change pas."""
+    if os.path.normcase(os.path.normpath(nouveau_T)) == os.path.normcase(os.path.normpath(ancien_T)):
+        return None
+    if not os.path.isdir(nouveau_T):
+        return f"T : dossier introuvable ({nouveau_T})"
+    if (Path(nouveau_T) / config.NOM_FICHIER_PANORAMA).exists():
+        return (f"T : ce dossier contient déjà un {config.NOM_FICHIER_PANORAMA} ({nouveau_T}) : choisissez-le "
+                "dans la liste des panoramas ou videz le dossier")
+    return None
+
+
+def panoramas_apres_deplacement(panoramas, ancien_T, nouveau_T):
+    """Liste des panoramas connus après un déplacement : `nouveau_T` à la place de `ancien_T`, sans doublon."""
+    resultat = []
+    for T in panoramas:
+        T = nouveau_T if T == ancien_T else T
+        if T not in resultat:
+            resultat.append(T)
+    if nouveau_T not in resultat:
+        resultat.append(nouveau_T)
+    return resultat
 
 
 def valeurs_initiales_nouveau(courant, date):
@@ -340,20 +365,21 @@ def panorama(etat):
             ui.notify("Rien n'a changé")
             return
         ancien_T = p.T
-        if "T" in modifiees and not os.path.isdir(modifiees["T"]):
-            ui.notify(f"T : dossier introuvable ({modifiees['T']})", type="negative")
+        raison = deplacement_refuse(ancien_T, modifiees["T"]) if "T" in modifiees else None
+        if raison:
+            ui.notify(raison, type="negative", multi_line=True)
             return
         try:
             with page.VERROU_PANORAMA:
+                config.enregistrer_panorama(replace(p, **modifiees))   # la mémoire ne suit qu'une écriture réussie
                 for cle, v in modifiees.items():
                     setattr(p, cle, v)
-                config.enregistrer_panorama(p)
         except OSError as e:
             ui.notify(f"Écriture impossible : {e}", type="negative", multi_line=True)
             return
         ui.notify("Enregistré : " + ", ".join(modifiees), type="positive", multi_line=True)
         if p.T != ancien_T:         # panorama déplacé : le poste suit le nouveau $T
-            ctx.poste.panoramas = [p.T if T == ancien_T else T for T in ctx.poste.panoramas]
+            ctx.poste.panoramas = panoramas_apres_deplacement(ctx.poste.panoramas, ancien_T, p.T)
             page.changer_panorama(ctx, p.T)
             dialogue.close()
         else:
@@ -369,9 +395,13 @@ def panorama(etat):
             return
         if perime():
             return
-        with page.VERROU_PANORAMA:
-            p.reglages = {}
-            config.enregistrer_panorama(p)
+        try:
+            with page.VERROU_PANORAMA:
+                config.enregistrer_panorama(replace(p, reglages={}))
+                p.reglages = {}
+        except OSError as e:
+            ui.notify(f"Écriture impossible : {e}", type="negative", multi_line=True)
+            return
         ui.notify("Réglages mémorisés oubliés")
         contenu.refresh()
 
@@ -539,12 +569,13 @@ def configuration(etat):
         ui.label(statut_outil(cle, ctx.poste.outils.get(cle), ctx.etats)).classes("text-xs text-gray-600 break-all")
 
     async def enregistrer():
-        ctx.poste.outils = outils_modifies(ctx.poste.outils, {cle: el.value for cle, el in elements.items()})
+        nouveaux = outils_modifies(ctx.poste.outils, {cle: el.value for cle, el in elements.items()})
         try:
-            config.enregistrer_poste(ctx.poste)
+            config.enregistrer_poste(replace(ctx.poste, outils=nouveaux))
         except OSError as e:
             ui.notify(f"Écriture impossible : {e}", type="negative", multi_line=True)
             return
+        ctx.poste.outils = nouveaux         # la mémoire ne suit qu'une écriture réussie
         ctx.etats = await run.io_bound(outils.detecter_tous, ctx.poste.outils)
         statut.refresh()
         etat.rafraichir()
