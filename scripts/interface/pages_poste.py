@@ -201,13 +201,15 @@ def page_encore_ouverte(client, element=None):
 
 
 def bilan_installation(nom, resultat, erreur=None):
-    """(message, type de notification) d'une installation : `erreur` (OSError au lancement), sinon le code de retour
-    de `resultat` (0 = réussi ; autre = « warning », la détection dira si l'outil est quand même là)."""
+    """(message, type de notification) d'une installation : `erreur` (OSError au lancement : seul vrai « échec »),
+    sinon le code de retour de `resultat` (0 = réussi ; autre = « warning » prudent : winget renvoie un code non
+    nul pour « déjà installé » ou « aucune mise à jour », la détection dira si l'outil est là)."""
     if erreur is not None:
         return f"Installation impossible : {erreur}", "negative"
     if resultat.returncode == 0:
         return f"{nom} : installation terminée (code 0)", "positive"
-    return f"{nom} : échec de l'installation (code {resultat.returncode})", "warning"
+    return (f"{nom} : commande terminée avec le code {resultat.returncode} : vérifier la détection ci-dessous",
+            "warning")
 
 
 def panoramas_apres_deplacement(panoramas, ancien_T, nouveau_T):
@@ -499,7 +501,10 @@ def nouveau_panorama(etat):
             recalculer_bientot()
 
     def creer():
-        solder_recalcul(attente, recalculer)    # « Créer » moins de DELAI_RECALCUL s après la dernière frappe
+        try:
+            solder_recalcul(attente, recalculer)    # « Créer » moins de DELAI_RECALCUL s après la dernière frappe
+        except (OSError, ValueError) as e:          # panorama.json illisible : on garde les saisies telles quelles
+            ui.notify(f"Propositions impossibles : {e}", type="warning", multi_line=True)
         valeurs, erreurs = lire_nouveau(saisies())
         if erreurs:
             _notifier_erreurs(erreurs)

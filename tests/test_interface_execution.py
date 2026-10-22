@@ -131,15 +131,14 @@ class TestExecutionArrierePlan(unittest.TestCase):
                   "print(e.pid, flush=True)\n"
                   "time.sleep(60)\n")
         ex = self._demarrer("t/arbre.py", [sys.executable, "-c", parent])
+        def tuer_l_arbre():                         # enregistré AVANT la lecture du PID : aucun processus résiduel
+            subprocess.run(["taskkill", "/T", "/F", "/PID", str(ex.processus.pid)], capture_output=True)
+        self.addCleanup(tuer_l_arbre)
         limite = time.monotonic() + 20
         while not ex.lignes and time.monotonic() < limite:
             time.sleep(0.05)
         self.assertTrue(ex.lignes, "le parent n'a pas imprimé le PID de son enfant")
         enfant = int(ex.lignes[0])
-
-        def tuer_l_enfant():                                    # même en cas d'échec : aucun processus résiduel
-            subprocess.run(["taskkill", "/F", "/PID", str(enfant)], capture_output=True)
-        self.addCleanup(tuer_l_enfant)
         self.assertTrue(self._pid_existe(enfant), "l'enfant devrait vivre avant l'arrêt")
 
         execution.arreter(ex)

@@ -159,7 +159,9 @@ class TestDeplacement(unittest.TestCase):
         message, genre = pages_poste.bilan_installation("Hugin", N(returncode=0))
         self.assertEqual((message, genre), ("Hugin : installation terminée (code 0)", "positive"))
         message, genre = pages_poste.bilan_installation("Hugin", N(returncode=1603))
-        self.assertEqual((message, genre), ("Hugin : échec de l'installation (code 1603)", "warning"))
+        self.assertEqual((message, genre), ("Hugin : commande terminée avec le code 1603 : vérifier la détection "
+                                             "ci-dessous", "warning"))
+        self.assertNotIn("échec", message)
         message, genre = pages_poste.bilan_installation("Hugin", None, FileNotFoundError("winget"))
         self.assertEqual(genre, "negative")
         self.assertTrue(message.startswith("Installation impossible : "))
