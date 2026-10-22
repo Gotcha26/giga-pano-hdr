@@ -148,17 +148,42 @@ def ecarts(constantes, panorama):
     return resultat
 
 
-def _valeurs_initiales(arguments, panorama):
+def valeurs_initiales(arguments, panorama, memorises=None):
+    """Valeur de départ de chaque argument : réglage mémorisé, sinon configuration du panorama, sinon défaut."""
+    memorises = memorises or {}
     valeurs = {}
     for a in arguments:
         if a.type == "drapeau":
-            valeurs[a.nom] = bool(a.defaut)
+            valeurs[a.nom] = bool(memorises[a.nom]) if a.nom in memorises else bool(a.defaut)
             continue
-        v = config.valeur(panorama, a.config) if a.config else None
+        v = memorises.get(a.nom)
+        if v in (None, ""):
+            v = config.valeur(panorama, a.config) if a.config else None
         if v is None and a.defaut is not None:
             v = str(a.defaut)
         valeurs[a.nom] = v or ""
     return valeurs
+
+
+_valeurs_initiales = valeurs_initiales
+
+
+def verifier(arguments, valeurs, chemins_absolus=True):
+    """Messages d'erreur qui empêchent le lancement (liste vide si tout est en ordre) : obligatoire non renseigné,
+    chemin à saisir en entier, positionnel renseigné après un positionnel vide."""
+    messages = []
+    manquants = [a.nom for a in arguments if a.obligatoire and valeurs[a.nom] in ("", None)]
+    if manquants:
+        messages.append(f"Argument obligatoire non renseigné : {', '.join(manquants)}")
+    invalides = _chemins_invalides(arguments, valeurs, chemins_absolus)
+    if invalides:
+        messages.append("Chemin à saisir en entier (ex. D:\\Panoramas\\…) : " +
+                        " ; ".join(f"{nom} : {raison}" for nom, raison in invalides))
+    orphelins = _positionnels_apres_un_vide(arguments, valeurs)
+    if orphelins:
+        messages.append("Les arguments sont positionnels : " +
+                        " ; ".join(f"{apres} exige {vide}" for vide, apres in orphelins))
+    return messages
 
 
 def _choisir_pto(a, panorama, c, lire, ecrire):
@@ -222,7 +247,7 @@ def menu(doc, arguments, ecrit, constantes=None, panorama=None, c=None, lire=inp
     if valeurs is None:
         valeurs = {}
     if not valeurs:
-        valeurs.update(_valeurs_initiales(arguments, panorama))
+        valeurs.update(valeurs_initiales(arguments, panorama))
     try:
         while True:
             effacer()
@@ -231,21 +256,10 @@ def menu(doc, arguments, ecrit, constantes=None, panorama=None, c=None, lire=inp
             if choix == "0":
                 return None
             if choix.lower() == "l":
-                manquants = [a.nom for a in arguments if a.obligatoire and valeurs[a.nom] in ("", None)]
-                if manquants:
-                    ecrire(c.erreur(f"Argument obligatoire non renseigné : {', '.join(manquants)}"))
-                    pause(c, lire)
-                    continue
-                invalides = _chemins_invalides(arguments, valeurs, chemins_absolus)
-                if invalides:
-                    ecrire(c.erreur("Chemin à saisir en entier (ex. D:\\Panoramas\\…) : " +
-                                    " ; ".join(f"{nom} : {raison}" for nom, raison in invalides)))
-                    pause(c, lire)
-                    continue
-                orphelins = _positionnels_apres_un_vide(arguments, valeurs)
-                if orphelins:
-                    ecrire(c.erreur("Les arguments sont positionnels : " +
-                                    " ; ".join(f"{apres} exige {vide}" for vide, apres in orphelins)))
+                erreurs = verifier(arguments, valeurs, chemins_absolus)
+                if erreurs:
+                    for message in erreurs:
+                        ecrire(c.erreur(message))
                     pause(c, lire)
                     continue
                 if constantes and ecarts(constantes, panorama):

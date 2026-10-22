@@ -86,5 +86,35 @@ class TestPanorama(unittest.TestCase):
         self.assertIsNone(config.dossier_phase(None, "3_grille"))
 
 
+class TestClesReportees(unittest.TestCase):
+    def test_ancien_fichier_sans_nouvelles_cles(self):
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "panorama.json").write_text(json.dumps({"T": d, "P": "x"}), encoding="utf-8")
+            p = config.charger_panorama(d)
+            self.assertEqual(p.reglages, {})
+            self.assertEqual(p.pleine_res, "")
+            self.assertIsNone(config.valeur(p, "pleine_res"))
+
+    def test_aller_retour_des_nouvelles_cles(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = config.Panorama(T=d, P=str(Path(d) / "P"), hdr_pto=r"5_hdr\pano_HDR.pto",
+                                reglages={"6C.4/rendre_projet.ps1": {"-Nom": "vue"}})
+            config.enregistrer_panorama(p)
+            self.assertEqual(config.charger_panorama(d), p)
+
+    def test_ranger_chemin_relatif_sous_P_sinon_absolu(self):
+        p = config.Panorama(T=r"D:\Panos\x", P=r"D:\Panos\x\Assemblage-Hugin")
+        self.assertEqual(config.ranger_chemin(p, r"d:\panos\x\assemblage-hugin\5_hdr\pano_HDR.pto"),
+                         r"5_hdr\pano_HDR.pto")
+        self.assertEqual(config.ranger_chemin(p, r"E:\Rendus\complet"), r"E:\Rendus\complet")
+        self.assertEqual(config.ranger_chemin(p, ""), "")
+
+    def test_valeur_recompose_relatif_et_garde_absolu(self):
+        p = config.Panorama(T=r"D:\x", P=r"D:\x\P", hdr_pto=r"5_hdr\pano_HDR.pto", pleine_res=r"E:\R\c.tif")
+        self.assertEqual(config.valeur(p, "hdr_pto"), r"D:\x\P\5_hdr\pano_HDR.pto")
+        self.assertEqual(config.valeur(p, "pleine_res"), r"E:\R\c.tif")
+        self.assertIsNone(config.valeur(p, "rendu_hdr"))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -124,5 +124,26 @@ class TestMenu(unittest.TestCase):
             self.assertIn("[lecture seule]", "\n".join(lignes))
 
 
+class TestValeursInitialesEtVerification(unittest.TestCase):
+    def test_valeurs_initiales_memorisees_avant_panorama(self):
+        p = config.Panorama(T="D:\\x", P="D:\\x\\P", largeur_hdr=20000)
+        args = [arguments.Arg("-Largeur", "l", type="entier", config="largeur_hdr"),
+                arguments.Arg("-Nom", "n", defaut="panorama")]
+        v = arguments.valeurs_initiales(args, p, memorises={"-Nom": "vue"})
+        self.assertEqual(v, {"-Largeur": "20000", "-Nom": "vue"})
+        self.assertIs(arguments._valeurs_initiales, arguments.valeurs_initiales)
+
+    def test_verifier_rend_les_trois_familles_de_messages(self):
+        args = [arguments.Arg("a.pto", "a", type="pto"), arguments.Arg("b.pto", "b", type="pto")]
+        self.assertTrue(any("obligatoire" in m for m in arguments.verifier(args, {"a.pto": "", "b.pto": ""})))
+        self.assertTrue(any("en entier" in m for m in arguments.verifier(args, {"a.pto": r"rel\x.pto", "b.pto": ""})))
+        self.assertTrue(any("positionnels" in m for m in arguments.verifier(args, {"a.pto": "", "b.pto": r"D:\b.pto"})))
+        self.assertEqual(arguments.verifier(args, {"a.pto": r"D:\a.pto", "b.pto": r"D:\b.pto"}), [])
+
+    def test_verifier_accepte_le_relatif_sans_chemins_absolus(self):
+        args = [arguments.Arg("a.pto", "a", type="pto")]
+        self.assertEqual(arguments.verifier(args, {"a.pto": r"rel\x.pto"}, chemins_absolus=False), [])
+
+
 if __name__ == "__main__":
     unittest.main()

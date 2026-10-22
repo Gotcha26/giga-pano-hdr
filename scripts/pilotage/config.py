@@ -48,6 +48,14 @@ class Panorama:
     maitre: str = ""                     # relatif à P, ex. 3_optimisation\pano_grille_opt4.pto
     export_l: str = "Export-TIFF-L"
     export_h: str = "Export-TIFF-H"
+    hdr_pto: str = ""                    # chemins reportés d'une phase à la suivante (relatifs à P s'ils sont dessous)
+    rendu_hdr: str = ""
+    calques_hdr: str = ""
+    pleine_res: str = ""
+    reglages: dict = field(default_factory=dict)   # identifiant de tâche -> {nom d'argument: valeur mémorisée}
+
+
+CLES_CHEMIN_P = ("maitre", "hdr_pto", "rendu_hdr", "calques_hdr", "pleine_res")
 
 
 def _lire_json(chemin):
@@ -119,14 +127,33 @@ _FIXES = {
     "cp_pto": lambda p: os.path.join(p.P, "3_grille", "pano_grille_cp.pto"),
     "export_l": lambda p: os.path.join(p.T, p.export_l),
     "export_h": lambda p: os.path.join(p.T, p.export_h),
-    "maitre": lambda p: os.path.join(p.P, p.maitre) if p.maitre else None,
 }
+
+
+def _normaliser(chemin):
+    return os.path.normcase(os.path.abspath(chemin))
+
+
+def ranger_chemin(p, chemin):
+    """Chemin à stocker dans panorama.json : relatif à $P s'il est dessous (casse ignorée), sinon inchangé."""
+    if not chemin:
+        return chemin
+    racine = _normaliser(p.P)
+    complet = _normaliser(chemin)
+    if complet == racine or not complet.startswith(racine.rstrip(os.sep) + os.sep):
+        return chemin
+    return os.path.relpath(chemin, p.P)
 
 
 def valeur(p, cle):
     """Valeur de préremplissage (chaîne) pour une clé de configuration ; None si inconnue ou non renseignée."""
     if p is None:
         return None
+    if cle in CLES_CHEMIN_P:
+        v = getattr(p, cle, "")
+        if not v:
+            return None
+        return v if os.path.isabs(v) else os.path.join(p.P, v)
     if cle in _FIXES:
         return _FIXES[cle](p)
     if cle in ("T", "P", "H"):
