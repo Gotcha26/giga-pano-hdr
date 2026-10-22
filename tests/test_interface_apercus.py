@@ -1,8 +1,11 @@
 """Tests de interface.apercus : liste des images, cache et aperçus réduits par libvips."""
 
 import os
+import subprocess
 import sys
 import tempfile
+import threading
+import time
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -39,7 +42,7 @@ class TestApercus(unittest.TestCase):
     def test_dossier_absent_liste_vide(self):
         self.assertEqual(apercus.lister_images(None), [])
         self.assertEqual(apercus.lister_images(""), [])
-        self.assertEqual(apercus.lister_images(r"Z:\n\existe\pas"), [])
+        self.assertEqual(apercus.lister_images(self.tmp / "n_existe" / "pas"), [])
 
     def test_fichier_au_lieu_d_un_dossier_liste_vide(self):
         f = self._fichier("a.tif")
@@ -91,10 +94,73 @@ class TestApercus(unittest.TestCase):
         self.assertEqual(len(vu), 1)
         cmd = vu[0][0]
         self.assertEqual(cmd[:3], ["vips.exe", "thumbnail", str(f)])
-        self.assertEqual(cmd[3], f"{a1}[Q=85]")
+        self.assertEqual(cmd[3], f"{a1.with_suffix('.part.jpg')}[Q=85]")
         self.assertEqual(cmd[-1], "2000")
         self.assertTrue(vu[0][1]["capture_output"])
         self.assertTrue(vu[0][1]["text"])
+        self.assertEqual(vu[0][1]["timeout"], 120)
+        self.assertEqual([p.name for p in self.cache.iterdir()], [a1.name])     # le .part a été renommé
+
+    def test_apercu_echec_apres_ecriture_ne_laisse_aucun_jpeg(self):
+        f = self._fichier("a.tif")
+
+        def lancer(cmd, **k):
+            Path(cmd[3].split("[")[0]).write_bytes(b"jpg tronque")
+            return SimpleNamespace(returncode=1, stderr="coupé")
+        with self.assertRaises(RuntimeError):
+            apercus.apercu(f, "vips.exe", lancer=lancer, racine=self.cache)
+        self.assertEqual(list(self.cache.glob("*.jpg")), [])
+
+    def test_apercu_delai_depasse_leve_en_francais(self):
+        f = self._fichier("a.tif")
+        vu = []
+
+        def lancer(cmd, **k):
+            vu.append(k)
+            Path(cmd[3].split("[")[0]).write_bytes(b"debut")
+            raise subprocess.TimeoutExpired(cmd, k["timeout"])
+        with self.assertRaises(RuntimeError) as ctx:
+            apercus.apercu(f, "vips.exe", lancer=lancer, racine=self.cache, delai=7)
+        self.assertEqual(vu[0]["timeout"], 7)
+        self.assertIn("7 s", str(ctx.exception))
+        self.assertEqual(list(self.cache.glob("*.jpg")), [])
+
+    def test_apercus_concurrents_un_seul_appel_vips(self):
+        f = self._fichier("a.tif")
+        vu, entre = [], threading.Event()
+
+        def lancer(cmd, **k):
+            vu.append(cmd)
+            entre.set()
+            time.sleep(0.2)                     # laisse le second fil arriver sur le verrou
+            Path(cmd[3].split("[")[0]).write_bytes(b"jpg")
+            return SimpleNamespace(returncode=0, stderr="")
+        resultats = []
+
+        def tache():
+            resultats.append(apercus.apercu(f, "vips.exe", lancer=lancer, racine=self.cache))
+        fils = [threading.Thread(target=tache) for _ in range(2)]
+        fils[0].start()
+        entre.wait(5)
+        fils[1].start()
+        for t in fils:
+            t.join(5)
+        self.assertEqual(len(vu), 1)
+        self.assertEqual(len(resultats), 2)
+        self.assertEqual(resultats[0], resultats[1])
+
+    def test_liste_ignore_un_fichier_illisible(self):
+        self._fichier("a.tif", 1000)
+        self._fichier("b.tif", 2000)
+        stat_reel = Path.stat
+
+        def stat(self_, *a, **k):
+            if self_.name == "a.tif":
+                raise PermissionError("verrouillé")
+            return stat_reel(self_, *a, **k)
+        with mock.patch.object(Path, "stat", stat):
+            images = apercus.lister_images(self.tmp)
+        self.assertEqual([i.chemin.name for i in images], ["b.tif"])
 
     def test_apercu_largeur_personnalisee(self):
         f = self._fichier("a.tif")
