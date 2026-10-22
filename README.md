@@ -46,6 +46,7 @@ Le guide donne la **procédure** et ses raisons. L'étude de cas donne les **val
    python panorama.py
    ```
    Menu **Préparer** : il affiche les versions de ***Hugin***, ***multiblend***, ***Python*** (+ ***Pillow***), ***ExifTool***, ***libvips***, propose d'installer ce qui manque, et crée l'arborescence d'un **nouveau panorama**. Les autres menus suivent les phases du guide et ouvrent chaque script avec ses arguments préremplis.
+   1 bis. Ou l'**interface web** : `pip install nicegui` puis `python panorama_web.py` (depuis `scripts\`). ***NiceGUI*** s'installe dans les paquets de l'utilisateur : lancer avec `python` simple, pas `python -I`, qui les ignore.
 2. Un script se lance aussi seul : **sans argument** dans un terminal, il affiche le menu de ses arguments ; **avec des arguments**, il fait ce que dit le guide :
    ```powershell
    python verifier_ordre.py "$T\Export-TIFF-L" --grille <lignes> <colonnes>
@@ -63,7 +64,7 @@ giga-pano-hdr\
 ├── docs\
 │   ├── GUIDE.md                           ← la méthode générale (phases 0 à 7)
 │   └── NETTOYAGE-ancien-depot.md          ← à faire dans l'ancien dépôt, après la clôture de son issue #46
-├── scripts\                               ← 43 scripts .py / .ps1 / .cmd, un dossier (ils s'appellent entre eux)
+├── scripts\                               ← 46 scripts .py / .ps1 / .cmd et les lanceurs, un dossier (ils s'appellent entre eux)
 │   ├── panorama.py                        ← le lanceur : menus par phase, Phase 0 outillée
 │   ├── pilotage\                          ← kit partagé : couleurs, menus, configuration, outils, arguments
 │   └── INDEX.md                           ← quel script pour quoi, portée de chacun

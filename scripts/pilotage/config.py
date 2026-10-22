@@ -48,6 +48,14 @@ class Panorama:
     maitre: str = ""                     # relatif à P, ex. 3_optimisation\pano_grille_opt4.pto
     export_l: str = "Export-TIFF-L"
     export_h: str = "Export-TIFF-H"
+    hdr_pto: str = ""                    # chemins reportés d'une phase à la suivante (relatifs à P s'ils sont dessous)
+    rendu_hdr: str = ""
+    calques_hdr: str = ""
+    pleine_res: str = ""
+    reglages: dict = field(default_factory=dict)   # identifiant de tâche -> {nom d'argument: valeur mémorisée}
+
+
+CLES_CHEMIN_P = ("maitre", "hdr_pto", "rendu_hdr", "calques_hdr", "pleine_res")
 
 
 def _lire_json(chemin):
@@ -80,14 +88,43 @@ def enregistrer_poste(poste, chemin=None):
 
 
 def charger_panorama(T):
+    """Le panorama de $T, ou None si son panorama.json manque ou est illisible ; des réglages mémorisés qui ne
+    sont pas un dictionnaire (fichier corrompu, « null ») sont ignorés."""
     donnees = _lire_json(Path(T) / NOM_FICHIER_PANORAMA)
     if not isinstance(donnees, dict) or "T" not in donnees or "P" not in donnees:
         return None
-    return _depuis_dict(Panorama, donnees)
+    p = _depuis_dict(Panorama, donnees)
+    if not isinstance(p.reglages, dict):
+        p.reglages = {}
+    return p
 
 
 def enregistrer_panorama(p):
     _ecrire_json(Path(p.T) / NOM_FICHIER_PANORAMA, asdict(p))
+
+
+def mettre_a_jour(T, /, **cles):
+    """Relit le panorama.json de $T, lui applique `cles`, l'enregistre et retourne le panorama relu et modifié.
+
+    Ce qui a changé sur disque depuis le chargement d'un objet Panorama gardé en mémoire (une autre tâche, un
+    autre onglet, une modification à la main) est conservé : seules les clés données sont réécrites.
+    `reglages={identifiant: {...}}` remplace les réglages de ces identifiants seulement ; `reglages={}` les
+    vide tous. Une clé `T` différente déplace l'enregistrement dans le nouveau $T.
+    FileNotFoundError si $T n'a pas de panorama.json lisible ; TypeError pour une clé inconnue."""
+    p = charger_panorama(T)
+    if p is None:
+        raise FileNotFoundError(f"{NOM_FICHIER_PANORAMA} absent ou illisible dans {T}")
+    connues = {f.name for f in fields(Panorama)}
+    inconnues = set(cles) - connues
+    if inconnues:
+        raise TypeError(f"clé de panorama inconnue : {', '.join(sorted(inconnues))}")
+    if "reglages" in cles:
+        reglages = cles.pop("reglages")
+        p.reglages = {**p.reglages, **reglages} if reglages else {}
+    for cle, v in cles.items():
+        setattr(p, cle, v)
+    enregistrer_panorama(p)
+    return p
 
 
 def panorama_courant(poste):
@@ -119,17 +156,101 @@ _FIXES = {
     "cp_pto": lambda p: os.path.join(p.P, "3_grille", "pano_grille_cp.pto"),
     "export_l": lambda p: os.path.join(p.T, p.export_l),
     "export_h": lambda p: os.path.join(p.T, p.export_h),
-    "maitre": lambda p: os.path.join(p.P, p.maitre) if p.maitre else None,
 }
+
+
+def _normaliser(chemin):
+    return os.path.normcase(os.path.abspath(chemin))
+
+
+def sous(racine, chemin, inclus=False):
+    """Vrai si `chemin` est strictement sous `racine` (casse et séparateurs ignorés ; « D:\\T-voisin » n'est pas
+    sous « D:\\T ») ; `inclus` : la racine elle-même compte aussi. Faux si l'un des deux est vide."""
+    if not racine or not chemin:
+        return False
+    r = _normaliser(racine).rstrip(os.sep)
+    c = _normaliser(chemin)
+    return (inclus and c == r) or c.startswith(r + os.sep)
+
+
+def ranger_chemin(p, chemin):
+    """Chemin à stocker dans panorama.json : relatif à $P s'il est dessous (casse ignorée), sinon inchangé
+    (inchangé aussi si $P est vide : le dossier courant n'est pas une racine de panorama)."""
+    if not sous(p.P, chemin):
+        return chemin
+    return os.path.relpath(chemin, p.P)
 
 
 def valeur(p, cle):
     """Valeur de préremplissage (chaîne) pour une clé de configuration ; None si inconnue ou non renseignée."""
     if p is None:
         return None
+    if cle in CLES_CHEMIN_P:
+        v = getattr(p, cle, "")
+        if not v:
+            return None
+        return v if os.path.isabs(v) else os.path.join(p.P, v)
     if cle in _FIXES:
         return _FIXES[cle](p)
     if cle in ("T", "P", "H"):
         return getattr(p, cle) or None
     v = getattr(p, cle, None)
     return None if v in (None, "") else str(v)
+
+
+# Valeurs du guide, proposées faute de mieux
+DEFAUTS_GUIDE = {"largeur_mm": 24, "largeur_hdr": 20000}
+RACINE_GUIDE = r"D:\Panoramas"      # 0D : $T = <racine>\<date>\<focale>, $H = <dossier des RAW>\HDR
+QUESTIONS = [   # (clé, question, entier) ; la focale est demandée avant $T, qu'elle sert à nommer
+    ("lignes", "Lignes de la grille", True),
+    ("colonnes", "Colonnes de la grille", True),
+    ("expos", "Expositions par position", True),
+    ("largeur_mm", "Côté horizontal du capteur (mm : 24 en portrait plein format)", False),
+    ("pas_h", "Pas horizontal (°)", False),
+    ("pas_v", "Pas vertical (°)", False),
+    ("largeur_hdr", "Largeur du HDR (px)", True),
+    ("largeur_pleine", "Largeur de la pleine résolution (px)", True),
+]
+
+
+def propositions_nouveau(courant, date, focale, T, raws):
+    """Valeurs proposées pour un nouveau panorama, d'après ce qui est déjà connu (None = pas encore donné).
+
+    Les chemins suivent le guide (0D) : $T = <racine>\\<date>\\<focale>mm (racine du panorama courant, sinon
+    D:\\Panoramas), $H = <dossier des RAW>\\HDR. Une valeur de question vient du panorama.json déjà présent dans
+    $T, sinon du panorama courant (même série d'objectif), sinon du guide. `existant` : ce panorama.json, ou None."""
+    racine = str(Path(courant.T).parent.parent) if courant and courant.T else RACINE_GUIDE
+    if not T:
+        T = str(Path(racine, date, f"{focale:g}mm" if focale else ""))
+    existant = charger_panorama(T)
+    if raws is None:
+        raws = str(Path(existant.H).parent) if existant and existant.H else ""
+    H = existant.H if existant and existant.H else (str(Path(raws, "HDR")) if raws else "")
+    resultat = {"date": date, "focale": focale, "T": T, "raws": raws, "H": H, "existant": existant}
+    source = existant or courant
+    for cle, _, _ in QUESTIONS:
+        v = getattr(source, cle, None) if source else None
+        resultat[cle] = v if v is not None else DEFAUTS_GUIDE.get(cle)
+    return resultat
+
+
+def creer_nouveau(poste, valeurs):
+    """Crée le panorama décrit par `valeurs` (T, H, focale et les clés de QUESTIONS), son arborescence et son
+    panorama.json, le range parmi les panoramas connus du poste et le rend courant ; retourne (panorama, dossiers
+    créés). Ce que `valeurs` ne porte pas (maître, noms d'export, chemins reportés, réglages mémorisés) est
+    conservé d'un panorama.json déjà présent dans $T."""
+    T = valeurs["T"]
+    questions = {cle: valeurs.get(cle) for cle, _, _ in QUESTIONS}
+    p = Panorama(T=T, P=os.path.join(T, "Assemblage-Hugin"), H=valeurs.get("H") or "",
+                 focale=valeurs.get("focale"), **questions)
+    existant = charger_panorama(T)
+    if existant:
+        for cle in ("export_l", "export_h", "reglages", *CLES_CHEMIN_P):
+            setattr(p, cle, getattr(existant, cle))
+    crees = creer_arborescence(p)
+    enregistrer_panorama(p)
+    if T not in poste.panoramas:
+        poste.panoramas.append(T)
+    poste.courant = T
+    enregistrer_poste(poste)
+    return p, crees

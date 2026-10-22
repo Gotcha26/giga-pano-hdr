@@ -19,6 +19,7 @@ from .couleurs import Couleurs
 from .menu import pause
 
 RE_CONSTANTE = re.compile(r"^(COLS|ROWS|FOCALE|LARGEUR_MM|PAS_H|PAS_V|EXPOS|FOV_H|FOV_V)\s*=\s*([\d.]+)", re.MULTILINE)
+RE_DIESE = re.compile(r"^# ?")          # début d'une ligne de commentaire PowerShell : « # » puis un espace facultatif
 RE_CONSTANTES_DOUBLE = re.compile(r"^(COLS|ROWS), (COLS|ROWS)\s*=\s*([\d.]+),\s*([\d.]+)", re.MULTILINE)
 
 MESSAGES_INTERRUPTION = {
@@ -98,9 +99,27 @@ def _piloter(ctx, doc, arguments, ecrit, commande, script, constantes=None, cons
         pause(ctx.c, ctx.lire)
 
 
-def _executer(ctx, commande, script=""):
+def environnement_enfant():
+    """Environnement d'un script lancé : jamais de second menu (GIGA_PANO_SANS_MENU), sortie en UTF-8 et sans
+    tampon (lue par un tube depuis la page web, une sortie Python tamponnée n'arriverait qu'à la fin)."""
     env = dict(os.environ)
     env[args_mod.SANS_MENU] = "1"          # l'enfant hérite de la console : il ne doit pas rouvrir un menu
+    env["PYTHONIOENCODING"] = "utf-8"
+    env["PYTHONUNBUFFERED"] = "1"
+    return env
+
+
+def commande_python(ctx, script, argv):
+    return [sys.executable, str(ctx.scripts / script), *argv]
+
+
+def commande_powershell(ctx, script, argv):
+    return [_executable_powershell(ctx), "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
+            str(ctx.scripts / script), *argv]
+
+
+def _executer(ctx, commande, script=""):
+    env = environnement_enfant()
     try:
         r = ctx.executer(commande, cwd=str(ctx.scripts), env=env)
         return getattr(r, "returncode", 0)
@@ -120,7 +139,7 @@ def python(ctx, script, arguments=None, ecrit=None):
     else:
         doc = args_mod.lire_declaration(chemin)[2]
     return _piloter(ctx, doc, _prerempli_outils(ctx, arguments), ecrit,
-                    lambda argv: [sys.executable, str(chemin), *argv], script, constantes=constantes_du_fichier(chemin))
+                    lambda argv: commande_python(ctx, script, argv), script, constantes=constantes_du_fichier(chemin))
 
 
 def construire_ps(arguments, valeurs):
@@ -139,17 +158,24 @@ def construire_ps(arguments, valeurs):
     return resultat
 
 
-def _titre_ps(chemin):
-    """Première ligne de commentaire d'un script PowerShell (son titre)."""
+def commentaire_ps(chemin):
+    """Bloc de commentaires d'en-tête d'un script PowerShell (lignes # consécutives), sans « # » ni l'espace qui
+    le suit (un seul : l'indentation au-delà est gardée)."""
+    bloc = []
     try:
         for ligne in Path(chemin).read_text(encoding="utf-8").splitlines():
             if ligne.startswith("#"):
-                return ligne.lstrip("# ").strip()
-            if ligne.strip():
+                bloc.append(RE_DIESE.sub("", ligne, count=1))
+            elif bloc or ligne.strip():
                 break
     except OSError:
         pass
-    return ""
+    return "\n".join(bloc).strip("\n")
+
+
+def _titre_ps(chemin):
+    """Première ligne non vide du commentaire d'en-tête d'un script PowerShell (son titre)."""
+    return next((l.strip() for l in commentaire_ps(chemin).splitlines() if l.strip()), "")
 
 
 def powershell_disponible(ctx):
@@ -166,15 +192,23 @@ def powershell(ctx, script, arguments, ecrit, doc=None):
     arguments = _prerempli_outils(ctx, arguments)
     if doc is None:
         doc = _titre_ps(ctx.scripts / script) or script
-    entete = [_executable_powershell(ctx), "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ctx.scripts / script)]
-    return _piloter(ctx, doc, arguments, ecrit, lambda argv: [*entete, *argv], script, construire=construire_ps)
+    return _piloter(ctx, doc, arguments, ecrit, lambda argv: commande_powershell(ctx, script, argv), script,
+                    construire=construire_ps)
 
 
-def outil(ctx, cle, args):
-    """Exécute un programme livré avec un outil détecté (ex. cpclean.exe du dossier de Hugin)."""
+def commande_outil(ctx, cle, args):
+    """Commande d'un programme livré avec un outil détecté (ex. cpclean.exe à côté de nona.exe, dans le dossier
+    bin de Hugin) ; LookupError si l'outil est absent."""
     e = etat(ctx, cle)
     if not (e and e.present):
-        ctx.ecrire(ctx.c.erreur(f"{cle} introuvable : voir Configuration."))
-        return None
-    dossier = os.path.dirname(e.chemin)
-    return _executer(ctx, [os.path.join(dossier, args[0]), *args[1:]])
+        raise LookupError(f"{cle} introuvable : voir Configuration.")
+    return [os.path.join(os.path.dirname(e.chemin), args[0]), *args[1:]]
+
+
+def commande_cpclean(ctx, argv):
+    """cpclean.exe -p -n 2 -o <sortie> <entrée>, `argv` = [entrée, sortie] (catalogue.ARGS_CPCLEAN construits)."""
+    entree, sortie = argv
+    return commande_outil(ctx, "hugin", ["cpclean.exe", "-p", "-n", "2", "-o", sortie, entree])
+
+
+COMMANDES_ACTIONS = {"cpclean": commande_cpclean}      # action du catalogue -> commande(ctx, argv)

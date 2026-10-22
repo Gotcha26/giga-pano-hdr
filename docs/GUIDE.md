@@ -103,7 +103,7 @@ flowchart LR
 
 > **Numérotation.** Chaque geste porte un identifiant : le chiffre de sa phase, puis une lettre qui repart à A dans chaque phase (**3E** : cinquième étape de la Phase 3) ; une sous-étape ajoute un point et un chiffre (**3C.2**). Les scripts, l'index et l'étude de cas citent les mêmes identifiants.
 
-**Notations du guide.** `L` lignes, `C` colonnes, `N` expositions par position ; `k = ligne × C + colonne` est le numéro d'une position. Les variables PowerShell `$OUTILS`, `$T`, `$P` et `$H` sont définies en [**0D**](#0d--préparer-les-disques-et-les-emplacements). Les noms de fichiers des commandes (`pano_grille_opt.pto`, `vue_centree.pto`…) sont des repères : on enregistre sous un **nouveau nom à chaque étape** pour pouvoir revenir en arrière.
+**Notations du guide.** `L` lignes, `C` colonnes, `N` expositions par position ; `k = ligne × C + colonne` est le numéro d'une position. Les variables PowerShell `$OUTILS`, `$T`, `$P` et `$H` sont définies en [**0D**](#0d--préparer-les-disques-et-les-emplacements). Les noms de fichiers des commandes (`pano_grille_opt.pto`, `vue_centree.pto`…) sont des repères : on enregistre sous un **nouveau nom à chaque étape** pour pouvoir revenir en arrière ; seul le maître final porte toujours le nom `pano_grille_opt.pto` (**3G**).
 
 Pressé ? La séquence complète des commandes est dans l'[aide-mémoire](#aide-mémoire--la-séquence-complète).
 
@@ -758,7 +758,7 @@ python affiner_images_faibles.py "$P\3_optimisation\pano_grille_opt2_ciel.pto" "
 python affiner_images_faibles.py "$P\3_optimisation\pano_grille_opt2_ciel.pto" "$P\3_grille\pano_grille_cp.pto" "$P\3_optimisation\pano_grille_opt3_in.pto" 1.5 5
 ```
 
-Arguments : projet de base (images faibles déjà replacées), projet contenant les points **bruts**, sortie, seuil (°), nombre minimal de points valides. Ouvrir la sortie dans ***Hugin*** et **Optimiser maintenant !**.
+Arguments : projet de base (images faibles déjà replacées), projet contenant les points **bruts**, sortie, seuil (°), nombre minimal de points valides. Ouvrir la sortie dans ***Hugin*** et **Optimiser maintenant !**. Enregistrer ce résultat sous `3_optimisation\pano_grille_opt.pto` : c'est le **projet maître**, le nom que toutes les commandes des phases 4 à 6 emploient, et que le lanceur reconnaît.
 
 Outils d'inspection :
 
@@ -1506,12 +1506,14 @@ Toutes les commandes de ce guide restent valables telles quelles. Deux facilité
 - **Le lanceur** ***panorama.py*** (`python panorama.py` depuis `$OUTILS`) aiguille vers le bon script **par phase du guide** : chaque sous-menu liste des tâches, nomme le script appelé et déclare ce qu'il écrit et où (`[écrit — cible]` ou `[lecture seule]`). Les gestes qui se font dans ***Hugin*** ou ***Lightroom*** (**3B**, **3E**, **5C**, **6A**, **7C**) y apparaissent grisés, avec leur rappel. La Phase 0 y est outillée : versions des outils, installation de ce qui manque (sur confirmation), dossiers des préréglages ***Lightroom***, création de l'arborescence d'un nouveau panorama.
 - **Le menu de pilotage** d'un script Python s'affiche quand on le lance **sans argument, dans un terminal** : la liste numérotée de ses arguments, préremplie, où l'on règle chaque valeur avant de taper `L` pour lancer. Avec des arguments, ou appelé par un autre programme, un script ne pose **jamais** de question. Les scripts PowerShell n'ont pas ce menu : le lanceur le leur fournit. Depuis le lanceur, après chaque exécution, le menu de pilotage revient avec les mêmes réglages (un essai à blanc se relance avec `--apply`), et les chemins se saisissent **en entier** : le lanceur exécute les scripts depuis `$OUTILS`, où un chemin relatif ou abrégé (`…\rendu`) créerait un dossier dans le dépôt ; il le refuse avant de lancer.
 
+**L'interface web** ***panorama_web.py*** (`python panorama_web.py`, après `pip install nicegui`) présente les mêmes tâches par phase dans le navigateur : formulaires préremplis, console du script, section du guide à côté, aperçu des TIFF produits, et report automatique dans `panorama.json` du maître, du projet HDR et des dossiers de rendu. ***NiceGUI*** s'installe dans les paquets de l'utilisateur : on lance donc ***panorama_web.py*** avec `python` simple, pas `python -I`, qui ignore ces paquets.
+
 Le préremplissage vient de deux fichiers JSON, hors dépôt :
 
 | Fichier | Contenu | Qui l'écrit |
 | --- | --- | --- |
 | `%LOCALAPPDATA%\giga-pano-hdr\config.json` | Chemins des outils, panoramas connus, panorama **courant** | Le lanceur (Configuration, Nouveau panorama) |
-| `$T\panorama.json` | `T`, `P`, `H`, grille, expositions, focale, pas, largeurs du HDR et de la pleine résolution, projet maître | Le lanceur (Nouveau panorama) ; à la main ensuite, par exemple pour `maitre` une fois **3G** terminé |
+| `$T\panorama.json` | `T`, `P`, `H`, grille, expositions, focale, pas, largeurs du HDR et de la pleine résolution, projet maître ; `hdr_pto` (projet HDR dérivé, **5A**), `rendu_hdr` (dossier des `f_NNNN.tif` de **5B**), `calques_hdr` (dossier des calques de **5B**), `pleine_res` (TIFF de la pleine résolution, **6C.4**), `reglages` (réglages mémorisés par tâche) | Le lanceur (Nouveau panorama) ; l'interface web (report automatique, Mémoriser) ; à la main ensuite, par exemple pour `maitre` une fois **3G** terminé |
 
 Quand une **constante en dur** d'un script (`COLS`, `PAS_V`…) contredit le panorama courant, le menu de pilotage l'affiche en avertissement et demande confirmation avant de lancer : c'est le rappel d'adapter la constante, pas une interdiction.
 

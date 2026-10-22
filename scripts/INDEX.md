@@ -1,6 +1,6 @@
 # Index des scripts d'assemblage
 
-Les 43 scripts de ce dossier forment la chaîne qui mène des images exportées de *Lightroom* à un giga-panorama tuilé : renommage, géométrie dans *Hugin*, rendu, mesures de qualité, cadrage, tuilage. Chacun porte, **en tête de fichier**, son propre mode d'emploi.
+Les 46 scripts de ce dossier (36 Python, 9 PowerShell, 1 .cmd ; hors les deux lanceurs `panorama.py` et `panorama_web.py` et les paquets `pilotage/` et `interface/`) forment la chaîne qui mène des images exportées de *Lightroom* à un giga-panorama tuilé : renommage, géométrie dans *Hugin*, rendu, mesures de qualité, cadrage, tuilage. Chacun porte, **en tête de fichier**, son propre mode d'emploi.
 
 ---
 
@@ -9,7 +9,9 @@ Les 43 scripts de ce dossier forment la chaîne qui mène des images exportées 
 | Entrée | Rôle |
 | --- | --- |
 | [***panorama.py***](panorama.py) | **Le lanceur** : `python panorama.py`. Menu par phase du guide ; chaque tâche nomme son script et déclare ce qu'elle écrit. Phase 0 : versions des outils, installation, dossiers des préréglages Lightroom, nouveau panorama (arborescence + `panorama.json`), panorama courant. Configuration : chemins des outils |
-| [`pilotage/`](pilotage/) | Le kit partagé : `couleurs.py` (ANSI), `menu.py` (menus déclaratifs), `config.py` (`config.json` du poste et `$T\panorama.json`), `outils.py` (détection, versions, `winget`), `arguments.py` (menu de pilotage des arguments d'un script), `lancer.py` (sous-processus), `declarations_ps.py` (arguments des scripts PowerShell) |
+| [***panorama_web.py***](panorama_web.py) | **L'interface web** : `pip install nicegui` puis `python panorama_web.py` (`python` simple, pas `-I`). Les mêmes tâches par phase dans le navigateur : formulaires préremplis, console, section du guide, aperçus des TIFF, report dans `panorama.json`. `--sans-navigateur` (ou `GIGA_PANO_SANS_NAVIGATEUR=1`) n'ouvre pas le navigateur |
+| [`interface/`](interface/) | Le code de l'interface web (seul avec `panorama_web.py` à importer ***NiceGUI***) : `page.py` (assemblage) et ses parties `entete.py`, `colonne.py`, `zone_tache.py`, `console.py`, `aide_volet.py`, puis `pages_poste.py`, `formulaire.py`, `execution.py`, `reglages.py`, `aide.py`, `apercus.py` |
+| [`pilotage/`](pilotage/) | Le kit partagé : `catalogue.py` (le catalogue déclaratif des tâches, lu par le lanceur et par l'interface web), `couleurs.py` (ANSI), `menu.py` (menus déclaratifs), `config.py` (`config.json` du poste et `$T\panorama.json`), `outils.py` (détection, versions, `winget`), `arguments.py` (menu de pilotage des arguments d'un script), `lancer.py` (sous-processus), `declarations_ps.py` (arguments des scripts PowerShell) |
 
 **Menu de pilotage** : chaque script Python de cet index, lancé **sans argument dans un terminal**, affiche la liste de ses arguments, préremplie d'après le panorama courant, et se lance sur `L`. Avec des arguments, il se comporte exactement comme avant. Les scripts PowerShell n'ont pas ce menu : le lanceur le leur fournit. ***verifier_renvois.py*** en est exempté (sans argument, il contrôle).
 
@@ -17,7 +19,7 @@ Les 43 scripts de ce dossier forment la chaîne qui mène des images exportées 
 
 ## 📋 Pour qui ?
 
-Pour qui veut savoir « quel script pour quoi ? » sans ouvrir les 43 fichiers : cet index les classe par phase, dans l'ordre où on s'en sert, avec l'identifiant de l'étape du [guide](../docs/GUIDE.md) qui les emploie (**3F**, **6C**…) et leur **portée**. Le détail des gestes dans *Hugin* et *Lightroom* est dans le guide (voir son aide-mémoire pour la séquence complète).
+Pour qui veut savoir « quel script pour quoi ? » sans ouvrir les 46 fichiers : cet index les classe par phase, dans l'ordre où on s'en sert, avec l'identifiant de l'étape du [guide](../docs/GUIDE.md) qui les emploie (**3F**, **6C**…) et leur **portée**. Le détail des gestes dans *Hugin* et *Lightroom* est dans le guide (voir son aide-mémoire pour la séquence complète).
 
 ---
 
@@ -29,7 +31,7 @@ Pour qui veut savoir « quel script pour quoi ? » sans ouvrir les 43 fichiers :
 | 🟡 **Paramétré par la grille** | Contient en tête des **constantes** écrites pour une prise de vue donnée :<ul><li>colonnes</li><li>lignes</li><li>focale</li><li>pas</li><li>champ</li></ul> | Les constantes en tête du script (voir les [conventions](#️-conventions-communes)) |
 | 🔵 **Rédaction** | Sert à tenir le guide, pas à assembler | Rien |
 
-Les 43 scripts sont des outils de **méthode** : aucun n'est propre à un seul panorama. Ce qui est propre à un panorama (table RAW → `L_C_E`, préréglages Lightroom, mesures) est dans son dossier `etudes-de-cas/`.
+Les 46 scripts sont des outils de **méthode** : aucun n'est propre à un seul panorama. Ce qui est propre à un panorama (table RAW → `L_C_E`, préréglages Lightroom, mesures) est dans son dossier `etudes-de-cas/`.
 
 ---
 

@@ -69,12 +69,21 @@ CLOTURE = "```"
 SCHEMAS = ("", "mermaid")  # blocs lus comme du texte : arborescences et diagrammes
 
 
+CLOTURES = (CLOTURE, "~~~")
+
+
 def _blocs(texte: str):
-    """(numéro, ligne, bloc) : bloc vaut None hors code, la langue du bloc de code (« » sans langue), ou CLOTURE."""
-    bloc = None
+    """(numéro, ligne, bloc) : bloc vaut None hors code, la langue du bloc de code (« » sans langue), ou CLOTURE
+    sur les lignes de clôture. Un bloc s'ouvre par ``` ou ~~~ et se ferme par la même clôture (un ~~~ dans un
+    bloc ``` est du contenu, et inversement)."""
+    bloc, ouverture = None, None
     for n, ligne in enumerate(texte.splitlines(), 1):
-        if ligne.lstrip().startswith(CLOTURE):
-            bloc = ligne.strip()[3:].strip().lower() if bloc is None else None
+        debut = ligne.lstrip()[:3]
+        if debut in CLOTURES and (ouverture is None or debut == ouverture):
+            if ouverture is None:
+                bloc, ouverture = ligne.strip()[3:].strip().lower(), debut
+            else:
+                bloc, ouverture = None, None
             yield n, ligne, CLOTURE
             continue
         yield n, ligne, bloc

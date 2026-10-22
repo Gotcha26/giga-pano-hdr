@@ -41,6 +41,16 @@ class TestArgv(unittest.TestCase):
         v = {"optimise.pto": "a.pto", "sortie.pto": "b.pto", "--rapport": False, "--images": ""}
         self.assertEqual(arguments.construire_argv(ARGS, v), ["a.pto", "b.pto"])
 
+    def test_appliquer_lit_relie_au_panorama_sans_toucher_la_declaration(self):
+        relies = arguments.appliquer_lit(ARGS, {"sortie.pto": "hdr_pto"})
+        self.assertEqual(relies[1].config, "hdr_pto")
+        self.assertIsNone(ARGS[1].config)                         # copie : la déclaration est intacte
+        self.assertEqual([a.nom for a in relies], [a.nom for a in ARGS])
+        self.assertEqual(relies[:1] + relies[2:], ARGS[:1] + ARGS[2:])
+        self.assertEqual(arguments.appliquer_lit(ARGS, {}), ARGS)
+        with self.assertRaisesRegex(ValueError, "non déclaré : -Absent"):
+            arguments.appliquer_lit(ARGS, {"-Absent": "maitre"})
+
     def test_obligatoire_deduit(self):
         self.assertTrue(ARGS[0].obligatoire)
         self.assertFalse(ARGS[2].obligatoire)
@@ -96,6 +106,23 @@ class TestMenu(unittest.TestCase):
         self.assertIsNone(r)
         self.assertIn("obligatoire", texte.lower())
 
+    def test_deux_familles_d_erreurs_ecrites_ensemble_avec_une_seule_pause(self):
+        args = [arguments.Arg("a.pto", "a", type="pto"), arguments.Arg("b.pto", "b", type="pto")]
+        invites, lignes = [], []
+        reponses = iter(["1", r"rel\x.pto", "L", "", "0"])      # a relatif, b vide : obligatoire + chemin relatif
+
+        def lire(invite=""):
+            invites.append(invite)
+            return next(reponses)
+
+        r = arguments.menu("T", args, None, c=C, lire=lire, ecrire=lignes.append, effacer=lambda: None,
+                           chemins_absolus=True)
+        self.assertIsNone(r)                                    # retour au menu, puis « 0 »
+        texte = "\n".join(lignes)
+        self.assertIn("Argument obligatoire non renseigné : b.pto", texte)
+        self.assertIn("Chemin à saisir en entier", texte)
+        self.assertEqual(sum("Appuyez sur Entrée" in i for i in invites), 1)
+
     def test_drapeau_et_nargs(self):
         r, _ = self.menu(["2", "s.pto", "6", "7", "3456 5184", "L"])
         self.assertEqual(r[-4:], ["--rapport", "--images", "3456", "5184"])
@@ -122,6 +149,27 @@ class TestMenu(unittest.TestCase):
                                lire=saisies("1", "1", "2", "s.pto", "L"), ecrire=lignes.append, effacer=lambda: None)
             self.assertEqual(r[0], str(P / "3_optimisation" / "opt4.pto"))
             self.assertIn("[lecture seule]", "\n".join(lignes))
+
+
+class TestValeursInitialesEtVerification(unittest.TestCase):
+    def test_valeurs_initiales_memorisees_avant_panorama(self):
+        p = config.Panorama(T="D:\\x", P="D:\\x\\P", largeur_hdr=20000)
+        args = [arguments.Arg("-Largeur", "l", type="entier", config="largeur_hdr"),
+                arguments.Arg("-Nom", "n", defaut="panorama")]
+        v = arguments.valeurs_initiales(args, p, memorises={"-Nom": "vue"})
+        self.assertEqual(v, {"-Largeur": "20000", "-Nom": "vue"})
+        self.assertIs(arguments._valeurs_initiales, arguments.valeurs_initiales)
+
+    def test_verifier_rend_les_trois_familles_de_messages(self):
+        args = [arguments.Arg("a.pto", "a", type="pto"), arguments.Arg("b.pto", "b", type="pto")]
+        self.assertTrue(any("obligatoire" in m for m in arguments.verifier(args, {"a.pto": "", "b.pto": ""})))
+        self.assertTrue(any("en entier" in m for m in arguments.verifier(args, {"a.pto": r"rel\x.pto", "b.pto": ""})))
+        self.assertTrue(any("positionnels" in m for m in arguments.verifier(args, {"a.pto": "", "b.pto": r"D:\b.pto"})))
+        self.assertEqual(arguments.verifier(args, {"a.pto": r"D:\a.pto", "b.pto": r"D:\b.pto"}), [])
+
+    def test_verifier_accepte_le_relatif_sans_chemins_absolus(self):
+        args = [arguments.Arg("a.pto", "a", type="pto")]
+        self.assertEqual(arguments.verifier(args, {"a.pto": r"rel\x.pto"}, chemins_absolus=False), [])
 
 
 if __name__ == "__main__":
