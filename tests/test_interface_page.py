@@ -185,6 +185,26 @@ class TestTache(unittest.TestCase):
         self.assertIn("](https://github.com/Gotcha26/giga-pano-hdr/blob/main/docs/GUIDE.md#0d--dossiers)", texte)
         self.assertIn("](https://x.org)", texte)
 
+    def test_liens_relatifs_et_images_vers_github(self):
+        depot = "https://github.com/Gotcha26/giga-pano-hdr"
+        texte = self.page.liens_absolus(
+            "[index](../scripts/INDEX.md) [voisin](./AUTRE.md) [nu](AUTRE.md#section) "
+            '![schéma](img/a.png "titre") ![loin](https://x.org/i.png) [mail](mailto:a@b.c) [dehors](../../x.md)')
+        self.assertIn(f"[index]({depot}/blob/main/scripts/INDEX.md)", texte)
+        self.assertIn(f"[voisin]({depot}/blob/main/docs/AUTRE.md)", texte)
+        self.assertIn(f"[nu]({depot}/blob/main/docs/AUTRE.md#section)", texte)
+        self.assertIn(f'![schéma]({depot}/raw/main/docs/img/a.png "titre")', texte)
+        self.assertIn("![loin](https://x.org/i.png)", texte)
+        self.assertIn("[mail](mailto:a@b.c)", texte)
+        self.assertIn("[dehors](../../x.md)", texte)        # sortirait du dépôt : laissé tel quel
+
+    def test_zoom_a_la_molette_borne(self):
+        from interface import console
+        self.assertEqual(console.niveau_molette(1, True), 1.25)
+        self.assertEqual(console.niveau_molette(1, False), 1)          # jamais sous l'image ajustée
+        self.assertEqual(console.niveau_molette(16, True), 16)
+        self.assertAlmostEqual(console.niveau_molette(2, False), 1.6)
+
     def test_etat_execution_et_taille(self):
         ex = SimpleNamespace(etat="échec", code=2)
         self.assertEqual(self.page.etat_execution(ex), "échec (code 2)")

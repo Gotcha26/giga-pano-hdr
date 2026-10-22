@@ -70,8 +70,9 @@ def construire(etat):
             await run.io_bound(execution.arreter, ex)
         ui.notify("Serveur arrêté : vous pouvez fermer l'onglet.")
         app.shutdown()
-        # filet : une fois, le serveur a cessé d'écouter sans que le processus se termine (non reproduit) ;
-        # les scripts lancés sont déjà arrêtés, rien n'est perdu à forcer la sortie quelques secondes plus tard
+        # filet : une fois, le serveur a cessé d'écouter sans que le processus se termine (non reproduit ; cause
+        # probable : fils du pool io_bound encore occupés, boîte Parcourir ouverte ou taskkill lent, que l'arrêt
+        # attend) ; les scripts lancés sont déjà arrêtés, rien n'est perdu à forcer la sortie quelques secondes après
         filet = threading.Timer(DELAI_SORTIE_FORCEE, os._exit, (0,))
         filet.daemon = True
         filet.start()

@@ -14,6 +14,16 @@ from . import apercus, execution, formulaire
 
 VIPS_ABSENT = "libvips absent : voir Configuration"
 LIMITE_IMAGES = 200
+ZOOM_MAX = 16
+PAS_MOLETTE = 1.25
+AIDE_ZOOM = "molette : zoom · clic : ×2 · Maj+clic : ÷2"
+# position visée dans l'image (fractions de sa largeur et de sa hauteur) et sens de la molette ; le défilement
+# natif est empêché pour que la molette ne fasse que zoomer
+JS_MOLETTE = ("(e) => { e.preventDefault(); const i = e.currentTarget.querySelector('img');"
+              " if (!i) return; const r = i.getBoundingClientRect();"
+              " const borne = (v) => Math.min(Math.max(v, 0), 1);"
+              " emit({avant: e.deltaY < 0, fx: borne((e.clientX - r.left) / r.width),"
+              " fy: borne((e.clientY - r.top) / r.height)}); }")
 
 
 # ---------------------------------------------------------------- fonctions pures
@@ -42,6 +52,16 @@ def chemin_vips(ctx):
         return configure
     e = lancer.etat(ctx, "vips")
     return e.chemin if e and e.present else None
+
+
+def borner_zoom(niveau):
+    """Niveau de zoom ramené entre 1 (image ajustée à la largeur) et ZOOM_MAX."""
+    return min(max(niveau, 1), ZOOM_MAX)
+
+
+def niveau_molette(niveau, avant):
+    """Niveau après un cran de molette : ×PAS_MOLETTE vers l'avant, ÷PAS_MOLETTE vers l'arrière, borné."""
+    return borner_zoom(niveau * PAS_MOLETTE if avant else niveau / PAS_MOLETTE)
 
 
 def taille_lisible(octets):
@@ -121,12 +141,14 @@ def construire(etat):
                 ui.label(f"… et {len(images) - LIMITE_IMAGES} autres").classes("text-gray-600")
 
     def visionneuse(nom, jpeg):
-        """Aperçu en grand ; clic : zoom ×2 centré sur le point, Maj+clic : dézoom ; défilement pour se déplacer."""
+        """Aperçu en grand ; molette : zoom ×1,25 sur le point visé ; clic : zoom ×2 centré sur le point,
+        Maj+clic : dézoom ; barres de défilement pour se déplacer."""
         zoom = {"niveau": 1, "largeur": 1, "hauteur": 1}
         with ui.dialog().props("maximized") as dialogue, ui.card().classes("w-full h-full p-2"):
             with ui.row().classes("w-full items-center gap-2"):
                 ui.label(nom).classes("font-bold")
                 ui.space()
+                ui.label(AIDE_ZOOM).classes("text-xs text-gray-500")
                 ui.button("−", on_click=lambda: zoomer(zoom["niveau"] / 2)).props("flat")
                 ui.button("+", on_click=lambda: zoomer(zoom["niveau"] * 2)).props("flat")
                 ui.button("Ajuster", on_click=lambda: zoomer(1)).props("flat no-caps")
@@ -135,7 +157,7 @@ def construire(etat):
                 image = ui.interactive_image(jpeg, events=["click"]).style("width: 100%")
 
         def zoomer(niveau, fx=0.5, fy=0.5):
-            zoom["niveau"] = min(max(niveau, 1), 16)
+            zoom["niveau"] = borner_zoom(niveau)
             image.style(f"width: {zoom['niveau'] * 100}%")
             ui.run_javascript(
                 f"setTimeout(() => {{ const c = document.getElementById('c{cadre.id}');"
@@ -149,8 +171,16 @@ def construire(etat):
             facteur = 0.5 if e.shift else 2
             zoomer(zoom["niveau"] * facteur, e.image_x / zoom["largeur"], e.image_y / zoom["hauteur"])
 
+        def molette(e):
+            a = e.args if isinstance(e.args, dict) else {}
+            if not a:
+                return
+            zoomer(niveau_molette(zoom["niveau"], a.get("avant", True)), a.get("fx", 0.5), a.get("fy", 0.5))
+
         image.on("loaded", taille)
         image.on_mouse(clic)
+        # le navigateur ne défile pas (preventDefault) : la molette zoome sur le point visé de l'image
+        cadre.on("wheel", molette, throttle=0.1, js_handler=JS_MOLETTE)
         dialogue.on("hide", dialogue.delete)
         dialogue.open()
 
