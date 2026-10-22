@@ -25,7 +25,7 @@ class TestExecutionArrierePlan(unittest.TestCase):
         for ex in self._lancees:
             if ex.processus is not None and ex.processus.poll() is None:
                 ex.processus.kill()
-                ex.processus.wait()
+                ex.processus.wait(10)
             ex.fini.wait(10)
             if ex.processus is not None and ex.processus.stdout:
                 ex.processus.stdout.close()
@@ -84,6 +84,12 @@ class TestExecutionArrierePlan(unittest.TestCase):
         ex = self._demarrer("t/x.py", [sys.executable, "-c", "raise SystemExit(3)"])
         self._attendre_fin(ex)
         self.assertEqual((ex.code, ex.etat), (3, "échec"))
+
+    def test_entree_standard_fermee_input_echoue_au_lieu_de_bloquer(self):
+        ex = self._demarrer("t/x.py", [sys.executable, "-c", "input('? ')"])
+        self._attendre_fin(ex)
+        self.assertEqual(ex.etat, "échec")
+        self.assertNotEqual(ex.code, 0)
 
     def test_code_130_interrompue(self):
         ex = self._demarrer("t/x.py", [sys.executable, "-c", "raise SystemExit(130)"])

@@ -87,8 +87,12 @@ def _lire(ex, sur_ligne, sur_fin):
 
 def demarrer(identifiant, commande, cwd, env, sur_ligne: Optional[Callable] = None,
              sur_fin: Optional[Callable] = None, Popen=subprocess.Popen):
-    """Lance la commande, enregistre l'exécution dans REGISTRE et rend la main ; OSError si le lancement échoue."""
-    processus = Popen(commande, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0)
+    """Lance la commande, enregistre l'exécution dans REGISTRE et rend la main ; OSError si le lancement échoue.
+
+    L'entrée standard est fermée (DEVNULL) : un script interactif qui appelle input() échoue au lieu d'attendre
+    une saisie que la page ne peut pas fournir."""
+    processus = Popen(commande, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                      stderr=subprocess.STDOUT, bufsize=0)
     ex = Execution(identifiant, list(commande), processus=processus)
     REGISTRE[identifiant] = ex
     threading.Thread(target=_lire, args=(ex, sur_ligne, sur_fin), daemon=True).start()
@@ -102,3 +106,5 @@ def arreter(ex, lancer=subprocess.run):
         lancer(["taskkill", "/T", "/F", "/PID", str(ex.processus.pid)], capture_output=True)
     else:
         ex.processus.terminate()
+    if ex.processus.poll() is None and sys.platform == "win32":
+        ex.processus.kill()                 # repli si taskkill n'a pas abouti
