@@ -98,9 +98,25 @@ def _piloter(ctx, doc, arguments, ecrit, commande, script, constantes=None, cons
         pause(ctx.c, ctx.lire)
 
 
-def _executer(ctx, commande, script=""):
+def environnement_enfant():
+    """Environnement d'un script lancé : jamais de second menu (GIGA_PANO_SANS_MENU), sortie en UTF-8."""
     env = dict(os.environ)
     env[args_mod.SANS_MENU] = "1"          # l'enfant hérite de la console : il ne doit pas rouvrir un menu
+    env["PYTHONIOENCODING"] = "utf-8"
+    return env
+
+
+def commande_python(ctx, script, argv):
+    return [sys.executable, str(ctx.scripts / script), *argv]
+
+
+def commande_powershell(ctx, script, argv):
+    return [_executable_powershell(ctx), "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
+            str(ctx.scripts / script), *argv]
+
+
+def _executer(ctx, commande, script=""):
+    env = environnement_enfant()
     try:
         r = ctx.executer(commande, cwd=str(ctx.scripts), env=env)
         return getattr(r, "returncode", 0)
@@ -120,7 +136,7 @@ def python(ctx, script, arguments=None, ecrit=None):
     else:
         doc = args_mod.lire_declaration(chemin)[2]
     return _piloter(ctx, doc, _prerempli_outils(ctx, arguments), ecrit,
-                    lambda argv: [sys.executable, str(chemin), *argv], script, constantes=constantes_du_fichier(chemin))
+                    lambda argv: commande_python(ctx, script, argv), script, constantes=constantes_du_fichier(chemin))
 
 
 def construire_ps(arguments, valeurs):
@@ -173,8 +189,8 @@ def powershell(ctx, script, arguments, ecrit, doc=None):
     arguments = _prerempli_outils(ctx, arguments)
     if doc is None:
         doc = _titre_ps(ctx.scripts / script) or script
-    entete = [_executable_powershell(ctx), "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ctx.scripts / script)]
-    return _piloter(ctx, doc, arguments, ecrit, lambda argv: [*entete, *argv], script, construire=construire_ps)
+    return _piloter(ctx, doc, arguments, ecrit, lambda argv: commande_powershell(ctx, script, argv), script,
+                    construire=construire_ps)
 
 
 def outil(ctx, cle, args):
