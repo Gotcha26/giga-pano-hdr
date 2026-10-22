@@ -10,6 +10,7 @@ SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 from interface import formulaire  # noqa: E402
+from pilotage import arguments as args_mod  # noqa: E402
 from pilotage import catalogue, config, lancer  # noqa: E402
 from pilotage.couleurs import Couleurs  # noqa: E402
 
@@ -101,6 +102,30 @@ class TestChamps(unittest.TestCase):
         self.assertEqual([a.nom for a in args], ["image.tif"])
         self.assertIsNone(ecrit)
         self.assertTrue(doc)
+
+    def test_toutes_les_taches_a_script_donnent_des_champs(self):
+        genres = set(formulaire.GENRES.values())
+        taches = [t for t in catalogue.TACHES if t.script]
+        self.assertTrue(taches)
+        for t in taches:
+            with self.subTest(tache=t.identifiant):
+                args, _, _ = formulaire.arguments_de(t, self.ctx)
+                for c in formulaire.champs(t, args, self.p, self.ctx):
+                    self.assertIn(c.genre, genres)
+
+    def test_tache_sans_script_et_type_inconnu_levent_une_erreur_explicite(self):
+        sans = next(t for t in catalogue.TACHES if not t.script)
+        with self.assertRaisesRegex(ValueError, "tâche sans script"):
+            formulaire.arguments_de(sans, self.ctx)
+        a = args_mod.Arg("--x", "x")
+        a.type = "inconnu"
+        with self.assertRaisesRegex(ValueError, "sans genre de champ"):
+            formulaire.champs(_tache(RENDRE), [a], self.p, self.ctx)
+
+    def test_valeur_preremplie_de_casse_differente_pas_dupliquee(self):
+        dossier = self.P / "4_vue_centree"
+        self.p.reglages[RENDRE] = {"-Projet": str(dossier / "A.PTO").upper()}
+        self.assertEqual(len(self._champs()["-Projet"].choix), 3)
 
     def test_commande_py_et_ps1(self):
         t_py = next(t for t in catalogue.TACHES if t.script == "tiffinfo.py")

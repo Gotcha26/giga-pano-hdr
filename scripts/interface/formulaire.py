@@ -14,7 +14,7 @@ from pilotage import config, declarations_ps, lancer
 
 AUTRE = "Autre…"        # dernier choix d'un champ « pto » : saisir ou parcourir un autre chemin
 
-GENRES = {"texte": "texte", "liste": "texte", "nombre": "nombre", "entier": "nombre", "drapeau": "interrupteur",
+GENRES = {"texte": "texte", "liste": "texte", "plage": "texte","nombre": "nombre", "entier": "nombre", "drapeau": "interrupteur",
           "chemin": "fichier", "dossier": "dossier", "pto": "pto"}
 GENRES_CHEMIN = ("fichier", "dossier", "pto")
 
@@ -50,6 +50,8 @@ class Champ:
 def arguments_de(tache, ctx):
     """(arguments, ecrit, doc) d'une tâche : sa déclaration propre si elle en a une, sinon celle de son script
     (en-tête Python lu par analyse syntaxique, ou déclaration PowerShell du lanceur)."""
+    if not tache.script:
+        raise ValueError("tâche sans script : " + tache.identifiant)
     if tache.script.endswith(".ps1"):
         arguments, ecrit = declarations_ps.PS[tache.script]
         doc = lancer._titre_ps(ctx.scripts / tache.script) or tache.script
@@ -64,7 +66,10 @@ def arguments_de(tache, ctx):
 def _choix_pto(arg, valeur, panorama):
     dossier = config.dossier_phase(panorama, arg.phase) if arg.phase and panorama else None
     fichiers = sorted(str(f) for f in dossier.glob("*.pto")) if dossier and dossier.is_dir() else []
-    choix = [valeur] if valeur and valeur not in fichiers else []
+    def forme(chemin):
+        return os.path.normcase(os.path.normpath(chemin))
+    deja = {forme(f) for f in fichiers}
+    choix = [valeur] if valeur and forme(valeur) not in deja else []
     return choix + fichiers + [AUTRE]
 
 
@@ -84,6 +89,8 @@ def champs(tache, arguments, panorama, ctx):
     valeurs = args_mod.valeurs_initiales(arguments, panorama, memorises=memorises)
     resultat = []
     for a in arguments:
+        if a.type not in GENRES:
+            raise ValueError(f"type d'argument sans genre de champ : {a.type} ({a.nom})")
         genre = GENRES[a.type]
         valeur = valeurs[a.nom]
         resultat.append(Champ(arg=a, valeur=valeur, genre=genre,
