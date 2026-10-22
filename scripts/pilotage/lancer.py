@@ -139,17 +139,24 @@ def construire_ps(arguments, valeurs):
     return resultat
 
 
-def _titre_ps(chemin):
-    """Première ligne de commentaire d'un script PowerShell (son titre)."""
+def commentaire_ps(chemin):
+    """Bloc de commentaires d'en-tête d'un script PowerShell (lignes # consécutives), sans « # »."""
+    bloc = []
     try:
         for ligne in Path(chemin).read_text(encoding="utf-8").splitlines():
             if ligne.startswith("#"):
-                return ligne.lstrip("# ").strip()
-            if ligne.strip():
+                texte = ligne[1:]
+                bloc.append(texte[1:] if texte.startswith(" ") else texte)
+            elif bloc or ligne.strip():
                 break
     except OSError:
         pass
-    return ""
+    return "\n".join(bloc).strip("\n")
+
+
+def _titre_ps(chemin):
+    """Première ligne non vide du commentaire d'en-tête d'un script PowerShell (son titre)."""
+    return next((l.strip() for l in commentaire_ps(chemin).splitlines() if l.strip()), "")
 
 
 def powershell_disponible(ctx):
