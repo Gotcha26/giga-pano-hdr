@@ -20,7 +20,8 @@ PILOTES = [
     "comparer_couleur.py", "rehausser_ciel.py",
 ]
 EXEMPTES = ["verifier_renvois.py",   # sans argument, il contrôle : jamais de menu de pilotage
-            "panorama.py"]           # le lanceur lui-même
+            "panorama.py",           # le lanceur lui-même
+            "panorama_web.py"]       # son pendant web
 
 MARQUEUR_MENU = "PILOTAGE"
 
