@@ -22,11 +22,10 @@ from pilotage import arguments as args_mod
 from pilotage import catalogue, config, lancer, outils
 from pilotage.catalogue import Tache
 
-from . import aide, apercus, execution, formulaire, reglages
+from . import aide, apercus, execution, formulaire, pages_poste, reglages
 
 TITRE_MESURES = "Mesures et inspection"
 PHASE0_ENTREE = "Outils, préréglages, nouveau panorama"
-PHASE0_MESSAGE = "Disponible dans la page Phase 0 (tâche suivante)."
 ACTION_MESSAGE = "Action propre au lanceur console : pas encore disponible dans la page (python panorama.py)."
 VIPS_ABSENT = "libvips absent : voir Configuration"
 LIMITE_IMAGES = 200
@@ -232,7 +231,7 @@ class Etat:
     """État d'un onglet : la tâche affichée, ses champs, le journal et les zones rafraîchissables."""
     ctx: lancer.Contexte
     tache: Optional[Tache] = None
-    vue: str = "accueil"                    # « accueil », « tache » ou « phase0 »
+    vue: str = "accueil"                    # « accueil » ou « tache »
     elements: dict = field(default_factory=dict)
     champs: list = field(default_factory=list)
     arguments: list = field(default_factory=list)   # déclaration brute (sans préremplissage des outils)
@@ -251,11 +250,7 @@ class Etat:
     aide: object = None
     apercus: object = None
     boutons: object = None
-
-
-def _a_venir(nom):
-    from nicegui import ui
-    ui.notify(f"{nom} : à venir (tâche suivante)")
+    rafraichir: object = None               # tout_rafraichir de l'onglet (pages hors tâches)
 
 
 async def _confirmer(message, oui, details=()):
@@ -323,9 +318,9 @@ def construire(ctx):
         n = len(execution.en_cours())
         ui.label(f"{n} en cours").classes("text-amber-300" if n else "text-gray-300")
         ui.space()
-        for nom in ("Panorama", "Nouveau panorama", "Phase 0"):
-            ui.button(nom, on_click=lambda n=nom: _a_venir(n)).props("flat dense no-caps color=white")
-        ui.button("⚙ Configuration", on_click=lambda: _a_venir("Configuration")).props("flat dense no-caps color=white")
+        for nom, ouvrir_page in (("Panorama", pages_poste.panorama), ("Nouveau panorama", pages_poste.nouveau_panorama),
+                                 ("Phase 0", pages_poste.phase0), ("⚙ Configuration", pages_poste.configuration)):
+            ui.button(nom, on_click=lambda o=ouvrir_page: o(etat)).props("flat dense no-caps color=white")
         ui.button("Aide", on_click=lambda: volet.toggle()).props("flat dense no-caps color=white")
         ui.button("Quitter", on_click=quitter).props("dense no-caps color=negative")
 
@@ -350,8 +345,7 @@ def construire(ctx):
                                   on_value_change=lambda e, tp=titre_phase: suivre_depliage(tp, e.value)
                                   ).classes("w-full").props("dense"):
                     if titre_phase == arbre[0][0] and not taches:
-                        ui.item(PHASE0_ENTREE, on_click=lambda: ouvrir(None, "phase0")).classes(
-                            "bg-blue-100" if etat.vue == "phase0" else "")
+                        ui.item(PHASE0_ENTREE, on_click=lambda: pages_poste.phase0(etat))
                     for t in taches:
                         item = ui.item(libelle(t), on_click=lambda t=t: ouvrir(t))
                         if t.est_geste:
@@ -431,7 +425,7 @@ def construire(ctx):
             raisons = raisons_indisponible(ctx, t)
             if raisons:
                 ui.label("Lancement impossible : " + ", ".join(raisons)).classes("text-red-700")
-                ui.button("⚙ Configuration", on_click=lambda: _a_venir("Configuration")).props("flat no-caps")
+                ui.button("⚙ Configuration", on_click=lambda: pages_poste.configuration(etat)).props("flat no-caps")
             else:
                 ui.button("▶ Lancer", on_click=lancer_tache).props("no-caps color=primary")
             ui.button("Mémoriser ces réglages pour ce panorama", on_click=memoriser).props("outline no-caps")
@@ -482,10 +476,6 @@ def construire(ctx):
         t = etat.tache
         etat.elements, etat.champs, etat.arguments = {}, [], []
         etat.T_vu = ctx.poste.courant
-        if etat.vue == "phase0":
-            ui.label(arbre[0][0]).classes("text-xl font-bold")
-            ui.label(PHASE0_MESSAGE)
-            return
         if t is None:
             ui.label("Choisissez une tâche dans la colonne de gauche.").classes("text-gray-600")
             return
@@ -678,8 +668,8 @@ def construire(ctx):
 
     # ------------------------------------------------------------ disposition
 
-    etat.en_tete, etat.colonne, etat.centre, etat.aide, etat.apercus, etat.boutons = (
-        en_tete, colonne, centre, volet_aide, apercus_zone, boutons)
+    etat.en_tete, etat.colonne, etat.centre, etat.aide, etat.apercus, etat.boutons, etat.rafraichir = (
+        en_tete, colonne, centre, volet_aide, apercus_zone, boutons, tout_rafraichir)
     with ui.header().classes("items-center gap-4 bg-slate-800 text-white"):
         en_tete()
     with ui.left_drawer(value=True).props("width=300 bordered").classes("p-0"):
