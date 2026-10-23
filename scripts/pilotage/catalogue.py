@@ -231,7 +231,6 @@ _AUTRES_REPERES = [
 
 _GESTES = [
     Tache("1A — Régler l'appareil", 1, "1A", geste="sur l'appareil : tout en manuel (mise au point, exposition, balance des blancs)"),
-    Tache("1B — Respecter l'ordre de la séquence", 1, "1B", geste="à la prise de vue : balayer la grille dans l'ordre prévu"),
     Tache("2A — Sélectionner les photos", 2, "2A", geste="dans Lightroom : sélectionner les photos du panorama, dans l'ordre"),
     Tache("2B — Développement identique", 2, "2B", geste="dans Lightroom : appliquer le même développement à toutes les photos"),
     Tache("2C — Une retouche par finalité", 2, "2C", geste="dans Lightroom : travailler sur des copies virtuelles, pas sur les originaux"),
@@ -243,7 +242,16 @@ _GESTES = [
     Tache("5D — Finitions sur le HDR", 5, "5D", geste="dans Lightroom : finitions sur le DNG HDR (recadrage, tonalité)"),
 ]
 
-TACHES = _CONSOLE + _AUTRES_REPERES + _GESTES
+# ---------------------------------------------------------------- action propre à la page web (la console l'a
+# dans son menu Phase 0, construit à la main : panorama.cheminement)
+
+_CHEMINEMENT = [
+    Tache("1B — Respecter l'ordre de la séquence", 1, "1B", action="cheminement",
+          sous_titre="à la prise de vue : balayer la grille dans l'ordre choisi",
+          effet="panorama.json (départ, serpentin)"),
+]
+
+TACHES = _CONSOLE + _AUTRES_REPERES + _CHEMINEMENT + _GESTES
 
 
 # ---------------------------------------------------------------- lecture

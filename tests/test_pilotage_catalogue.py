@@ -90,6 +90,12 @@ class TestCatalogue(unittest.TestCase):
         self.assertEqual(sorted(t.repere for t in rp), ["4A", "6B", "6C.4"])
         self.assertEqual([t.groupe_console for t in rp].count("rendus"), 1)
 
+    def test_1b_est_une_action_cheminement_hors_console(self):
+        t = next(t for t in self.catalogue.TACHES if t.identifiant == "1B/cheminement")
+        self.assertFalse(t.est_geste)
+        self.assertEqual((t.action, t.groupe_console, t.repere), ("cheminement", "", "1B"))
+        self.assertFalse([x for x in self.catalogue.TACHES if x.identifiant == "1B/geste"])
+
     def test_geste_3g_reporte_le_maitre(self):
         t = next(t for t in self.catalogue.TACHES if t.identifiant == "3G/geste")
         self.assertTrue(t.est_geste)

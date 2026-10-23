@@ -284,6 +284,34 @@ class TestApresExecution(unittest.TestCase):
         self.assertEqual(self.p.rendu_hdr, "")
 
 
+class TestCheminementPage(unittest.TestCase):
+    def setUp(self):
+        from interface import zone_tache
+        self.zone = zone_tache
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.p = config.Panorama(T=self.tmp.name, P=str(Path(self.tmp.name) / "P"))
+        config.enregistrer_panorama(self.p)
+
+    def test_enregistrer_cheminement(self):
+        vu = []
+
+        def mettre_a_jour(T, /, **cles):
+            vu.append((T, cles))
+            return config.mettre_a_jour(T, **cles)
+        changes = self.zone.enregistrer_cheminement(self.p, "bg", True, mettre_a_jour=mettre_a_jour)
+        self.assertEqual(changes, [("depart", "bg"), ("serpentin", True)])
+        self.assertEqual(vu, [(self.tmp.name, {"depart": "bg", "serpentin": True})])
+        relu = config.charger_panorama(self.tmp.name)
+        self.assertEqual((relu.depart, relu.serpentin), ("bg", True))
+        self.assertEqual((self.p.depart, self.p.serpentin), ("bg", True))      # l'objet en mémoire suit
+
+    def test_enregistrer_cheminement_depart_invalide(self):
+        with self.assertRaises(ValueError):
+            self.zone.enregistrer_cheminement(self.p, "zz", False, mettre_a_jour=lambda *a, **k: self.fail("écrit"))
+        self.assertEqual(config.charger_panorama(self.tmp.name).depart, "hd")
+
+
 class TestFumee(unittest.IsolatedAsyncioTestCase):
     """La page se construit dans le User simulé de nicegui.testing (sans navigateur ni serveur réseau).
 
@@ -323,6 +351,12 @@ class TestFumee(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(items), 1)
                 UserInteraction(user, items, None).click()
                 for texte in ("4A — Rendre", "Mémoriser ces réglages", "Fichiers produits", "Mode d'emploi du script"):
+                    await user.should_see(texte)
+                items = {e for e in user.find(kind=ui.item).elements
+                         if any("1B Respecter" in (getattr(d, "text", "") or "") for d in e.descendants())}
+                self.assertEqual(len(items), 1)
+                UserInteraction(user, items, None).click()
+                for texte in ("1B — Respecter", "Aucun panorama courant"):
                     await user.should_see(texte)
 
 
