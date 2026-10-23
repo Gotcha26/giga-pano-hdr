@@ -234,13 +234,13 @@ def construire(etat):
         p = ctx.panorama
         ui.label(t.sous_titre).classes("text-xl")
         if p is None:
-            ui.label("Aucun panorama courant : rien à régler (Phase 0, nouveau panorama).").classes("text-amber-700")
-            return
-        choix = {"depart": p.depart if p.depart in cheminement.COINS else cheminement.DEFAUT,
-                 "serpentin": bool(p.serpentin)}
+            ui.label("Aucun panorama courant : le sélecteur s'essaie, mais rien ne peut être enregistré "
+                     "(Phase 0, nouveau panorama).").classes("text-amber-700")
+        choix = {"depart": p.depart if p and p.depart in cheminement.COINS else cheminement.DEFAUT,
+                 "serpentin": bool(p.serpentin) if p else False}
 
         def enregistrer():
-            if refuser_si_perime():
+            if p is None or refuser_si_perime():
                 return
             try:
                 with reglages.VERROU_PANORAMA:
@@ -289,7 +289,8 @@ def construire(etat):
         plan()
         ui.switch("Serpentin (sens inversé à chaque ligne)", value=choix["serpentin"], on_change=basculer)
         with ui.row().classes("items-center gap-2"):
-            ui.button("Enregistrer dans panorama.json", on_click=enregistrer).props("no-caps color=primary")
+            ui.button("Enregistrer dans panorama.json", on_click=enregistrer).props(
+                "no-caps color=primary" + (" disable" if p is None else ""))
         ui.label(f"✎ Écrit dans {t.effet}").classes("text-sm text-amber-800")
 
     def zone_script(t):

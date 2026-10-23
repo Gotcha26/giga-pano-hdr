@@ -356,7 +356,7 @@ class TestFumee(unittest.IsolatedAsyncioTestCase):
                          if any("1B Respecter" in (getattr(d, "text", "") or "") for d in e.descendants())}
                 self.assertEqual(len(items), 1)
                 UserInteraction(user, items, None).click()
-                for texte in ("1B — Respecter", "Aucun panorama courant"):
+                for texte in ("1B — Respecter", "Aucun panorama courant", "Serpentin", "Enregistrer dans panorama.json"):
                     await user.should_see(texte)
 
 

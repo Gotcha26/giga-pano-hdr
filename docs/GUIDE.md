@@ -327,25 +327,29 @@ Rien ne change d'une image à l'autre :
 Le nom `L{ligne}_C{colonne}_E{exposition}` de chaque image est **calculé uniquement d'après son rang dans l'ordre de prise de vue** et du cheminement choisi. Une photo oubliée, doublée ou prise dans un autre ordre **décale toute la grille qui la suit**.
 
 **Choisir le cheminement avant de partir** : un **coin de départ** (haut gauche, haut droit, bas gauche ou bas droit) et, au besoin, le **serpentin**. Une seule règle : on parcourt **toujours des lignes, jamais des colonnes**. Le défaut est le **haut droit, sans serpentin** (toutes les lignes de droite à gauche, de haut en bas). Le choix se règle avant la prise de vue :
+
 - dans le lanceur console : *Préparer → Cheminement de la prise de vue* ;
 - dans l'interface web : cette étape **1B** (quatre coins cliquables dont la flèche indique le sens de la prise de vue, case *Serpentin* désactivée par défaut) ;
 
 et s'inscrit dans `panorama.json` (`depart` : `hg`, `hd`, `bg` ou `bd` ; `serpentin`). ***renommer_pano.py*** les reçoit en options (`--depart`, `--serpentin`) : le lanceur et la page web les préremplissent d'après `panorama.json`, mais **en ligne de commande il faut les passer explicitement** (sans eux, le défaut s'applique).
 
 ```
-Départ haut gauche, sans serpentin    Départ bas droit, serpentin
-  1 → 2 → 3 → 4 → 5                     15 ← 14 ← 13 ← 12 ← 11
-  ↓┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄                                            ↑
-  6 → 7 → 8 → 9 → 10                    6 → 7 → 8 → 9 → 10
-  ↓┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄                      ↑
-  11 → 12 → 13 → 14 → 15                5 ← 4 ← 3 ← 2 ← 1
+Départ haut gauche, sans serpentin :
+  1 → 2 → 3 → 4 → 5
+  ↓┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+  6 → 7 → 8 → 9 → 10
+  ↓┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+  11 → 12 → 13 → 14 → 15
 
-  Sans serpentin, on revient au début de chaque ligne (┄) ; avec serpentin, la ligne suivante part de
-  l'endroit où l'on s'est arrêté, dans l'autre sens.
-
-  À chaque position, une rafale de N images dans un ordre FIXE, la vue centrée (0 IL) en tête :
-      E0 (0 IL)  puis  E1 … E(N-1)
+Départ bas droit, serpentin :
+  15 ← 14 ← 13 ← 12 ← 11
+                      ↑
+  6 → 7 → 8 → 9 → 10
+  ↑
+  5 ← 4 ← 3 ← 2 ← 1
 ```
+
+Sans serpentin, on revient au début de chaque ligne (┄) ; avec serpentin, la ligne suivante part de l'endroit où l'on s'est arrêté, dans l'autre sens. À chaque position, une rafale de N images dans un ordre **fixe**, la vue centrée (0 IL) en tête : `E0` (0 IL), puis `E1` … `E(N-1)`.
 
 Le rang `R` (à partir de 1) donne `position = (R − 1) ÷ N` (division entière) et `exposition = (R − 1) mod N`. La **position** désigne ensuite la case n° `position` du cheminement choisi.
 
