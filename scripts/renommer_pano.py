@@ -82,7 +82,7 @@ ARGUMENTS = [
     Arg("--lignes", "Lignes de la grille", type="entier", config="lignes"),
     Arg("--colonnes", "Colonnes de la grille", type="entier", config="colonnes"),
     Arg("--expos", "Expositions par position", type="entier", config="expos"),
-    Arg("--depart", "Coin de départ de la prise de vue : hg, hd, bg ou bd", config="depart", defaut=cheminement.DEFAUT),
+    Arg("--depart", "Coin de départ de la prise de vue : hg, hd, bg ou bd", config="depart", defaut="hd"),     # littéral : ARGUMENTS est lu sans exécuter
     Arg("--serpentin", "Une ligne sur deux dans l'autre sens", type="drapeau", config="serpentin"),
     Arg("--force", "Ignore un écart de nombre ou un trou de numérotation", type="drapeau"),
     Arg("--table", "Table RAW -> L_C_E : contrôle le plan si elle existe, sinon l'écrit (export complet)", type="chemin",
