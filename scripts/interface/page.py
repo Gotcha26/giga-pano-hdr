@@ -38,7 +38,7 @@ class Etat:
     """État d'un onglet : la tâche affichée, ses champs, le journal et les fonctions des parties de la page."""
     ctx: lancer.Contexte
     tache: Optional[Tache] = None
-    vue: str = "accueil"                    # « accueil » ou « tache »
+    vue: str = "accueil"                    # « accueil », « tache » ou une clé de pages_poste.VUES
     elements: dict = field(default_factory=dict)
     champs: list = field(default_factory=list)
     arguments: list = field(default_factory=list)   # déclaration brute (sans préremplissage des outils)
