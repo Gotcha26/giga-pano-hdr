@@ -279,7 +279,10 @@ def cheminement(ctx):
     if p is None:
         ctx.ecrire(c.attention("Aucun panorama courant : Préparer → Nouveau panorama."))
         return
-    depart, serpentin = trace.verifier_depart(p.depart), bool(p.serpentin)
+    depart, serpentin = p.depart, bool(p.serpentin)
+    if depart not in trace.COINS:       # panorama.json édité à la main : proposer le défaut, valider le répare
+        ctx.ecrire(c.attention(f"panorama.json : départ {depart!r} inconnu, {trace.DEFAUT} proposé."))
+        depart = trace.DEFAUT
     coins = "   ".join(f"{c.JAUNE}{k}{c.RESET} {trace.FLECHES_COINS[k]} {trace.NOMS_COINS[k]}" for k in trace.COINS)
     while True:
         ctx.ecrire("")

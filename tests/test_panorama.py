@@ -269,6 +269,17 @@ class TestCheminementConsole(unittest.TestCase):
             self.assertIn("zz", "\n".join(map(str, lignes)))
             self.assertEqual(config.charger_panorama(d).depart, "hd")
 
+    def test_cheminement_depart_inconnu_dans_le_panorama_json_ne_plante_pas(self):
+        import panorama
+        lignes = []
+        with tempfile.TemporaryDirectory() as d:
+            ctx = self._contexte(d, ["bg", "v"], lignes)
+            config.mettre_a_jour(d, depart="zz")
+            ctx.panorama = config.charger_panorama(d)
+            panorama.cheminement(ctx)
+            self.assertIn("zz", "\n".join(map(str, lignes)))
+            self.assertEqual(config.charger_panorama(d).depart, "bg")      # l'utilisateur répare en validant
+
     def test_cheminement_affiche_le_dessin_et_le_resume(self):
         import panorama
         lignes = []

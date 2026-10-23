@@ -330,7 +330,7 @@ Le nom `L{ligne}_C{colonne}_E{exposition}` de chaque image est **calculé unique
 - dans le lanceur console : *Préparer → Cheminement de la prise de vue* ;
 - dans l'interface web : cette étape **1B** (quatre coins cliquables dont la flèche indique le sens de la prise de vue, case *Serpentin* désactivée par défaut) ;
 
-et s'inscrit dans `panorama.json` (`depart` : `hg`, `hd`, `bg` ou `bd` ; `serpentin`). ***renommer_pano.py*** le lit (`--depart`, `--serpentin`).
+et s'inscrit dans `panorama.json` (`depart` : `hg`, `hd`, `bg` ou `bd` ; `serpentin`). ***renommer_pano.py*** les reçoit en options (`--depart`, `--serpentin`) : le lanceur et la page web les préremplissent d'après `panorama.json`, mais **en ligne de commande il faut les passer explicitement** (sans eux, le défaut s'applique).
 
 ```
 Départ haut gauche, sans serpentin    Départ bas droit, serpentin
@@ -553,8 +553,8 @@ Il contrôle aussi le **motif d'exposition** lu dans l'EXIF (***exiftool***), et
 - **vues centrées seules** : toutes les images portent la même compensation, quelle qu'elle soit (pas forcément 0 IL). Une image d'une autre exposition glissée dans le lot est signalée par son nom.
 
 ```powershell
-python renommer_pano.py "$T\Export-TIFF-L" --lignes <L> --colonnes <C> --expos <N> --table "$P\table_raw_LCE.csv"            # essai à blanc
-python renommer_pano.py "$T\Export-TIFF-L" --lignes <L> --colonnes <C> --expos <N> --table "$P\table_raw_LCE.csv" --apply    # renomme + correspondance.csv
+python renommer_pano.py "$T\Export-TIFF-L" --lignes <L> --colonnes <C> --expos <N> --table "$P\table_raw_LCE.csv" [--depart <coin>] [--serpentin]            # essai à blanc
+python renommer_pano.py "$T\Export-TIFF-L" --lignes <L> --colonnes <C> --expos <N> --table "$P\table_raw_LCE.csv" [--depart <coin>] [--serpentin] --apply    # renomme + correspondance.csv
 python renommer_pano.py "$T\Export-TIFF-L" --undo                                                                              # restaure
 ```
 
@@ -1506,7 +1506,7 @@ python empaqueter.py pano-<focale>-<date> "$P\7_tuiles\hdr_cadre_webp\hdr.dzi" "
 
 Les scripts du dossier `scripts\` (`$OUTILS`) sont classés par étape dans [`INDEX.md`](../scripts/INDEX.md), avec leur rôle en une ligne et leur **portée** (générique, ou paramétré par la grille). Chacun porte en tête de fichier son **mode d'emploi** : contexte, mode opératoire, entrées (arguments et constantes), sorties, exemple.
 
-**Constantes codées en dur** (à adapter si la prise de vue change) : la taille des images est lue dans les fichiers ou dans le projet, mais les scripts de diagnostic et de placement supposent le **nombre de colonnes et de lignes et le champ horizontal** d'une prise de vue donnée. Les modifier en tête de chaque script. Les signes de rotation supposent la colonne 0 à **droite** et la ligne 0 en **haut** ; pour une prise de vue gauche → droite, inverser le signe du lacet dans ***generer_pto.py***.
+**Constantes codées en dur** (à adapter si la prise de vue change) : la taille des images est lue dans les fichiers ou dans le projet, mais les scripts de diagnostic et de placement supposent le **nombre de colonnes et de lignes et le champ horizontal** d'une prise de vue donnée. Les modifier en tête de chaque script. Les signes de rotation supposent la colonne 0 à **droite** et la ligne 0 en **haut**, **quel que soit le sens de la prise de vue** : c'est le renommage qui y range les images selon le cheminement choisi ([**1B**](#1b--respecter-lordre-de-la-séquence)). Ne rien inverser dans ***generer_pto.py***.
 
 **Chemins d'installation** (***Hugin***, ***multiblend***, ***libvips***) : paramètres optionnels des scripts PowerShell concernés (`-Hugin`, `-Multiblend`, `-Vips`, avec un chemin par défaut en tête de script), variable `MULTIBLEND_EXE` pour l'adaptateur, ou menu **Configuration** du lanceur, qui les transmet.
 
