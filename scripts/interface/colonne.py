@@ -43,6 +43,13 @@ def arborescence(groupes=None, titres=None):
     return resultat
 
 
+def depliage(ouvertes, titre_phase, ouvert):
+    """Phases dépliées après (dé)pliage de `titre_phase` : une seule à la fois, la dernière ouverte."""
+    if ouvert:
+        return {titre_phase}
+    return set(ouvertes) - {titre_phase}
+
+
 def _tete_sans_repere(t):
     for prefixe in (t.repere + " — ", t.repere + " "):
         if t.repere and t.tete.startswith(prefixe):
@@ -75,7 +82,10 @@ def construire(etat, arbre):
         etat.aide.refresh()
 
     def suivre_depliage(titre_phase, ouvert):
-        (etat.ouvertes.add if ouvert else etat.ouvertes.discard)(titre_phase)
+        avant = etat.ouvertes
+        etat.ouvertes = depliage(avant, titre_phase, ouvert)
+        if ouvert and avant - {titre_phase}:        # une autre phase était ouverte : la colonne la replie
+            colonne.refresh()
 
     @ui.refreshable
     def colonne():

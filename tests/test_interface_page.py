@@ -69,6 +69,13 @@ class TestColonne(unittest.TestCase):
         self.assertIn("4A", reperes)
         self.assertEqual(reperes, sorted(reperes, key=catalogue.cle_tri))
 
+    def test_une_seule_phase_ouverte_a_la_fois(self):
+        from interface import colonne
+        self.assertEqual(colonne.depliage({"Phase 0", "Phase 1"}, "Phase 2", True), {"Phase 2"})
+        self.assertEqual(colonne.depliage(set(), "Phase 2", True), {"Phase 2"})
+        self.assertEqual(colonne.depliage({"Phase 2"}, "Phase 2", False), set())
+        self.assertEqual(colonne.depliage({"Phase 1"}, "Phase 2", False), {"Phase 1"})     # fermeture d'une autre : rien
+
     def test_libelle_et_titre_sans_repere_double(self):
         geste = _tache("3B/geste")
         self.assertEqual(self.page.libelle(geste), "3B Points de contrôle")
