@@ -39,6 +39,8 @@ class Panorama:
     lignes: Optional[int] = None
     colonnes: Optional[int] = None
     expos: Optional[int] = None
+    depart: str = "hd"                   # coin de départ de la prise de vue : hg, hd, bg, bd (cheminement.py)
+    serpentin: bool = False              # une ligne sur deux dans l'autre sens
     focale: Optional[float] = None
     largeur_mm: Optional[float] = None
     pas_h: Optional[float] = None

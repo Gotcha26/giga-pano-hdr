@@ -145,6 +145,24 @@ class TestClesReportees(unittest.TestCase):
         self.assertIsNone(config.valeur(p, "rendu_hdr"))
 
 
+class TestCheminement(unittest.TestCase):
+    def test_panorama_ancien_sans_cheminement(self):
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "panorama.json").write_text(json.dumps({"T": d, "P": "x"}), encoding="utf-8")
+            p = config.charger_panorama(d)
+            self.assertEqual((p.depart, p.serpentin), ("hd", False))
+
+    def test_cheminement_aller_retour(self):
+        with tempfile.TemporaryDirectory() as d:
+            config.enregistrer_panorama(config.Panorama(T=d, P="x"))
+            config.mettre_a_jour(d, depart="bg", serpentin=True)
+            p = config.charger_panorama(d)
+            self.assertEqual((p.depart, p.serpentin), ("bg", True))
+
+    def test_valeur_depart(self):
+        self.assertEqual(config.valeur(config.Panorama(T="D:\\x", P="D:\\x\\P"), "depart"), "hd")
+
+
 class TestMettreAJour(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()

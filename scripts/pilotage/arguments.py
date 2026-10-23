@@ -164,7 +164,12 @@ def valeurs_initiales(arguments, panorama, memorises=None):
     valeurs = {}
     for a in arguments:
         if a.type == "drapeau":
-            valeurs[a.nom] = bool(memorises[a.nom]) if a.nom in memorises else bool(a.defaut)
+            if a.nom in memorises:
+                valeurs[a.nom] = bool(memorises[a.nom])
+            elif a.config and panorama is not None:
+                valeurs[a.nom] = bool(getattr(panorama, a.config, a.defaut))
+            else:
+                valeurs[a.nom] = bool(a.defaut)
             continue
         v = memorises.get(a.nom)
         if v in (None, ""):

@@ -160,6 +160,13 @@ class TestValeursInitialesEtVerification(unittest.TestCase):
         self.assertEqual(v, {"-Largeur": "20000", "-Nom": "vue"})
         self.assertIs(arguments._valeurs_initiales, arguments.valeurs_initiales)
 
+    def test_drapeau_prerempli_depuis_le_panorama(self):
+        args = [arguments.Arg("--serpentin", "s", type="drapeau", config="serpentin")]
+        p = config.Panorama(T="D:\\x", P="D:\\x\\P", serpentin=True)
+        self.assertIs(arguments.valeurs_initiales(args, p)["--serpentin"], True)
+        self.assertIs(arguments.valeurs_initiales(args, p, memorises={"--serpentin": False})["--serpentin"], False)
+        self.assertIs(arguments.valeurs_initiales(args, None)["--serpentin"], False)
+
     def test_verifier_rend_les_trois_familles_de_messages(self):
         args = [arguments.Arg("a.pto", "a", type="pto"), arguments.Arg("b.pto", "b", type="pto")]
         self.assertTrue(any("obligatoire" in m for m in arguments.verifier(args, {"a.pto": "", "b.pto": ""})))
