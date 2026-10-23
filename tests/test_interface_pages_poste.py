@@ -304,6 +304,20 @@ class TestFumee(unittest.IsolatedAsyncioTestCase):
                                         ("⚙ Configuration", "Dossier bin de Hugin")):
                     user.find(kind=ui.button, content=bouton).click()
                     await user.should_see(attendu)
+                    await user.should_not_see("Fermer")         # affichée dans la zone centrale, plus en plein écran
+                # chaque page remplace la précédente dans la zone centrale
+                user.find(kind=ui.button, content="Phase 0").click()
+                await user.should_see("Installer")
+                user.find(kind=ui.button, content="Panorama").click()
+                await user.should_see("Oublier les réglages mémorisés")
+                await user.should_not_see("Installer")
+                # choisir une tâche dans la colonne quitte la page
+                items = {e for e in user.find(kind=ui.item).elements
+                         if any("4A Rendre" in (getattr(d, "text", "") or "") for d in e.descendants())}
+                from nicegui.testing.user_interaction import UserInteraction
+                UserInteraction(user, items, None).click()
+                await user.should_see("4A — Rendre")
+                await user.should_not_see("Oublier les réglages mémorisés")
 
 
 if __name__ == "__main__":

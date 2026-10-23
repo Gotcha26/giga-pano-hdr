@@ -85,7 +85,7 @@ def construire(etat, arbre):
                                   on_value_change=lambda e, tp=titre_phase: suivre_depliage(tp, e.value)
                                   ).classes("w-full").props("dense"):
                     if titre_phase == arbre[0][0] and not taches:
-                        ui.item(PHASE0_ENTREE, on_click=lambda: pages_poste.phase0(etat))
+                        ui.item(PHASE0_ENTREE, on_click=lambda: pages_poste.ouvrir_vue(etat, "phase0"))
                     for t in taches:
                         item = ui.item(libelle(t), on_click=lambda t=t: ouvrir(t))
                         if t.est_geste:

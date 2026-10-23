@@ -103,9 +103,9 @@ def construire(etat):
         n = len(execution.en_cours())
         ui.label(f"{n} en cours").classes("text-amber-300" if n else "text-gray-300")
         ui.space()
-        for nom, ouvrir_page in (("Panorama", pages_poste.panorama), ("Nouveau panorama", pages_poste.nouveau_panorama),
-                                 ("Phase 0", pages_poste.phase0), ("⚙ Configuration", pages_poste.configuration)):
-            ui.button(nom, on_click=lambda o=ouvrir_page: o(etat)).props("flat dense no-caps color=white")
+        for nom, vue in (("Panorama", "panorama"), ("Nouveau panorama", "nouveau"), ("Phase 0", "phase0"),
+                         ("⚙ Configuration", "configuration")):
+            ui.button(nom, on_click=lambda v=vue: pages_poste.ouvrir_vue(etat, v)).props("flat dense no-caps color=white")
         ui.button("Aide", on_click=lambda: etat.volet.toggle()).props("flat dense no-caps color=white")
         ui.button("Quitter", on_click=quitter).props("dense no-caps color=negative")
 

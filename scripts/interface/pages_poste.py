@@ -1,9 +1,10 @@
 """Les pages hors tâches du lanceur web : Panorama, Nouveau panorama, Phase 0 et Configuration.
 
-Chaque page est un dialogue plein écran ouvert depuis l'en-tête (et, pour la Phase 0, depuis la colonne). Il est
-posé à la racine de la page, hors des zones que `tout_rafraichir` reconstruit, qui l'effaceraient sinon. En haut
-du module, les fonctions pures (champs du panorama, conversions, propositions du nouveau panorama, lignes du
-tableau des outils), testées sans serveur ; en bas, les dialogues. NiceGUI n'est importé que dans ces derniers.
+Chaque page s'affiche dans la zone centrale, à la place de la tâche ouverte : `ouvrir_vue` (depuis l'en-tête et,
+pour la Phase 0, depuis la colonne) fixe `etat.vue`, et `zone_tache.centre` rend la page de `VUES`. Choisir une tâche
+dans la colonne la remplace. En haut du module, les fonctions pures (champs du panorama, conversions, propositions
+du nouveau panorama, lignes du tableau des outils), testées sans serveur ; en bas, les pages. NiceGUI n'est importé
+que dans ces dernières.
 
 La logique est celle du lanceur console (`panorama.py`, `pilotage/config.py`, `pilotage/outils.py`) : mêmes
 propositions de valeurs, même écriture de panorama.json et de la configuration du poste.
@@ -311,19 +312,25 @@ def statut_outil(cle, configure, etats):
 
 # ---------------------------------------------------------------- partie NiceGUI
 
-def _dialogue(titre):
-    """Dialogue plein écran posé à la racine de la page ; retourne (dialogue, colonne du contenu)."""
+def _corps(titre):
+    """Titre de la page puis colonne du contenu, posés dans la zone centrale (la page est rendue par `centre`)."""
     from nicegui import ui
-    with ui.context.client.content:
-        with ui.dialog().props("maximized") as dialogue, ui.card().classes("w-full h-full overflow-auto"):
-            with ui.row().classes("w-full items-center"):
-                ui.label(titre).classes("text-2xl font-bold")
-                ui.space()
-                ui.button("Fermer", on_click=dialogue.close).props("flat no-caps")
-            corps = ui.column().classes("w-full max-w-4xl gap-2")
-    dialogue.on("hide", dialogue.delete)
-    dialogue.open()
-    return dialogue, corps
+    ui.label(titre).classes("text-2xl font-bold")
+    return ui.column().classes("w-full max-w-4xl gap-2")
+
+
+def ouvrir_vue(etat, nom):
+    """Affiche la page `nom` (clé de VUES) dans la zone centrale, à la place de la tâche ouverte."""
+    etat.tache, etat.vue = None, nom
+    etat.colonne.refresh()
+    etat.centre.refresh()
+    etat.aide.refresh()
+
+
+def quitter_vue(etat):
+    """Revient à l'accueil de la zone centrale (la page affichée n'a plus lieu d'être : panorama changé ou déplacé)."""
+    etat.vue = "accueil"
+    etat.rafraichir()
 
 
 def _champ_chemin(libelle, valeur, genre, depart=lambda: "", ranger=None, placeholder=""):
@@ -354,10 +361,11 @@ def panorama(etat):
     from . import entete       # import tardif : entete importe ce module
     ctx = etat.ctx
     p = ctx.panorama
+    corps = _corps("Panorama")
     if p is None:
-        ui.notify("Aucun panorama courant : voir Nouveau panorama", type="warning")
+        with corps:
+            ui.label("Aucun panorama courant : voir Nouveau panorama.").classes("text-amber-700")
         return
-    dialogue, corps = _dialogue("Panorama")
     elements, affichees = {}, {}
 
     def valeur_de(nom):
@@ -367,7 +375,7 @@ def panorama(etat):
         if ctx.panorama is p:
             return False
         ui.notify(MESSAGE_PERIME, type="warning", multi_line=True)
-        dialogue.close()
+        quitter_vue(etat)
         return True
 
     def champ(c):
@@ -432,7 +440,7 @@ def panorama(etat):
         if p.T != ancien_T:         # panorama déplacé : le poste suit le nouveau $T
             ctx.poste.panoramas = panoramas_apres_deplacement(ctx.poste.panoramas, ancien_T, p.T)
             entete.changer_panorama(ctx, p.T)
-            dialogue.close()
+            etat.vue = "accueil"
         else:
             contenu.refresh()
         etat.rafraichir()
@@ -467,7 +475,7 @@ def nouveau_panorama(etat):
     from nicegui import ui
 
     ctx = etat.ctx
-    dialogue, corps = _dialogue("Nouveau panorama")
+    corps = _corps("Nouveau panorama")
     initiales = valeurs_initiales_nouveau(ctx.panorama, datetime.date.today().isoformat())
     elements, touches, remplissage, attente = {}, set(), [False], [None]
 
@@ -518,7 +526,9 @@ def nouveau_panorama(etat):
             return
         etat.dossier_apercus = None
         ui.notify(f"Panorama courant : {p.T} ({len(crees)} dossier(s) créé(s))", type="positive", multi_line=True)
-        etat.rafraichir()
+        etat.T_vu = ctx.poste.courant       # la zone centrale n'est pas reconstruite : son bilan reste affiché
+        etat.en_tete.refresh()
+        etat.aide.refresh()
         corps.clear()
         with corps:
             ui.label(f"panorama.json écrit dans {p.T} ; panorama courant.").classes("text-green-700")
@@ -553,12 +563,12 @@ def phase0(etat):
     from nicegui import run, ui
 
     ctx = etat.ctx
-    dialogue, corps = _dialogue("Phase 0 — outils et préréglages")
+    corps = _corps("Phase 0 — outils et préréglages")
 
     async def detecter():
         ctx.etats = await run.io_bound(outils.detecter_tous, ctx.poste.outils)
         tableau.refresh()
-        etat.rafraichir()
+        etat.en_tete.refresh()
 
     async def installer(ligne):
         if ligne["commande"]:
@@ -573,7 +583,7 @@ def phase0(etat):
                 r, erreur = None, e
             else:
                 erreur = None
-            if not page_encore_ouverte(client, dialogue):
+            if not page_encore_ouverte(client, corps):
                 # onglet fermé ou page quittée : rien à afficher, mais la détection profite aux autres onglets
                 ctx.etats = await run.io_bound(outils.detecter_tous, ctx.poste.outils)
                 return
@@ -630,7 +640,7 @@ def configuration(etat):
     configuration du poste (champ vide : détection automatique) puis relance la détection."""
     from nicegui import run, ui
     ctx = etat.ctx
-    _, corps = _dialogue("Configuration — chemins des outils")
+    corps = _corps("Configuration — chemins des outils")
     elements = {}
 
     @ui.refreshable
@@ -647,7 +657,7 @@ def configuration(etat):
         ctx.poste.outils = nouveaux         # la mémoire ne suit qu'une écriture réussie
         ctx.etats = await run.io_bound(outils.detecter_tous, ctx.poste.outils)
         statut.refresh()
-        etat.rafraichir()
+        etat.en_tete.refresh()
         ui.notify("Configuration du poste enregistrée ; outils détectés à nouveau", type="positive")
 
     with corps:
@@ -658,3 +668,6 @@ def configuration(etat):
                                                  placeholder="(détection automatique)")
                 statut(cle)
         ui.button("Enregistrer", on_click=enregistrer).props("no-caps color=primary")
+
+
+VUES = {"panorama": panorama, "nouveau": nouveau_panorama, "phase0": phase0, "configuration": configuration}

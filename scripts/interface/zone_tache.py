@@ -196,7 +196,7 @@ def construire(etat):
             raisons = raisons_indisponible(ctx, t)
             if raisons:
                 ui.label("Lancement impossible : " + ", ".join(raisons)).classes("text-red-700")
-                ui.button("⚙ Configuration", on_click=lambda: pages_poste.configuration(etat)).props("flat no-caps")
+                ui.button("⚙ Configuration", on_click=lambda: pages_poste.ouvrir_vue(etat, "configuration")).props("flat no-caps")
             else:
                 ui.button("▶ Lancer", on_click=lancer_tache).props("no-caps color=primary")
             ui.button("Mémoriser ces réglages pour ce panorama", on_click=memoriser).props("outline no-caps")
@@ -317,6 +317,9 @@ def construire(etat):
         t = etat.tache
         etat.elements, etat.champs, etat.arguments = {}, [], []
         etat.T_vu = ctx.poste.courant
+        if t is None and etat.vue in pages_poste.VUES:       # Panorama, Nouveau panorama, Phase 0, Configuration
+            pages_poste.VUES[etat.vue](etat)
+            return
         if t is None:
             ui.label("Choisissez une tâche dans la colonne de gauche.").classes("text-gray-600")
             return
