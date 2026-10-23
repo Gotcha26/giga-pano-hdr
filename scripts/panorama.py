@@ -32,6 +32,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from pilotage import arguments, catalogue, config, declarations_ps, lancer, menu, outils  # noqa: E402
+from pilotage import cheminement as trace  # noqa: E402  (la fonction cheminement() du lanceur porte l'autre nom)
 from pilotage.config import DEFAUTS_GUIDE, QUESTIONS, RACINE_GUIDE  # noqa: E402,F401  (partagés avec l'interface web)
 from pilotage.couleurs import Couleurs, effacer_ecran, preparer_console  # noqa: E402
 from pilotage.menu import Entree, confirmer, demander, proposer  # noqa: E402
@@ -269,6 +270,43 @@ def changer_panorama(ctx):
         ctx.ecrire(c.succes(f"Panorama courant : {ctx.poste.courant}"))
 
 
+def cheminement(ctx):
+    """1B : choisir le coin de départ et le serpentin de la prise de vue. Le dessin 3 x 5 montre le cheminement ;
+    hg, hd, bg, bd choisit le coin (la flèche pointe vers le centre : le sens de la prise de vue), s bascule le
+    serpentin, v ou ENTRÉE valide et écrit panorama.json, x annule."""
+    c = ctx.c
+    p = ctx.panorama
+    if p is None:
+        ctx.ecrire(c.attention("Aucun panorama courant : Préparer → Nouveau panorama."))
+        return
+    depart, serpentin = trace.verifier_depart(p.depart), bool(p.serpentin)
+    coins = "   ".join(f"{c.JAUNE}{k}{c.RESET} {trace.FLECHES_COINS[k]} {trace.NOMS_COINS[k]}" for k in trace.COINS)
+    while True:
+        ctx.ecrire("")
+        ctx.ecrire(c.titre("Cheminement de la prise de vue (1B)"))
+        ctx.ecrire(c.info("Toujours en lignes, jamais en colonnes ; 1 = première photo (dessin : 3 lignes x 5 colonnes)."))
+        for ligne in trace.dessin_texte(depart, serpentin):
+            ctx.ecrire(f"  {ligne}")
+        ctx.ecrire(f"  {c.VALEUR}{trace.resume(depart, serpentin)}{c.RESET}")
+        ctx.ecrire(f"  Coin de départ : {coins}")
+        ctx.ecrire(f"  {c.JAUNE}s{c.RESET} Serpentin : {'activé' if serpentin else 'désactivé'}    "
+                   f"{c.JAUNE}v{c.RESET} Valider    {c.JAUNE}x{c.RESET} Annuler")
+        choix = ctx.lire(c.prompt("  Votre choix : ")).strip().lower()
+        if choix == "x":
+            ctx.ecrire(c.attention("Annulé : rien n'a été écrit."))
+            return
+        if choix in ("v", ""):
+            ctx.panorama = config.mettre_a_jour(p.T, depart=depart, serpentin=serpentin)
+            ctx.ecrire(c.succes(f"panorama.json : départ {depart}, serpentin {'oui' if serpentin else 'non'}."))
+            return
+        if choix == "s":
+            serpentin = not serpentin
+        elif choix in trace.COINS:
+            depart = choix
+        else:
+            ctx.ecrire(c.erreur(f'Choix invalide : "{choix}" (hg, hd, bg, bd, s, v ou x)'))
+
+
 def menu_phase0(ctx):
     return [
         Entree("Versions des outils", "nona, enblend, multiblend, vips, exiftool, python, Pillow, pwsh",
@@ -282,6 +320,8 @@ def menu_phase0(ctx):
                action=nouveau_panorama, section="PANORAMA"),
         Entree("Changer de panorama courant", "parmi les panoramas connus", effet="config du poste",
                action=changer_panorama, section="PANORAMA"),
+        Entree("Cheminement de la prise de vue", "coin de départ et serpentin (1B)", effet="panorama.json",
+               action=cheminement, section="PANORAMA"),
     ]
 
 

@@ -236,6 +236,65 @@ class TestLanceur(unittest.TestCase):
         self.assertIn("winget install --id OliverBetz.ExifTool", "\n".join(lignes))
 
 
+class TestCheminementConsole(unittest.TestCase):
+    def _contexte(self, d, valeurs, lignes=None):
+        ctx = contexte(valeurs, ecrire=(lignes.append if lignes is not None else None))
+        ctx.panorama = config.Panorama(T=d, P=str(Path(d) / "P"))
+        config.enregistrer_panorama(ctx.panorama)
+        return ctx
+
+    def test_cheminement_ecrit_depart_et_serpentin(self):
+        import panorama
+        with tempfile.TemporaryDirectory() as d:
+            ctx = self._contexte(d, ["bg", "s", "v"])
+            panorama.cheminement(ctx)
+            p = config.charger_panorama(d)
+            self.assertEqual((p.depart, p.serpentin), ("bg", True))
+            self.assertEqual((ctx.panorama.depart, ctx.panorama.serpentin), ("bg", True))
+
+    def test_cheminement_annule(self):
+        import panorama
+        with tempfile.TemporaryDirectory() as d:
+            ctx = self._contexte(d, ["bd", "x"])
+            panorama.cheminement(ctx)
+            p = config.charger_panorama(d)
+            self.assertEqual((p.depart, p.serpentin), ("hd", False))
+
+    def test_cheminement_saisie_invalide_redemande(self):
+        import panorama
+        lignes = []
+        with tempfile.TemporaryDirectory() as d:
+            ctx = self._contexte(d, ["zz", "x"], lignes)
+            panorama.cheminement(ctx)
+            self.assertIn("zz", "\n".join(map(str, lignes)))
+            self.assertEqual(config.charger_panorama(d).depart, "hd")
+
+    def test_cheminement_affiche_le_dessin_et_le_resume(self):
+        import panorama
+        lignes = []
+        with tempfile.TemporaryDirectory() as d:
+            panorama.cheminement(self._contexte(d, ["x"], lignes))
+        texte = "\n".join(map(str, lignes))
+        self.assertIn("5 ← 4 ← 3 ← 2 ← 1", texte)
+        self.assertIn("Départ haut droit", texte)
+
+    def test_cheminement_sans_panorama(self):
+        import panorama
+        lignes = []
+        ctx = contexte([], ecrire=lignes.append)
+        panorama.cheminement(ctx)
+        self.assertIn("Aucun panorama courant", "\n".join(map(str, lignes)))
+
+    def test_menu_phase0_propose_le_cheminement(self):
+        import panorama
+        from pilotage import menu
+        ctx = contexte([])
+        entrees = panorama.menu_phase0(ctx)
+        e = next(x for x in entrees if x.tete_texte(ctx) == "Cheminement de la prise de vue")
+        self.assertEqual((e.section, e.effet), ("PANORAMA", "panorama.json"))
+        self.assertIsNotNone(menu.numeroter(entrees, ctx)[entrees.index(e)])
+
+
 VERBES_ECRITURE = ("Renommer", "Rendre", "Tuiler", "Fusionner", "Reprojeter", "Générer", "Écrire", "Appliquer",
                    "Filtrer", "Replacer", "Affiner", "Reporter", "Extraire", "Rattacher", "Ranger", "Préparer",
                    "Remettre", "Redimensionner", "Nettoyer", "Cadrer", "Recadrer", "Rehausser", "Copier")
