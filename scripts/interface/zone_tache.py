@@ -6,7 +6,7 @@ de lecture d'`execution` : elle ne touche jamais la page, seulement panorama.jso
 """
 
 from pilotage import arguments as args_mod
-from pilotage import catalogue, config, lancer, outils
+from pilotage import catalogue, cheminement, config, lancer, outils
 
 from . import aide, colonne, execution, formulaire, pages_poste, reglages
 
@@ -53,6 +53,16 @@ def reporter_gestes(phase, p, taches=None, mettre_a_jour=config.mettre_a_jour):
             if v is not None:
                 changes.append((cle_attendu(g), v))
     return changes
+
+
+def enregistrer_cheminement(p, depart, serpentin, mettre_a_jour=config.mettre_a_jour):
+    """Écrit le coin de départ et le serpentin dans panorama.json (et dans `p`, gardé en mémoire) ; retourne
+    [(clé, valeur)]. ValueError, sans rien écrire, si `depart` n'est pas un des quatre coins."""
+    depart = cheminement.verifier_depart(depart)
+    serpentin = bool(serpentin)
+    mettre_a_jour(p.T, depart=depart, serpentin=serpentin)
+    p.depart, p.serpentin = depart, serpentin
+    return [("depart", depart), ("serpentin", serpentin)]
 
 
 def apres_execution(t, valeurs, p, ex, verrou=reglages.VERROU_PANORAMA, mettre_a_jour=config.mettre_a_jour, ctx=None):
@@ -219,6 +229,70 @@ def construire(etat):
         else:
             ui.label("en attente" + (f" : {chemin}" if chemin else " (aucun panorama courant)")).classes("text-amber-700")
 
+    def zone_cheminement(t):
+        """1B : quatre coins (flèche vers le centre = sens de la prise de vue), serpentin, tracé 3 x 5, enregistrement."""
+        p = ctx.panorama
+        ui.label(t.sous_titre).classes("text-xl")
+        if p is None:
+            ui.label("Aucun panorama courant : le sélecteur s'essaie, mais rien ne peut être enregistré "
+                     "(Phase 0, nouveau panorama).").classes("text-amber-700")
+        choix = {"depart": p.depart if p and p.depart in cheminement.COINS else cheminement.DEFAUT,
+                 "serpentin": bool(p.serpentin) if p else False}
+
+        def enregistrer():
+            if p is None or refuser_si_perime():
+                return
+            try:
+                with reglages.VERROU_PANORAMA:
+                    changes = enregistrer_cheminement(p, choix["depart"], choix["serpentin"])
+            except (OSError, ValueError) as e:
+                ui.notify(f"Écriture impossible : {e}", type="negative", multi_line=True)
+                return
+            for cle, v in changes:
+                etat.journal.push(ligne_report(cle, v))
+            ui.notify("Enregistré dans panorama.json")
+            etat.en_tete.refresh()
+
+        def choisir(coin):
+            choix["depart"] = coin
+            plan.refresh()
+
+        def basculer(e):
+            choix["serpentin"] = bool(e.value)
+            plan.refresh()
+
+        @ui.refreshable
+        def plan():
+            with ui.element("div").style("display:grid;grid-template-columns:auto minmax(0,26rem) auto;"
+                                         "align-items:center;gap:0.5rem;width:max-content;max-width:100%"):
+                for coin in ("hg", None, "hd"):
+                    _bouton_coin(coin)
+                ui.element("div")
+                ui.html(cheminement.dessin_svg(choix["depart"], choix["serpentin"]), sanitize=False)
+                ui.element("div")
+                for coin in ("bg", None, "bd"):
+                    _bouton_coin(coin)
+            ui.label(cheminement.resume(choix["depart"], choix["serpentin"])).classes("text-sm")
+
+        def _bouton_coin(coin):
+            if coin is None:
+                ui.element("div")
+                return
+            actif = choix["depart"] == coin
+            b = ui.button(cheminement.FLECHES_COINS[coin], on_click=lambda c=coin: choisir(c))
+            b.props("round " + ("color=primary" if actif else "outline color=grey-7"))
+            b.tooltip(f"Départ {cheminement.NOMS_COINS[coin]}")
+
+        ui.label("Cliquer un coin : la flèche indique le sens de la prise de vue. Toujours en lignes, jamais en "
+                 "colonnes. Le dessin montre 3 lignes x 5 colonnes, quelle que soit la grille réelle.").classes(
+            "text-sm text-gray-600")
+        plan()
+        ui.switch("Serpentin (sens inversé à chaque ligne)", value=choix["serpentin"], on_change=basculer)
+        with ui.row().classes("items-center gap-2"):
+            ui.button("Enregistrer dans panorama.json", on_click=enregistrer).props(
+                "no-caps color=primary" + (" disable" if p is None else ""))
+        ui.label(f"✎ Écrit dans {t.effet}").classes("text-sm text-amber-800")
+
     def zone_script(t):
         p = ctx.panorama
         try:
@@ -259,6 +333,8 @@ def construire(etat):
         etat.journal = journal
         if t.est_geste:
             zone_geste(t)
+        elif t.action == "cheminement":
+            zone_cheminement(t)
         elif formulaire.a_un_formulaire(t):
             zone_script(t)
         else:

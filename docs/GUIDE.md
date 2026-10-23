@@ -32,7 +32,7 @@ flowchart LR
 - Ça **ne comble pas un trou de prise de vue** : si deux images voisines ne se recouvrent pas, la bande noire reste, et il faut retoucher à la main.
 - Ça **ne remplace pas la prise de vue soignée** : un recouvrement d'au moins 15 % partout est la meilleure assurance.
 - Le **HDR** n'est pas produit à 100 % des pixels : la fusion HDR passe par ***Lightroom***, plafonné à 512 Mpx. Le détail à 100 % est servi par une seule exposition ([Phase 6](#-phase-6--pleine-résolution)).
-- La méthode n'a été éprouvée que sur une **grille numérotée dans l'ordre de prise de vue**, parcourue dans le même sens à chaque ligne.
+- La méthode n'a été éprouvée sur le terrain que sur une **grille parcourue du haut droit, ligne par ligne, dans le même sens**. Les autres coins de départ et le serpentin sont prévus ([**1B**](#1b--respecter-lordre-de-la-séquence)) mais n'ont pas encore été essayés sur une vraie prise de vue.
 - Elle s'arrête aux tuiles : afficher et publier dépend de la visionneuse choisie.
 
 ---
@@ -324,24 +324,39 @@ Rien ne change d'une image à l'autre :
 
 ### 1B — Respecter l'ordre de la séquence
 
-Le nom `L{ligne}_C{colonne}_E{exposition}` de chaque image est **calculé uniquement d'après son rang dans l'ordre de prise de vue**. Une photo oubliée, doublée ou prise dans un autre ordre **décale toute la grille qui la suit**.
+Le nom `L{ligne}_C{colonne}_E{exposition}` de chaque image est **calculé uniquement d'après son rang dans l'ordre de prise de vue** et du cheminement choisi. Une photo oubliée, doublée ou prise dans un autre ordre **décale toute la grille qui la suit**.
+
+**Choisir le cheminement avant de partir** : un **coin de départ** (haut gauche, haut droit, bas gauche ou bas droit) et, au besoin, le **serpentin**. Une seule règle : on parcourt **toujours des lignes, jamais des colonnes**. Le défaut est le **haut droit, sans serpentin** (toutes les lignes de droite à gauche, de haut en bas). Le choix se règle avant la prise de vue :
+
+- dans le lanceur console : *Préparer → Cheminement de la prise de vue* ;
+- dans l'interface web : cette étape **1B** (quatre coins cliquables dont la flèche indique le sens de la prise de vue, case *Serpentin* désactivée par défaut) ;
+
+et s'inscrit dans `panorama.json` (`depart` : `hg`, `hd`, `bg` ou `bd` ; `serpentin`). ***renommer_pano.py*** les reçoit en options (`--depart`, `--serpentin`) : le lanceur et la page web les préremplissent d'après `panorama.json`, mais **en ligne de commande il faut les passer explicitement** (sans eux, le défaut s'applique).
 
 ```
-Ordre de prise de vue :
+Départ haut gauche, sans serpentin :
+  1 → 2 → 3 → 4 → 5
+  ↓┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+  6 → 7 → 8 → 9 → 10
+  ↓┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+  11 → 12 → 13 → 14 → 15
 
-   Ligne 0 (haut)   colonne 0 ──► colonne C-1      ← chaque ligne démarre du MÊME côté
-   Ligne 1          colonne 0 ──► colonne C-1         (pas de parcours en serpentin)
-   ...
-   Ligne L-1 (bas)
-
-   À chaque position, une rafale de N images dans un ordre FIXE, la vue centrée (0 IL) en tête :
-       E0 (0 IL)  puis  E1 … E(N-1)
+Départ bas droit, serpentin :
+  15 ← 14 ← 13 ← 12 ← 11
+                      ↑
+  6 → 7 → 8 → 9 → 10
+  ↑
+  5 ← 4 ← 3 ← 2 ← 1
 ```
 
-Calcul du nom d'après le rang `R` (à partir de 1) : `position = (R − 1) ÷ N` (division entière), `exposition = (R − 1) mod N`, `ligne = position ÷ C`, `colonne = position mod C`.
+Sans serpentin, on revient au début de chaque ligne (┄) ; avec serpentin, la ligne suivante part de l'endroit où l'on s'est arrêté, dans l'autre sens. À chaque position, une rafale de N images dans un ordre **fixe**, la vue centrée (0 IL) en tête : `E0` (0 IL), puis `E1` … `E(N-1)`.
+
+Le rang `R` (à partir de 1) donne `position = (R − 1) ÷ N` (division entière) et `exposition = (R − 1) mod N`. La **position** désigne ensuite la case n° `position` du cheminement choisi.
+
+**Les noms suivent la position, pas l'ordre de prise** : ligne 0 = haut, colonne 0 = bord droit, quel que soit le départ. C'est la convention des scripts de géométrie (le lacet de ***generer_pto.py*** se calcule d'après la colonne), donc rien ne change en aval. Le défaut reproduit exactement l'ancien calcul (`ligne = position ÷ C`, `colonne = position mod C`).
 
 **Conséquences pratiques** :
-- Les lignes sont parcourues **dans le même sens**. Le sens de rotation de la rotule détermine le signe du lacet dans ***generer_pto.py*** (section [Configuration](#️-configuration--les-scripts)).
+- Le sens de rotation de la rotule ne détermine plus rien : le lacet vient de la position de l'image, pas de l'ordre de prise.
 - La **vue centrée en tête de rafale** se retrouve sans calcul : c'est l'image au temps de pose de la vue centrée ([**2D**](#2d--exporter-l-et-h), « Repérer la vue centrée »).
 - **Après la prise de vue**, vérifier avant tout traitement avec ***verifier_ordre.py*** ([**2E**](#2e--vérifier-lexport)). Un écart se corrige à la source : retrouver la photo en trop ou manquante.
 - **Bon réflexe** : à chaque début de ligne, photographier un repère (main devant l'objectif) pour repérer le changement de ligne. À exclure ensuite des exports, car il fausserait le compte.
@@ -532,7 +547,7 @@ Un écart supérieur à 1 ou 2 % entre voisines, avec un **bruit faible** (moins
 
 ### 2F — Renommer
 
-Les fichiers exportés sont classés par le **numéro qui termine leur nom**, qui suit l'ordre de prise de vue. Le rang `R` de chaque fichier donne `R − 1 = position × N + exposition`, avec `position = ligne × C + colonne`.
+Les fichiers exportés sont classés par le **numéro qui termine leur nom**, qui suit l'ordre de prise de vue. Le rang `R` de chaque fichier donne `R − 1 = position × N + exposition`, et `position` désigne la case correspondante du **cheminement** choisi en [**1B**](#1b--respecter-lordre-de-la-séquence) (option `--depart`, `--serpentin` ; par défaut `position = ligne × C + colonne`).
 
 Avant de renommer, le script contrôle que le **nombre de fichiers** est celui attendu et que la **numérotation est continue** (aucun trou). Le **préfixe** des préréglages de [**2D**](#2d--exporter-l-et-h) donne le type d'export : `Pano_E0-` (export H) attend **L × C** vues centrées, toutes nommées `_E0` quel que soit `--expos` ; `Pano_HDR-` (export L) attend des rafales de `--expos` expositions. Avec un autre préfixe, un export de L × C fichiers est pris pour des vues centrées. Deux préfixes dans le même dossier (deux exports mélangés) arrêtent le script.
 
@@ -542,8 +557,8 @@ Il contrôle aussi le **motif d'exposition** lu dans l'EXIF (***exiftool***), et
 - **vues centrées seules** : toutes les images portent la même compensation, quelle qu'elle soit (pas forcément 0 IL). Une image d'une autre exposition glissée dans le lot est signalée par son nom.
 
 ```powershell
-python renommer_pano.py "$T\Export-TIFF-L" --lignes <L> --colonnes <C> --expos <N> --table "$P\table_raw_LCE.csv"            # essai à blanc
-python renommer_pano.py "$T\Export-TIFF-L" --lignes <L> --colonnes <C> --expos <N> --table "$P\table_raw_LCE.csv" --apply    # renomme + correspondance.csv
+python renommer_pano.py "$T\Export-TIFF-L" --lignes <L> --colonnes <C> --expos <N> --table "$P\table_raw_LCE.csv" [--depart <coin>] [--serpentin]            # essai à blanc
+python renommer_pano.py "$T\Export-TIFF-L" --lignes <L> --colonnes <C> --expos <N> --table "$P\table_raw_LCE.csv" [--depart <coin>] [--serpentin] --apply    # renomme + correspondance.csv
 python renommer_pano.py "$T\Export-TIFF-L" --undo                                                                              # restaure
 ```
 
@@ -1388,7 +1403,7 @@ $H = <dossier des RAW>\HDR\              ← dans le catalogue Lightroom
 
 Tous ces dossiers sont créés en **Phase 0** ([**0D**](#0d--préparer-les-disques-et-les-emplacements)), avant le premier export.
 
-**Convention de nom** : `L{ligne}_C{colonne}_E{exposition}.tif`, ligne 0 = haut, colonne 0 = côté où chaque ligne commence, exposition 0 = vue centrée. Un tri alphabétique donne l'ordre de prise de vue.
+**Convention de nom** : `L{ligne}_C{colonne}_E{exposition}.tif`, ligne 0 = haut, colonne 0 = bord droit, exposition 0 = vue centrée. Avec le cheminement par défaut (haut droit, sans serpentin), un tri alphabétique donne l'ordre de prise de vue ; pas avec un autre départ ou le serpentin ([**1B**](#1b--respecter-lordre-de-la-séquence)).
 
 ---
 
@@ -1495,7 +1510,7 @@ python empaqueter.py pano-<focale>-<date> "$P\7_tuiles\hdr_cadre_webp\hdr.dzi" "
 
 Les scripts du dossier `scripts\` (`$OUTILS`) sont classés par étape dans [`INDEX.md`](../scripts/INDEX.md), avec leur rôle en une ligne et leur **portée** (générique, ou paramétré par la grille). Chacun porte en tête de fichier son **mode d'emploi** : contexte, mode opératoire, entrées (arguments et constantes), sorties, exemple.
 
-**Constantes codées en dur** (à adapter si la prise de vue change) : la taille des images est lue dans les fichiers ou dans le projet, mais les scripts de diagnostic et de placement supposent le **nombre de colonnes et de lignes et le champ horizontal** d'une prise de vue donnée. Les modifier en tête de chaque script. Les signes de rotation supposent la colonne 0 à **droite** et la ligne 0 en **haut** ; pour une prise de vue gauche → droite, inverser le signe du lacet dans ***generer_pto.py***.
+**Constantes codées en dur** (à adapter si la prise de vue change) : la taille des images est lue dans les fichiers ou dans le projet, mais les scripts de diagnostic et de placement supposent le **nombre de colonnes et de lignes et le champ horizontal** d'une prise de vue donnée. Les modifier en tête de chaque script. Les signes de rotation supposent la colonne 0 à **droite** et la ligne 0 en **haut**, **quel que soit le sens de la prise de vue** : c'est le renommage qui y range les images selon le cheminement choisi ([**1B**](#1b--respecter-lordre-de-la-séquence)). Ne rien inverser dans ***generer_pto.py***.
 
 **Chemins d'installation** (***Hugin***, ***multiblend***, ***libvips***) : paramètres optionnels des scripts PowerShell concernés (`-Hugin`, `-Multiblend`, `-Vips`, avec un chemin par défaut en tête de script), variable `MULTIBLEND_EXE` pour l'adaptateur, ou menu **Configuration** du lanceur, qui les transmet.
 
