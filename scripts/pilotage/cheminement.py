@@ -88,8 +88,9 @@ def dessin_texte(depart, serpentin):
         a = positions[bas_r if bas else haut][depart_liaison]
         b = positions[haut if bas else bas_r][arrivee]
         liaison = [" "] * (max(a, b) + 1)
-        for i in range(min(a, b), max(a, b)):
-            liaison[i] = "┄"
+        if depart_liaison != arrivee:               # retour d'un côté à l'autre ; en serpentin, simple flèche
+            for i in range(min(a, b), max(a, b)):
+                liaison[i] = "┄"
         liaison[b] = fleche
         resultat += ["".join(liaison), texte[r + 1]]
     return resultat

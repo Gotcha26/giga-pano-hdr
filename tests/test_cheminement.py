@@ -59,6 +59,11 @@ class TestDessin(unittest.TestCase):
         self.assertIn("↓", lignes[3])
         self.assertIn("11 → 12 → 13 → 14 → 15", lignes[4])
 
+    def test_dessin_texte_serpentin_sans_trait_de_retour(self):
+        for depart in cheminement.COINS:
+            lignes = cheminement.dessin_texte(depart, True)
+            self.assertNotIn("┄", lignes[1] + lignes[3], depart)
+
     def test_dessin_svg(self):
         lineaire, serpentin = cheminement.dessin_svg("hg", False), cheminement.dessin_svg("hg", True)
         for svg in (lineaire, serpentin):
