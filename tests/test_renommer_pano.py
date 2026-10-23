@@ -234,5 +234,56 @@ class TestRenommerPano(unittest.TestCase):
             self.assertIn("pas un motif HDR", r.stdout)
 
 
+def correspondance(dossier):
+    with open(Path(dossier) / "correspondance.csv", newline="", encoding="utf-8") as f:
+        return {r["ancien"]: r["nouveau"] for r in csv.DictReader(f)}
+
+
+@unittest.skipUnless(shutil.which("exiftool"), "exiftool absent du PATH")
+class TestCheminement(unittest.TestCase):
+    """Grille 2 x 3 de vues centrées seules : les noms suivent le coin de départ et le serpentin (colonne 0 = bord droit)."""
+
+    def renommer(self, *options):
+        d = tempfile.TemporaryDirectory()
+        self.addCleanup(d.cleanup)
+        export(d.name, [0] * 6)
+        r = lancer(d.name, "--apply", *options)
+        return r, d.name
+
+    def test_depart_par_defaut_inchange(self):
+        r, d = self.renommer()
+        self.assertEqual(r.returncode, 0, r.stderr)
+        c = correspondance(d)
+        self.assertEqual((c["Pano-01.tif"], c["Pano-04.tif"]), ("L0_C00_E0.tif", "L1_C00_E0.tif"))
+
+    def test_depart_bas_gauche_serpentin(self):
+        r, d = self.renommer("--depart", "bg", "--serpentin")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        c = correspondance(d)
+        self.assertEqual([c[f"Pano-0{k}.tif"] for k in (1, 3, 4, 6)],
+                         ["L1_C02_E0.tif", "L1_C00_E0.tif", "L0_C00_E0.tif", "L0_C02_E0.tif"])
+
+    def test_depart_haut_gauche_lineaire(self):
+        r, d = self.renommer("--depart", "hg")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        c = correspondance(d)
+        self.assertEqual((c["Pano-01.tif"], c["Pano-04.tif"]), ("L0_C02_E0.tif", "L1_C02_E0.tif"))
+
+    def test_depart_invalide(self):
+        r, d = self.renommer("--depart", "zz")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("invalid choice", r.stderr)
+        self.assertEqual(noms(d), [f"Pano-0{k}.tif" for k in range(1, 7)])
+
+    def test_force_avec_images_en_trop(self):
+        with tempfile.TemporaryDirectory() as d:
+            export(d, [0] * 7)
+            r = lancer(d, "--expos", "1", "--apply", "--force")
+            self.assertNotEqual(r.returncode, 0)
+            self.assertIn("plus d'images que de positions", r.stdout + r.stderr)
+            self.assertNotIn("Traceback", r.stderr)
+            self.assertEqual(noms(d), [f"Pano-0{k}.tif" for k in range(1, 8)])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -10,7 +10,10 @@ MODE OPÉRATOIRE
     (à partir de 1) donne :
 
         N - 1 = prise * EXPOS + expo        (EXPOS expositions entrelacées par position)
-        prise = ligne * COLONNES + colonne  (ligne 0 = haut, colonne 0 = bord droit : prise de droite à gauche)
+        (ligne, colonne) = case n° `prise` du cheminement choisi (--depart, --serpentin ; pilotage/cheminement.py)
+
+    Les noms suivent la POSITION : ligne 0 = haut, colonne 0 = bord droit (convention des scripts de géométrie).
+    Le défaut (départ haut droit, sans serpentin) est l'ancien calcul : prise = ligne * COLONNES + colonne.
 
     Avant de renommer, le script contrôle le nombre de fichiers (attendu : lignes x colonnes x expositions),
     l'absence de trou dans la numérotation et l'absence de nom cible déjà existant. Tous les fichiers doivent
@@ -41,6 +44,8 @@ ENTRÉES
     --apply                renomme réellement ; sans option : essai à blanc (affiche 5 premiers et 3 derniers)
     --undo                 restaure les noms d'origine depuis correspondance.csv
     --lignes --colonnes --expos   dimensions de la grille (défauts : 6, 37, 7)
+    --depart COIN          coin de départ de la prise de vue : hg, hd, bg, bd (défaut hd ; préremplie d'après le panorama)
+    --serpentin            une ligne sur deux dans l'autre sens (défaut : toutes les lignes dans le même sens)
     --force                ignore un écart de nombre de fichiers ou un trou de numérotation (pas le motif d'exposition)
     --table FICHIER        table RAW -> L_C_E, ex. $P\\table_raw_LCE.csv (préremplie d'après le panorama courant)
 
@@ -57,7 +62,7 @@ EXEMPLE
     python renommer_pano.py DOSSIER --undo               # restaure depuis correspondance.csv
     python renommer_pano.py DOSSIER --apply --table "$P\\table_raw_LCE.csv"   # contrôle contre la table, ou l'écrit
 
-Usage : python renommer_pano.py DOSSIER [--apply | --undo] [--lignes 6 --colonnes 37 --expos 7] [--force] [--table CSV]
+Usage : python renommer_pano.py DOSSIER [--apply | --undo] [--lignes 6 --colonnes 37 --expos 7] [--depart hd] [--serpentin] [--force] [--table CSV]
 """
 import argparse
 import csv
@@ -67,6 +72,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+from pilotage import cheminement
 from pilotage.arguments import Arg, piloter
 
 ARGUMENTS = [
@@ -76,6 +82,8 @@ ARGUMENTS = [
     Arg("--lignes", "Lignes de la grille", type="entier", config="lignes"),
     Arg("--colonnes", "Colonnes de la grille", type="entier", config="colonnes"),
     Arg("--expos", "Expositions par position", type="entier", config="expos"),
+    Arg("--depart", "Coin de départ de la prise de vue : hg, hd, bg ou bd", config="depart", defaut=cheminement.DEFAUT),
+    Arg("--serpentin", "Une ligne sur deux dans l'autre sens", type="drapeau", config="serpentin"),
     Arg("--force", "Ignore un écart de nombre ou un trou de numérotation", type="drapeau"),
     Arg("--table", "Table RAW -> L_C_E : contrôle le plan si elle existe, sinon l'écrit (export complet)", type="chemin",
         config="table"),
@@ -90,6 +98,8 @@ ap.add_argument("--undo", action="store_true")
 ap.add_argument("--lignes", type=int, default=6)
 ap.add_argument("--colonnes", type=int, default=37)
 ap.add_argument("--expos", type=int, default=7)
+ap.add_argument("--depart", choices=cheminement.COINS, default=cheminement.DEFAUT)
+ap.add_argument("--serpentin", action="store_true")
 ap.add_argument("--force", action="store_true")
 ap.add_argument("--table")
 args = ap.parse_args()
@@ -99,9 +109,14 @@ mapfile = dossier / "correspondance.csv"
 TOL = 0.1                       # tolérance sur la compensation lue dans l'EXIF, en IL
 
 
+CASES = cheminement.cases_nommees(args.lignes, args.colonnes, args.depart, args.serpentin)
+
+
 def nouveau_nom(rang):          # rang à partir de 1
     prise, expo = divmod(rang - 1, args.expos)
-    ligne, col = divmod(prise, args.colonnes)
+    if prise >= len(CASES):
+        sys.exit(f"plus d'images que de positions ({args.lignes} x {args.colonnes}) : aucun fichier modifié")
+    ligne, col = CASES[prise]
     return f"L{ligne}_C{col:02d}_E{expo}.tif"
 
 
